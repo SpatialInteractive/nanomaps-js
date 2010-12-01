@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script src="js/nanocore.js"></script>
+	<script>
+	var map;
+	
+	function initialize() {
+		var mapElt=document.getElementById('map');
+		
+		map=new nanocore.MapSurface(mapElt, {});
+	}
+	</script>
+	
+	<style>
+	#map {
+		width: 800px;
+		height: 600px;
+		border: 1px solid black;
+	}
+	</style>
+</head>
+<body onload="initialize()">
+	<div id="map"></div>
+
+</body>
+</html>
+
