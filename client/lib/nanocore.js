@@ -105,27 +105,29 @@ var LatLngProjection={
 		return xy;
 	}
 },
-WebMercatorK0=6378137.0,
-WebMercatorProjection={
-	DEFAULT_CENTER: {lat:39.7406, lng:-104.985441},
-	DEFAULT_SCALE: 108000,
-	forward: function(xy) {
-		var DEG_TO_RAD=.0174532925199432958,
-			x=xy.x * DEG_TO_RAD, y=xy.y * DEG_TO_RAD;
-		if (Math.abs(y-1.5707963267948966 /*HALFPI*/)<=1.e-10)
-			return null;
+WebMercatorProjection=new function() {
+	this.DEFAULT_CENTER={lat:39.7406, lng:-104.985441};
+	this.DEFAULT_SCALE=108000;
+
+	var EARTH_RADIUS=6378137.0,
+		DEG_TO_RAD=.0174532925199432958,
+		RAD_TO_DEG=57.29577951308232,
+		FOURTHPI=0.78539816339744833,
+		HALFPI=1.5707963267948966;
+	
+	this.forward=function(xy) {
 		return {
-			x: WebMercatorK0 * xy.x,
-			y: WebMercatorK0 * Math.log(Math.tan(0.78539816339744833 /*PI/4*/ + 0.5 * xy.y))
+			x: xy.x*DEG_TO_RAD * EARTH_RADIUS, 
+			y: Math.log(Math.tan(FOURTHPI + 0.5 * DEG_TO_RAD * xy.y)) * EARTH_RADIUS 
 		};
-	},
-	inverse: function(xy) {
-		var RAD_TO_DEG=57.29577951308232, x, y;
+	};
+	
+	this.inverse=function(xy) {
 		return {
-			x: RAD_TO_DEG * (xy.x / WebMercatorK0),
-			y: RAD_TO_DEG * (1.5707963267948966 /*HALFPI*/ - 2.0 * Math.atan(Math.exp(-xy.y / WebMercatorK0)))
+			x: RAD_TO_DEG * xy.x / EARTH_RADIUS,
+			y: RAD_TO_DEG * (HALFPI - 2. * Math.atan(Math.exp(-xy.y/EARTH_RADIUS)))
 		};
-	}
+	};
 };
 
 // Exports
