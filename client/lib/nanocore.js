@@ -130,6 +130,7 @@ WebMercatorProjection={
 
 // Exports
 exports.MapSurface=MapSurface;
+exports.WebMercatorProjection=WebMercatorProjection;
 
 // module suffix
 return exports;
