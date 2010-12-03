@@ -9,84 +9,6 @@ var nanocore=(function(exports) {
 var __nextId=0,
 	DPI_TO_DPM=100/2.54;
 	
-/**
- * Construct a new MapTransform with the given parameters:
- *  - dpi: Dpi of the drawing surface
- *  - projection: The projection object for the surface
- *  - scale: Scale at the given dpi (at representative latitude)
- *  - zeroLat: The latitude corresponding with the top of the viewport
- *  - zeroLng: The longitude corresponding with the left of the viewport
- */
-function MapTransform() {
-	this.sequence=__nextId++;
-}
-MapTransform.prototype={
-	init: function(projection, dpi, scale, zeroLngLat) {
-		// The sequence number is used to detect if objects are
-		// aligned properly against the current transform
-		this.projection=projection;
-		this.dpi=dpi;
-		this.dpm=dpi * DPI_TO_DPM;
-		this.scale=scale;
-		this.dpmScale=this.dpm / this.scale;
-		this.zeroLngLat=zeroLngLat;
-		
-		// Calculate corresponding unaligned pixel coordinates associated
-		// with zeroLatLng
-		this.zeroPx=this.toPixels(zeroLngLat[0], zeroLngLat[1]);
-	},
-	
-	/**
-	 * Return a new MapTransform at a new scale and zeroLatLng
-	 */
-	rescale: function(scale, zeroLngLat) {
-		var transform=new MapTransform();
-		transform.init(this.projection, this.dpi, scale, zeroLngLat);
-		return transform;
-	},
-	
-	/**
-	 * Convert the given longitude/latitude to returned [x, y] coordinates.
-	 * Returns null if the lng/lat is out of bounds.
-	 * NOTE: the order of the parameters is longitude, latitude, corresponding
-	 * with x and y.
-	 * In order to align to the viewport, the return value should be subtracted
-	 * from this.zeroPx (see toViewport).
-	 */
-	toPixels: function(lng, lat) {
-		var xy=this.projection.forward(lng, lat);
-		if (!xy) return null;
-		xy[0]*=this.dpmScale;
-		xy[1]*=this.dpmScale;
-		
-		return xy;
-	},
-	
-	/**
-	 * Return viewport coordinates of the given lat/lng
-	 */
-	toViewport: function(lng, lat) {
-		var xy=this.toPixels(lng, lat);
-		if (!xy) return null;
-		xy[0]-=this.zeroPx[0];
-		xy[1]-=this.zeroPx[1];
-		return xy;
-	},
-	
-	/**
-	 * Convert from global pixel coordinates to lng/lat.
-	 */
-	fromPixels: function(x, y) {
-		return this.projection.inverse(x / this.dpmScale, y / this.dpmScale);
-	},
-	
-	/**
-	 * Convert from viewport coordinates to [lng, lat]
-	 */
-	fromViewport: function(x, y) {
-		return this.fromPixels(x+this.zeroPx[0], y+this.zeroPx[1]);
-	}
-};
 
 /**
  * Instantiate a MapSurface, attaching it to the given element.
@@ -217,12 +139,37 @@ MapSurface.prototype={
 	 * Iterate over contained global elements and trigger listeners.
 	 */
 	_notifyPosition: function() {
-		this._eachGlobal(function(posElt) {
-			var handler=posElt.onmapmove;
+		this._eachGlobal(function(element) {
+			var delegate=element.mapDelegate||DEFAULT_MAP_DELEGATE,
+				handler=delegate.onposition;
 			if (typeof handler==='function') {
-				handler.call(posElt, this);
+				handler.call(element, this, delegate);
 			}
 		});
+	},
+	
+	/**
+	 * Reset all elements
+	 */
+	_notifyReset: function() {
+		this._eachGlobal(this._notifyResetSingle);
+	},
+	
+	/**
+	 * Reset a single element
+	 */
+	_notifyResetSingle: function(element) {
+		var delegate=element.mapDelegate||DEFAULT_MAP_DELEGATE,
+			handler=delegate.onreset;
+		if (typeof handler==='function')
+			handler.call(element, this, delegate);
+		
+	},
+	
+	attach: function(element) {
+		element.style.position='absolute';	// Make positioned
+		this._global.appendChild(element);
+		this._notifyResetSingle(element);
 	},
 	
 	/**
@@ -248,6 +195,16 @@ MapSurface.prototype={
 		return this._center;
 	},
 	
+	getScale: function() {
+		return this.transform.scale;
+	},
+	
+	setScale: function(scale) {
+		var center=this._center;
+		this.transform=this.transform.rescale(scale, [center.lng, center.lat]);
+		this._notifyReset();
+	},
+	
 	/**
 	 * Given x,y coordinates relative to the visible area of the viewport,
 	 * return the corresponding lat/lng
@@ -270,6 +227,112 @@ MapSurface.prototype={
 	}
 };
 
+var DEFAULT_MAP_DELEGATE={
+	onreset: function(map) {
+		var geo=this.geo, latLng, offset, xy;
+		if (geo) {
+			latLng=geo.latLng;
+			offset=geo.offset;
+			if (latLng) {
+				// Calculate position
+				xy=map.transform.toSurface(latLng.lng, latLng.lat);
+				if (xy) {
+					if (offset&&offset.x) xy[0]+=offset.x;
+					if (offset&&offset.y) xy[1]+=offset.y;
+					
+					// set position
+					this.style.left=(xy[0])+'px';
+					this.style.top=(xy[1])+'px';
+					this.style.display='block';
+					return;
+				}
+			}
+		}
+		
+		// If here, then geo information was non-conclusive.  Hide the
+		// element
+		this.style.display='none';
+	}
+};
+
+/**
+ * Construct a new MapTransform with the given parameters:
+ *  - dpi: Dpi of the drawing surface
+ *  - projection: The projection object for the surface
+ *  - scale: Scale at the given dpi (at representative latitude)
+ *  - zeroLat: The latitude corresponding with the top of the viewport
+ *  - zeroLng: The longitude corresponding with the left of the viewport
+ */
+function MapTransform() {
+	this.sequence=__nextId++;
+}
+MapTransform.prototype={
+	init: function(projection, dpi, scale, zeroLngLat) {
+		// The sequence number is used to detect if objects are
+		// aligned properly against the current transform
+		this.projection=projection;
+		this.dpi=dpi;
+		this.dpm=dpi * DPI_TO_DPM;
+		this.scale=scale;
+		this.dpmScale=this.dpm / this.scale;
+		this.zeroLngLat=zeroLngLat;
+		
+		// Calculate corresponding unaligned pixel coordinates associated
+		// with zeroLatLng
+		this.zeroPx=this.toPixels(zeroLngLat[0], zeroLngLat[1]);
+	},
+	
+	/**
+	 * Return a new MapTransform at a new scale and zeroLatLng
+	 */
+	rescale: function(scale, zeroLngLat) {
+		var transform=new MapTransform();
+		transform.init(this.projection, this.dpi, scale, zeroLngLat);
+		return transform;
+	},
+	
+	/**
+	 * Convert the given longitude/latitude to returned [x, y] coordinates.
+	 * Returns null if the lng/lat is out of bounds.
+	 * NOTE: the order of the parameters is longitude, latitude, corresponding
+	 * with x and y.
+	 * In order to align to the viewport, the return value should be subtracted
+	 * from this.zeroPx (see toViewport).
+	 */
+	toPixels: function(lng, lat) {
+		var xy=this.projection.forward(lng, lat);
+		if (!xy) return null;
+		xy[0]*=this.dpmScale;
+		xy[1]*=this.dpmScale;
+		
+		return xy;
+	},
+	
+	/**
+	 * Return viewport coordinates of the given lat/lng
+	 */
+	toSurface: function(lng, lat) {
+		var xy=this.toPixels(lng, lat);
+		if (!xy) return null;
+		xy[0]-=this.zeroPx[0];
+		xy[1]-=this.zeroPx[1];
+		return xy;
+	},
+	
+	/**
+	 * Convert from global pixel coordinates to lng/lat.
+	 */
+	fromPixels: function(x, y) {
+		return this.projection.inverse(x / this.dpmScale, y / this.dpmScale);
+	},
+	
+	/**
+	 * Convert from viewport coordinates to [lng, lat]
+	 */
+	fromSurface: function(x, y) {
+		return this.fromPixels(x+this.zeroPx[0], y+this.zeroPx[1]);
+	}
+};
 
 var Projections={
 	/**
@@ -301,11 +364,19 @@ var Projections={
 	}
 };
 
+// -- Tile Layer
+function createTileLayer(options) {
+	var _elt=document.createElement('div');
+	
+	
+	return _elt;
+}
 
 // Exports
 exports.MapSurface=MapSurface;
 exports.Projections=Projections;
 exports.MapTransform=MapTransform;
+exports.createTileLayer=createTileLayer;
 
 // module suffix
 return exports;
