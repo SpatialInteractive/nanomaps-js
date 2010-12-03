@@ -6,21 +6,42 @@
 	var map;
 	
 	function initialize() {
-		var mapElt=document.getElementById('map');
+		var mapElt=document.getElementById('map'), tagElt;
 		
 		map=new nanocore.MapSurface(mapElt, {});
+		
+		tagElt=document.createElement('div');
+		tagElt.innerHTML='Tag';
+		tagElt.style.color='white';
+		tagElt.style.border='1px solid black';
+		tagElt.style.backgroundColor='red';
+		tagElt.style.width='30px';
+		tagElt.style.height='20px';
+		tagElt.style.textAlign='center';
+		tagElt.style.position='absolute';
+		tagElt.style.left='0px';
+		tagElt.style.top='0px';
+		map._global.appendChild(tagElt);
 	}
 	</script>
 	
 	<style>
 	#map {
 		width: 800px;
-		height: 600px;
+		height: 400px;
 		border: 1px solid black;
 	}
 	</style>
 </head>
 <body onload="initialize()">
+	<div>
+		<a href="javascript:map.moveBy(-25, 0)">Move Left</a>
+		<a href="javascript:map.moveBy(25, 0)">Move Right</a>
+		<a href="javascript:map.moveBy(0, 25)">Move Up</a>
+		<a href="javascript:map.moveBy(0, -25)">Move Down</a>
+		<br />
+		<a href="javascript:alert('Center: ' + map.getCenter().lat + ', ' + map.getCenter().lng)">Show Position</a>
+	</div>
 	<div id="map"></div>
 
 </body>
