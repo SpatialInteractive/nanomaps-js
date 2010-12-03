@@ -88,51 +88,45 @@ function MapSurface(elt, options) {
 	this.height=height;
 	
 	// Initialize position, scale and projection
-	this.projection=options.projection||WebMercatorProjection;
+	this.projection=options.projection||projections.WebMercator;
 	this.center=options.center||this.projection.DEFAULT_CENTER;
 	this.scale=options.scale||this.projection.DEFAULT_SCALE;
 }
 
-// Projections
-var LatLngProjection={
-	DEFAULT_CENTER:{lat:0,lng:0},
-	DEFAULT_SCALE:1,
+var Projections={
+	/**
+	 * Standard "Web Mercator" projection as used by Google, Microsoft, OSM, et al.
+	 */
+	WebMercator: new function() {
+		this.DEFAULT_CENTER={lat:39.7406, lng:-104.985441};
+		this.DEFAULT_SCALE=108000;
 	
-	forward: function(xy) {
-		return xy;
-	},
-	inverse: function(xy) {
-		return xy;
+		var EARTH_RADIUS=6378137.0,
+			DEG_TO_RAD=.0174532925199432958,
+			RAD_TO_DEG=57.29577951308232,
+			FOURTHPI=0.78539816339744833,
+			HALFPI=1.5707963267948966;
+		
+		this.forward=function(xy) {
+			return {
+				x: xy.x*DEG_TO_RAD * EARTH_RADIUS, 
+				y: Math.log(Math.tan(FOURTHPI + 0.5 * DEG_TO_RAD * xy.y)) * EARTH_RADIUS 
+			};
+		};
+		
+		this.inverse=function(xy) {
+			return {
+				x: RAD_TO_DEG * xy.x / EARTH_RADIUS,
+				y: RAD_TO_DEG * (HALFPI - 2. * Math.atan(Math.exp(-xy.y/EARTH_RADIUS)))
+			};
+		};
 	}
-},
-WebMercatorProjection=new function() {
-	this.DEFAULT_CENTER={lat:39.7406, lng:-104.985441};
-	this.DEFAULT_SCALE=108000;
-
-	var EARTH_RADIUS=6378137.0,
-		DEG_TO_RAD=.0174532925199432958,
-		RAD_TO_DEG=57.29577951308232,
-		FOURTHPI=0.78539816339744833,
-		HALFPI=1.5707963267948966;
-	
-	this.forward=function(xy) {
-		return {
-			x: xy.x*DEG_TO_RAD * EARTH_RADIUS, 
-			y: Math.log(Math.tan(FOURTHPI + 0.5 * DEG_TO_RAD * xy.y)) * EARTH_RADIUS 
-		};
-	};
-	
-	this.inverse=function(xy) {
-		return {
-			x: RAD_TO_DEG * xy.x / EARTH_RADIUS,
-			y: RAD_TO_DEG * (HALFPI - 2. * Math.atan(Math.exp(-xy.y/EARTH_RADIUS)))
-		};
-	};
 };
+
 
 // Exports
 exports.MapSurface=MapSurface;
-exports.WebMercatorProjection=WebMercatorProjection;
+exports.Projections=Projections;
 
 // module suffix
 return exports;

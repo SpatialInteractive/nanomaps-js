@@ -10,7 +10,7 @@ typedef struct {
 const projection_t PROJECTIONS[] = {
 	{ 
 		.init_string = "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +no_defs",
-		.name = "WebMercatorProjection"
+		.name = "WebMercator"
 	}
 };
 
@@ -60,7 +60,7 @@ void process_projection(const projection_t *prj)
 		pj_transform(pj_latlong, pj_tgt, 1, 1, &x, &y, 0);
 		
 		printf("\t\tit 'should forward transform (%f, %f) to (%f,%f)'\n", test_point->x, test_point->y, x, y);
-		printf("\t\t\txy=projections.%s.forward({x: %.20f, y: %.20f})\n", prj->name, test_point->x, test_point->y);
+		printf("\t\t\txy=Projections.%s.forward({x: %.20f, y: %.20f})\n", prj->name, test_point->x, test_point->y);
 		printf("\t\t\txy.x.should.equal_approximately %.20f\n", x);
 		printf("\t\t\txy.y.should.equal_approximately %.20f\n", y);
 		printf("\t\tend\n\n");
@@ -73,7 +73,7 @@ void process_projection(const projection_t *prj)
 		y1*=RAD_TO_DEG;
 		
 		printf("\t\tit 'should inverse transform (%f, %f) to (%f,%f)'\n", x, y, x1, y1);
-		printf("\t\t\txy=projections.%s.inverse({x: %.20f, y: %.20f})\n", prj->name, x, y);
+		printf("\t\t\txy=Projections.%s.inverse({x: %.20f, y: %.20f})\n", prj->name, x, y);
 		printf("\t\t\txy.x.should.equal_approximately %.20f\n", x1);
 		printf("\t\t\txy.y.should.equal_approximately %.20f\n", y1);
 		printf("\t\tend\n\n");
@@ -88,7 +88,7 @@ int main(int argc, char** argv)
 	
 	printf("describe 'Projections'\n");
 	printf("\tbefore_each\n");
-	printf("\t\tprojections=nanocore\n");
+	printf("\t\tProjections=nanocore.Projections\n");
 	printf("\tend\n\n");
 	
 	for (i=0; i<(sizeof(PROJECTIONS)/sizeof(projection_t)); i++) {
