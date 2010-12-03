@@ -186,8 +186,8 @@ MapSurface.prototype={
 			xy;
 		this._center={lat:lat,lng:lng};
 		xy=transform.toPixels(lng, lat);
-		xy[0]-=transform.zeroPx[0] + this.width/2;
-		xy[1]-=transform.zeroPx[1] + this.height/2;
+		xy[0]-=transform.zpx[0] + this.width/2;
+		xy[1]-=transform.zpx[1] + this.height/2;
 		
 		global.style.left=(-xy[0]) + 'px';
 		global.style.top=(-xy[1]) + 'px';
@@ -200,7 +200,7 @@ MapSurface.prototype={
 	},
 	
 	getResolution: function() {
-		return this.transform.resolution;
+		return this.transform.res;
 	},
 	
 	setResolution: function(resolution) {
@@ -273,13 +273,13 @@ MapTransform.prototype={
 	init: function(projection, resolution, zeroLngLat) {
 		// The sequence number is used to detect if objects are
 		// aligned properly against the current transform
-		this.projection=projection;
-		this.resolution=resolution;
-		this.zeroLngLat=zeroLngLat;
+		this.prj=projection;
+		this.res=resolution;
+		this.zll=zeroLngLat;
 		
 		// Calculate corresponding unaligned pixel coordinates associated
 		// with zeroLatLng
-		this.zeroPx=this.toPixels(zeroLngLat[0], zeroLngLat[1]);
+		this.zpx=this.toPixels(zeroLngLat[0], zeroLngLat[1]);
 	},
 	
 	/**
@@ -287,7 +287,7 @@ MapTransform.prototype={
 	 */
 	rescale: function(resolution, zeroLngLat) {
 		var transform=new MapTransform();
-		transform.init(this.projection, resolution, zeroLngLat);
+		transform.init(this.prj, resolution, zeroLngLat);
 		return transform;
 	},
 	
@@ -300,7 +300,7 @@ MapTransform.prototype={
 	 * from this.zeroPx (see toViewport).
 	 */
 	toPixels: function(lng, lat) {
-		var xy=this.projection.forward(lng, lat), resolution=this.resolution;
+		var xy=this.prj.forward(lng, lat), resolution=this.res;
 		if (!xy) return null;
 		xy[0]/=resolution;
 		xy[1]/=resolution;
@@ -314,8 +314,8 @@ MapTransform.prototype={
 	toSurface: function(lng, lat) {
 		var xy=this.toPixels(lng, lat);
 		if (!xy) return null;
-		xy[0]-=this.zeroPx[0];
-		xy[1]-=this.zeroPx[1];
+		xy[0]-=this.zpx[0];
+		xy[1]-=this.zpx[1];
 		return xy;
 	},
 	
@@ -323,17 +323,18 @@ MapTransform.prototype={
 	 * Convert from global pixel coordinates to lng/lat.
 	 */
 	fromPixels: function(x, y) {
-		var resolution=this.resolution;
-		return this.projection.inverse(x * resolution, y * resolution);
+		var resolution=this.res;
+		return this.prj.inverse(x * resolution, y * resolution);
 	},
 	
 	/**
 	 * Convert from viewport coordinates to [lng, lat]
 	 */
 	fromSurface: function(x, y) {
-		return this.fromPixels(x+this.zeroPx[0], y+this.zeroPx[1]);
+		return this.fromPixels(x+this.zpx[0], y+this.zpx[1]);
 	}
 };
+
 
 var Projections={
 	/**
