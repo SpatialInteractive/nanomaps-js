@@ -48,9 +48,9 @@
 		<a href="javascript:map.moveBy(0, 25)">Move Up</a>
 		<a href="javascript:map.moveBy(0, -25)">Move Down</a>
 		<br />
-		<a href="javascript:alert('Scale=' + map.getScale() + ' Center: ' + map.getCenter().lat + ', ' + map.getCenter().lng)">Show Position</a>
-		<a href="javascript:map.setScale((map.getScale()/2) || 1000);">Zoom In</a>
-		<a href="javascript:map.setScale((map.getScale()*2));">Zoom Out</a>
+		<a href="javascript:alert('Resolution=' + map.getResolution() + ' Center: ' + map.getCenter().lat + ', ' + map.getCenter().lng)">Show Position</a>
+		<a href="javascript:map.setResolution((map.getResolution()/2) || 1000);">Zoom In</a>
+		<a href="javascript:map.setResolution((map.getResolution()*2));">Zoom Out</a>
 	</div>
 	<div id="map"></div>
 

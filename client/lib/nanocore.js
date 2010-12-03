@@ -110,8 +110,7 @@ function MapSurface(elt, options) {
 	this.transform=new MapTransform();
 	this.transform.init(
 		projection,
-		options.dpi||72,
-		options.scale||projection.DEFAULT_SCALE,
+		options.resolution||projection.DEFAULT_RESOLUTION,
 		[center.lng, center.lat]
 		);
 	
@@ -200,13 +199,13 @@ MapSurface.prototype={
 		return this._center;
 	},
 	
-	getScale: function() {
-		return this.transform.scale;
+	getResolution: function() {
+		return this.transform.resolution;
 	},
 	
-	setScale: function(scale) {
+	setResolution: function(resolution) {
 		var center=this._center;
-		this.transform=this.transform.rescale(scale, [center.lng, center.lat]);
+		this.transform=this.transform.rescale(resolution, [center.lng, center.lat]);
 		this._notifyReset();
 	},
 	
@@ -262,9 +261,8 @@ var DEFAULT_MAP_DELEGATE={
 
 /**
  * Construct a new MapTransform with the given parameters:
- *  - dpi: Dpi of the drawing surface
  *  - projection: The projection object for the surface
- *  - scale: Scale at the given dpi (at representative latitude)
+ *  - resolution: Ground resolution in m/px
  *  - zeroLat: The latitude corresponding with the top of the viewport
  *  - zeroLng: The longitude corresponding with the left of the viewport
  */
@@ -272,14 +270,11 @@ function MapTransform() {
 	this.sequence=__nextId++;
 }
 MapTransform.prototype={
-	init: function(projection, dpi, scale, zeroLngLat) {
+	init: function(projection, resolution, zeroLngLat) {
 		// The sequence number is used to detect if objects are
 		// aligned properly against the current transform
 		this.projection=projection;
-		this.dpi=dpi;
-		this.dpm=dpi * DPI_TO_DPM;
-		this.scale=scale;
-		this.dpmScale=this.dpm / this.scale;
+		this.resolution=resolution;
 		this.zeroLngLat=zeroLngLat;
 		
 		// Calculate corresponding unaligned pixel coordinates associated
@@ -290,9 +285,9 @@ MapTransform.prototype={
 	/**
 	 * Return a new MapTransform at a new scale and zeroLatLng
 	 */
-	rescale: function(scale, zeroLngLat) {
+	rescale: function(resolution, zeroLngLat) {
 		var transform=new MapTransform();
-		transform.init(this.projection, this.dpi, scale, zeroLngLat);
+		transform.init(this.projection, resolution, zeroLngLat);
 		return transform;
 	},
 	
@@ -305,10 +300,10 @@ MapTransform.prototype={
 	 * from this.zeroPx (see toViewport).
 	 */
 	toPixels: function(lng, lat) {
-		var xy=this.projection.forward(lng, lat);
+		var xy=this.projection.forward(lng, lat), resolution=this.resolution;
 		if (!xy) return null;
-		xy[0]*=this.dpmScale;
-		xy[1]*=this.dpmScale;
+		xy[0]/=resolution;
+		xy[1]/=resolution;
 		
 		return xy;
 	},
@@ -328,7 +323,8 @@ MapTransform.prototype={
 	 * Convert from global pixel coordinates to lng/lat.
 	 */
 	fromPixels: function(x, y) {
-		return this.projection.inverse(x / this.dpmScale, y / this.dpmScale);
+		var resolution=this.resolution;
+		return this.projection.inverse(x * resolution, y * resolution);
 	},
 	
 	/**
@@ -345,7 +341,7 @@ var Projections={
 	 */
 	WebMercator: new function() {
 		this.DEFAULT_CENTER={lat:39.7406, lng:-104.985441};
-		this.DEFAULT_SCALE=108000;
+		this.DEFAULT_RESOLUTION=611.4962;
 	
 		var EARTH_RADIUS=6378137.0,
 			DEG_TO_RAD=.0174532925199432958,
@@ -368,6 +364,17 @@ var Projections={
 		};
 	}
 };
+
+/**
+ * Class representing a tile selector for the layout of OSM, MS, Google, et al.
+ * Options:
+ *
+ */
+function StdTileSelector(options) {
+	// set defaults
+	this.tileSize=options.tileSize||256;
+	
+}
 
 // -- Tile Layer
 function createTileLayer(options) {
