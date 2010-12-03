@@ -172,6 +172,11 @@ MapSurface.prototype={
 		this._notifyResetSingle(element);
 	},
 	
+	update: function(element) {
+		if (!element.parentElement) this.attach(element);
+		else this._notifyResetSingle(element);
+	},
+	
 	/**
 	 * Set the map center to {lat:, lng:}
 	 */
@@ -213,7 +218,7 @@ MapSurface.prototype={
 		var transform=this.transform, global=this._global, lngLat;
 		x-=parseInt(global.style.left);
 		y-=parseInt(global.style.top);
-		lngLat=transform.fromViewport(x, y);
+		lngLat=transform.fromSurface(x, y);
 		if (!lngLat) return null;
 		return {lng: lngLat[0], lat: lngLat[1]};
 	},
