@@ -209,6 +209,14 @@ MapSurface.prototype={
 		this._notifyReset();
 	},
 	
+	setLevel: function(zoomLevel) {
+		this.setResolution(levelResolution(zoomLevel));
+	},
+	
+	getLevel: function() {
+		return resolutionLevel(this.transform.res);
+	},
+	
 	/**
 	 * Given x,y coordinates relative to the visible area of the viewport,
 	 * return the corresponding lat/lng
@@ -367,6 +375,27 @@ var Projections={
 };
 
 /**
+ * Return the resolution (m/px) for the given zoom index given a standard
+ * power of two zoom breakdown.
+ */
+function levelResolution(level) {
+	level=Number(level);
+	if (level<1) level=1;
+
+	var rootRes=78271.5170,
+		divisor=Math.pow(2, level-1);
+		
+	return rootRes/divisor;
+}
+
+function resolutionLevel(resolution) {
+	var rootRes=78271.5170,
+		divisor=rootRes/resolution;
+		
+	return Math.log(divisor) / Math.log(2) + 1;
+}
+
+/**
  * Class representing a tile selector for the layout of OSM, MS, Google, et al.
  * Options:
  *
@@ -378,7 +407,7 @@ function StdTileSelector(options) {
 }
 
 // -- Tile Layer
-function createTileLayer(options) {
+function createStdTileLayer(options) {
 	var _elt=document.createElement('div');
 	
 	
@@ -389,7 +418,7 @@ function createTileLayer(options) {
 exports.MapSurface=MapSurface;
 exports.Projections=Projections;
 exports.MapTransform=MapTransform;
-exports.createTileLayer=createTileLayer;
+exports.createStdTileLayer=createStdTileLayer;
 
 // module suffix
 return exports;
