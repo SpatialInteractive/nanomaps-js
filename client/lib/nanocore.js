@@ -142,7 +142,7 @@ MapSurface.prototype={
 			var delegate=element.mapDelegate||DEFAULT_MAP_DELEGATE,
 				handler=delegate.onposition;
 			if (typeof handler==='function') {
-				handler.call(element, this, delegate);
+				handler.call(delegate, this, element);
 			}
 		});
 	},
@@ -161,7 +161,7 @@ MapSurface.prototype={
 		var delegate=element.mapDelegate||DEFAULT_MAP_DELEGATE,
 			handler=delegate.onreset;
 		if (typeof handler==='function')
-			handler.call(element, this, delegate);
+			handler.call(delegate, this, element);
 		
 	},
 	
@@ -231,6 +231,20 @@ MapSurface.prototype={
 	},
 	
 	/**
+	 * Translate a viewport coordinate relative to the visible area to the
+	 * global pixel coordinates at the current resolution.
+	 */
+	toGlobalPixels: function(x, y) {
+		var transform=this.transform, global=this._global;
+		x-=parseInt(global.style.left);
+		y-=parseInt(global.style.top);
+		return {
+			x: x + transform.zpx[0],
+			y: transform.zpx[1] - y
+		};
+	},
+	
+	/**
 	 * Reposition the map by the given number of pixels
 	 */
 	moveBy: function(deltax, deltay) {
@@ -240,8 +254,8 @@ MapSurface.prototype={
 };
 
 var DEFAULT_MAP_DELEGATE={
-	onreset: function(map) {
-		var geo=this.geo, latLng, offset, xy;
+	onreset: function(map, element) {
+		var geo=element.geo, latLng, offset, xy;
 		if (geo) {
 			latLng=geo.latLng;
 			offset=geo.offset;
@@ -253,9 +267,9 @@ var DEFAULT_MAP_DELEGATE={
 					if (offset&&offset.y) xy[1]+=offset.y;
 					
 					// set position
-					this.style.left=(xy[0])+'px';
-					this.style.top=(xy[1])+'px';
-					this.style.display='block';
+					element.style.left=(xy[0])+'px';
+					element.style.top=(xy[1])+'px';
+					element.style.display='block';
 					return;
 				}
 			}
@@ -263,7 +277,7 @@ var DEFAULT_MAP_DELEGATE={
 		
 		// If here, then geo information was non-conclusive.  Hide the
 		// element
-		this.style.display='none';
+		element.style.display='none';
 	}
 };
 
@@ -403,16 +417,180 @@ function resolutionLevel(resolution) {
 function StdTileSelector(options) {
 	// set defaults
 	this.tileSize=options.tileSize||256;
-	
+	this.srcSpec="http://otile${modulo:1,2}.mqcdn.com/tiles/1.0.0/osm/${level}/${tileX}/${tileY}.png";
 }
+StdTileSelector.prototype={
+	/**
+	 * Gets the origin in physical units [x, y] for the tile coordinate space
+	 */
+	origin: function(projection) {
+		var ret=this._origin;
+		if (!ret) {
+			ret=projection.forward(-180, 85.05112878);
+			this._origin=ret;
+		}
+		return ret;
+	},
+	
+	/**
+	 * Get an img src from the tileDesc
+	 */
+	resolveSrc: function(tileDesc) {
+		return this.srcSpec.replace(/\$\{([A-Za-z]+)(\:([^\}]*))?\}/g, function(s, name, ignore, args) {
+			if (name==='modulo') {
+				// get the args and modulo it by the tileDesc.tileX
+				args=args.split(/\,/);
+				return args[tileDesc.tileX%args.length];
+			} else {
+				return tileDesc[name];
+			}
+		});
+	},
+	
+	/**
+	 * Select all tiles that intersect the given bounding box at the
+	 * given resolution.  Return an array of TileDesc elements, where
+	 * each TileDesc has the following attributes:
+	 *   - key: an opaque string that uniquely identifies this tile within
+	 *     this instance where multiple requests for the same physical tile
+	 *     have the same key
+	 *   - res: the native resolution of the tile
+	 *	 - level: the native zoom level
+	 *   - x, y: origin at native resolution,
+	 *	 - size: tile size (width/height) at native resolution
+	 *   - tileX, tileY: the tile x and y
+	 */
+	select: function(projection, resolution, x, y, width, height, sort) {
+		var tileStartX, tileStartY,
+			tileEndX, tileEndY,
+			tileMidX, tileMidY,
+			i, j, tileDesc,
+			nativeLevel=Math.round(resolutionLevel(resolution)),
+			nativeResolution=levelResolution(nativeLevel),
+			unscaledOrigin=this.origin(projection),
+			tileSize=this.tileSize,
+			nativeOriginX=unscaledOrigin[0]/nativeResolution,
+			nativeOriginY=unscaledOrigin[1]/nativeResolution,
+			nativeScaleFactor=nativeResolution / resolution,
+			retList=[];
+		
+		// Scale x,y,width,height to our nativeResolution
+		x=x*nativeScaleFactor;
+		y=y*nativeScaleFactor;
+		width=width*nativeScaleFactor;
+		height=height*nativeScaleFactor;
+		
+		// Find the grid of tiles that intersect
+		tileStartX=Math.floor( (x - nativeOriginX) / tileSize );
+		tileStartY=Math.floor( (nativeOriginY - y) / tileSize );		// y-axis inversion
+		tileEndX=Math.floor( ((x+width) - nativeOriginX ) / tileSize );
+		tileEndY=Math.floor( (nativeOriginY - (y-height)) / tileSize );	// y-axis inversion
+		//debugger;
+		// Loop and report each one
+		for (j=tileStartY; j<=tileEndY; j++) {
+			for (i=tileStartX; i<=tileEndX; i++) {
+				tileDesc={
+					key: nativeLevel + ':' + i + ':' + j,
+					res: nativeResolution,
+					level: nativeLevel,
+					tileX: i,
+					tileY: j,
+					size: tileSize,
+					x: nativeOriginX + i*tileSize,
+					y: nativeOriginY - j*tileSize	// y-axis inversion
+				};
+				
+				retList.push(tileDesc);
+			}
+		}
+		
+		// Sort by proximity to center tile
+		if (sort) {
+			tileMidX=(tileStartX+tileEndX)/2;
+			tileMidY=(tileStartY+tileEndY)/2;
+			retList.sort(function(a, b) {
+				var xa=Math.abs(a.tileX-tileMidX),
+					ya=Math.abs(a.tileY-tileMidY),
+					weighta=xa*xa+ya*ya,
+					xb=Math.abs(b.tileX-tileMidX),
+					yb=Math.abs(b.tileY-tileMidY),
+					weightb=xb*xb+yb*yb;
+				return weighta-weightb;
+			});
+		}
+		
+		return retList;
+	}
+};
 
 // -- Tile Layer
-function createStdTileLayer(options) {
-	var _elt=document.createElement('div');
-	
-	
-	return _elt;
+function makeVisibleOnLoad() {
+	this.style.visibility='';
 }
+
+function createStdTileLayer(options) {
+	var element=document.createElement('div');
+	element.style.position='absolute';
+	element.style.left='0px';
+	element.style.top='0px';
+	element.mapDelegate=new StdTileLayerDelegate(options);
+	return element;
+}
+function StdTileLayerDelegate(options) {
+	this.options=options;
+	this.sel=new StdTileSelector(options);
+}
+StdTileLayerDelegate.prototype={
+	onreset: function(map, element) {
+		var global=map._global,
+			transform=map.transform,
+			buffer=this.options.buffer||64,
+			zpX=transform.zpx[0],
+			zpY=transform.zpx[1],
+			ulXY=map.toGlobalPixels(-buffer,-buffer),
+			width=map.width+buffer,
+			height=map.height+buffer,
+			sel=this.sel,
+			tileList,
+			i,
+			tileDesc,
+			img;
+			
+		tileList=sel.select(transform.prj, transform.res, ulXY.x, ulXY.y, width, height, true);
+
+		element.innerHTML='';
+		for (i=0; i<tileList.length; i++) {
+			tileDesc=tileList[i];
+			img=map.createElement('img');
+			img.style.visibility='hidden';
+			img.onload=makeVisibleOnLoad;
+			img.src=sel.resolveSrc(tileDesc);
+			img.style.position='absolute';
+			img.style.left=(tileDesc.x - zpX) + 'px';
+			img.style.top=(zpY - tileDesc.y) + 'px';	// y-axis inversion
+			//img.style.border='1px solid red';
+			element.appendChild(img);
+			
+			/*
+			div=map.createElement('div');
+			div.style.position='absolute';
+			div.style.left=img.style.left;
+			div.style.top=img.style.top;
+			div.style.width='256px';
+			div.style.height='256px';
+			div.innerHTML='Tile:(' + tileDesc.tileX + ',' + tileDesc.tileY + ')<br />' +
+				'XY:(' + tileDesc.x + ', ' + tileDesc.y + ')<br />' +
+				'ZPXY:(' + zpX + ', ' + zpY + ')';
+			element.appendChild(div);
+			*/
+		}
+	},
+	
+	onposition: function(map, element) {
+		
+	}
+};
+
 
 // Exports
 exports.MapSurface=MapSurface;
