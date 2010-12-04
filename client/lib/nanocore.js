@@ -528,6 +528,48 @@ function makeVisibleOnLoad() {
 	this.style.visibility='';
 }
 
+function TileCache() {
+	var contents={},
+		marked=[];
+	
+	this.mark=function() {
+		marked.length=0;
+	};
+	
+	this.free=function() {
+		var newContents={},
+			key, i, tileDesc;
+			
+		// Add all marked to the new dictionary
+		for (i=0; i<marked.length; i++) {
+			tileDesc=marked[i];
+			key=tileDesc.key;
+			newContents[key]=tileDesc;
+			delete contents[key];
+		}
+		
+		// Any existing in contents are to be discarded
+		for (i in contents) {
+			tileDesc=contents[i];
+			if (tileDesc.img&&tileDesc.img.parentNode) 
+				// Detach
+				tileDesc.img.parentNode.removeChild(tileDesc.img);
+		}
+		
+		// Swap
+		contents=newContents;
+		marked.length=0;
+	};
+	
+	this.use=function(tileDesc) {
+		var key=tileDesc.key;
+		tileDesc=contents[key]||tileDesc;
+		contents[key]=tileDesc;
+		if (marked) marked.push(tileDesc);
+		return tileDesc;
+	};
+}
+
 function createStdTileLayer(options) {
 	var element=document.createElement('div');
 	element.style.position='absolute';
@@ -539,55 +581,60 @@ function createStdTileLayer(options) {
 function StdTileLayerDelegate(options) {
 	this.options=options;
 	this.sel=new StdTileSelector(options);
+	this.cache=new TileCache();
 }
 StdTileLayerDelegate.prototype={
-	onreset: function(map, element) {
-		var global=map._global,
+	placeTile: function(map, element, tileDesc) {
+		var img=tileDesc.img,
 			transform=map.transform,
+			zpx=transform.zpx,
+			scaleFactor=tileDesc.res / transform.res;
+			
+		if (img&&img._error) {
+			// Zero it out
+			if (img.parentElement) img.parentElement.removeChild(img);
+			tileDesc.img=null;
+			img=null;
+		}
+		
+		// If no valid img, instantiate it
+		if (!img) {
+			img=map.createElement('img');
+			img.style.visibility='hidden';
+			img.onload=makeVisibleOnLoad;
+			img.style.position='absolute';
+			img.src=this.sel.resolveSrc(tileDesc);
+			tileDesc.img=img;
+		}
+		
+		// Set position and size
+		img.width=Math.ceil(tileDesc.size*scaleFactor);
+		img.height=Math.ceil(tileDesc.size*scaleFactor);
+		img.style.left=Math.round(tileDesc.x*scaleFactor - zpx[0]) + 'px';
+		img.style.top=Math.round(zpx[1] - tileDesc.y*scaleFactor) + 'px';	// y-axis inversion
+		if (img.parentNode!==element) element.appendChild(img);
+	},
+	
+	onreset: function(map, element) {
+		var transform=map.transform,
 			buffer=this.options.buffer||64,
-			zpX=transform.zpx[0],
-			zpY=transform.zpx[1],
 			ulXY=map.toGlobalPixels(-buffer,-buffer),
 			width=map.width+buffer,
 			height=map.height+buffer,
 			displayResolution=transform.res,
-			sel=this.sel,
-			scaleFactor,
-			tileList,
+			tileList=this.sel.select(transform.prj, displayResolution, ulXY.x, ulXY.y, width, height, true),
+			cache=this.cache,
 			i,
-			tileDesc,
-			img;
+			tileDesc;
 			
-		tileList=sel.select(transform.prj, displayResolution, ulXY.x, ulXY.y, width, height, true);
 
-		element.innerHTML='';
+
+		cache.mark();
 		for (i=0; i<tileList.length; i++) {
-			tileDesc=tileList[i];
-			scaleFactor=tileDesc.res / displayResolution;
-			img=map.createElement('img');
-			img.style.visibility='hidden';
-			img.onload=makeVisibleOnLoad;
-			img.width=Math.ceil(tileDesc.size*scaleFactor);
-			img.height=Math.ceil(tileDesc.size*scaleFactor);
-			img.src=sel.resolveSrc(tileDesc);
-			img.style.position='absolute';
-			img.style.left=Math.round(tileDesc.x*scaleFactor - zpX) + 'px';
-			img.style.top=Math.round(zpY - tileDesc.y*scaleFactor) + 'px';	// y-axis inversion
-			element.appendChild(img);
-			
-			/*
-			div=map.createElement('div');
-			div.style.position='absolute';
-			div.style.left=img.style.left;
-			div.style.top=img.style.top;
-			div.style.width='256px';
-			div.style.height='256px';
-			div.innerHTML='Tile:(' + tileDesc.tileX + ',' + tileDesc.tileY + ')<br />' +
-				'XY:(' + tileDesc.x + ', ' + tileDesc.y + ')<br />' +
-				'ZPXY:(' + zpX + ', ' + zpY + ')';
-			element.appendChild(div);
-			*/
+			tileDesc=cache.use(tileList[i]);
+			this.placeTile(map, element, tileDesc);
 		}
+		cache.free();
 	},
 	
 	onposition: function(map, element) {
