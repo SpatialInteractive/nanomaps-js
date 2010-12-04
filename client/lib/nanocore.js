@@ -532,6 +532,12 @@ function TileCache() {
 	var contents={},
 		marked=[];
 	
+	function disposeTileDesc(tileDesc) {
+		if (tileDesc.img&&tileDesc.img.parentNode) 
+			// Detach
+			tileDesc.img.parentNode.removeChild(tileDesc.img);
+	}
+		
 	this.mark=function() {
 		marked.length=0;
 	};
@@ -551,9 +557,7 @@ function TileCache() {
 		// Any existing in contents are to be discarded
 		for (i in contents) {
 			tileDesc=contents[i];
-			if (tileDesc.img&&tileDesc.img.parentNode) 
-				// Detach
-				tileDesc.img.parentNode.removeChild(tileDesc.img);
+			disposeTileDesc(tileDesc);
 		}
 		
 		// Swap
@@ -562,11 +566,51 @@ function TileCache() {
 	};
 	
 	this.use=function(tileDesc) {
-		var key=tileDesc.key;
-		tileDesc=contents[key]||tileDesc;
+		var key=tileDesc.key,
+			existing=contents[key];
+		if (existing) {
+			disposeTileDesc(tileDesc);
+			tileDesc=existing;
+		}
 		contents[key]=tileDesc;
 		if (marked) marked.push(tileDesc);
 		return tileDesc;
+	};
+	
+	this.take=function(tileDesc) {
+		var key=tileDesc.key,
+			existing=contents[key];
+		if (existing) {
+			delete contents[key];
+			return existing;
+		}
+		return tileDesc;
+	};
+	
+	this.each=function(callback) {
+		var i, tileDesc;
+		for (i in contents) {
+			tileDesc=contents[i];
+			if (tileDesc && typeof tileDesc==='object')
+				callback(tileDesc);
+		}
+	};
+	
+	this.clear=function() {
+		contents={};
+		marked.length=0;
+	};
+	
+	this.moveFrom=function(otherCache) {
+		otherCache.each(function(tileDesc) {
+			var key=tileDesc.key;
+			if (contents[key]) {
+				// Already exists.  Delete
+				disposeTileDesc(tileDesc);
+			} else
+				contents[tileDesc.key]=tileDesc;
+		});
+		otherCache.clear();
 	};
 }
 
@@ -581,10 +625,11 @@ function createStdTileLayer(options) {
 function StdTileLayerDelegate(options) {
 	this.options=options;
 	this.sel=new StdTileSelector(options);
-	this.cache=new TileCache();
+	this.fgCache=new TileCache();
+	this.bgCache=new TileCache();
 }
 StdTileLayerDelegate.prototype={
-	placeTile: function(map, element, tileDesc) {
+	placeTile: function(map, element, tileDesc, moveToFront) {
 		var img=tileDesc.img,
 			transform=map.transform,
 			zpx=transform.zpx,
@@ -612,29 +657,51 @@ StdTileLayerDelegate.prototype={
 		img.height=Math.ceil(tileDesc.size*scaleFactor);
 		img.style.left=Math.round(tileDesc.x*scaleFactor - zpx[0]) + 'px';
 		img.style.top=Math.round(zpx[1] - tileDesc.y*scaleFactor) + 'px';	// y-axis inversion
-		if (img.parentNode!==element) element.appendChild(img);
+		if (moveToFront || img.parentNode!==element) element.appendChild(img);
 	},
 	
 	onreset: function(map, element) {
-		var transform=map.transform,
-			buffer=this.options.buffer||64,
+		var self=this,
+			transform=map.transform,
+			buffer=self.options.buffer||64,
 			ulXY=map.toGlobalPixels(-buffer,-buffer),
 			width=map.width+buffer,
 			height=map.height+buffer,
+			curResolution=self.curResolution,
 			displayResolution=transform.res,
-			tileList=this.sel.select(transform.prj, displayResolution, ulXY.x, ulXY.y, width, height, true),
-			cache=this.cache,
+			tileList=self.sel.select(transform.prj, displayResolution, ulXY.x, ulXY.y, width, height, true),
+			fgCache=self.fgCache,
+			bgCache=self.bgCache,
+			refreshBackground=false,
 			i,
 			tileDesc;
 			
-
-
-		cache.mark();
-		for (i=0; i<tileList.length; i++) {
-			tileDesc=cache.use(tileList[i]);
-			this.placeTile(map, element, tileDesc);
+		if (curResolution&&curResolution!==displayResolution) {
+			// We have a scale change.  Snapshot the current tile
+			// cache as the background cache and start on a new one
+			bgCache.mark();
+			bgCache.free();
+			bgCache.moveFrom(fgCache);
+			refreshBackground=true;
 		}
-		cache.free();
+
+		fgCache.mark();
+		for (i=0; i<tileList.length; i++) {
+			tileDesc=fgCache.use(bgCache.take(tileList[i]));
+			self.placeTile(map, element, tileDesc, true);
+		}
+		fgCache.free();
+
+		// Record so that the next time through we can tell whether
+		// this is a simple change
+		this.curResolution=displayResolution;
+		
+		if (refreshBackground) {
+			bgCache.each(function(tileDesc) {
+				self.placeTile(tileDesc);
+			});
+		}
+		
 	},
 	
 	onposition: function(map, element) {
@@ -652,3 +719,5 @@ exports.createStdTileLayer=createStdTileLayer;
 // module suffix
 return exports;
 })({});
+
+
