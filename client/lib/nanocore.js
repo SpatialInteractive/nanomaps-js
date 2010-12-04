@@ -567,12 +567,12 @@ StdTileLayerDelegate.prototype={
 			img=map.createElement('img');
 			img.style.visibility='hidden';
 			img.onload=makeVisibleOnLoad;
-			img.width=tileDesc.size*scaleFactor;
-			img.height=tileDesc.size*scaleFactor;
+			img.width=Math.ceil(tileDesc.size*scaleFactor);
+			img.height=Math.ceil(tileDesc.size*scaleFactor);
 			img.src=sel.resolveSrc(tileDesc);
 			img.style.position='absolute';
-			img.style.left=(tileDesc.x*scaleFactor - zpX) + 'px';
-			img.style.top=(zpY - tileDesc.y*scaleFactor) + 'px';	// y-axis inversion
+			img.style.left=Math.round(tileDesc.x*scaleFactor - zpX) + 'px';
+			img.style.top=Math.round(zpY - tileDesc.y*scaleFactor) + 'px';	// y-axis inversion
 			element.appendChild(img);
 			
 			/*

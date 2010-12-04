@@ -9,7 +9,7 @@
 		var mapElt=document.getElementById('map'), tagElt;
 		
 		map=new nanocore.MapSurface(mapElt, {});
-		map.setLevel(12.5);
+		map.setLevel(12);
 		
 		var tileLayer=nanocore.createStdTileLayer({
 			
@@ -52,8 +52,8 @@
 		<a href="javascript:map.moveBy(0, -25)">Move Down</a>
 		<br />
 		<a href="javascript:alert('Level=' + map.getLevel() + ' Resolution=' + map.getResolution() + ' Center: ' + map.getCenter().lat + ', ' + map.getCenter().lng)">Show Position</a>
-		<a href="javascript:map.setResolution((map.getResolution()/2) || 1000);">Zoom In</a>
-		<a href="javascript:map.setResolution((map.getResolution()*2));">Zoom Out</a>
+		<a href="javascript:map.setLevel(map.getLevel()+0.25);">Zoom In</a>
+		<a href="javascript:map.setLevel(map.getLevel()-0.25);">Zoom Out</a>
 	</div>
 	<div id="map"></div>
 
