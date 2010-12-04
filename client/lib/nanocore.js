@@ -471,9 +471,9 @@ StdTileSelector.prototype={
 			tileSize=this.tileSize,
 			nativeOriginX=unscaledOrigin[0]/nativeResolution,
 			nativeOriginY=unscaledOrigin[1]/nativeResolution,
-			nativeScaleFactor=nativeResolution / resolution,
+			nativeScaleFactor=resolution / nativeResolution,
 			retList=[];
-		
+
 		// Scale x,y,width,height to our nativeResolution
 		x=x*nativeScaleFactor;
 		y=y*nativeScaleFactor;
@@ -550,25 +550,29 @@ StdTileLayerDelegate.prototype={
 			ulXY=map.toGlobalPixels(-buffer,-buffer),
 			width=map.width+buffer,
 			height=map.height+buffer,
+			displayResolution=transform.res,
 			sel=this.sel,
+			scaleFactor,
 			tileList,
 			i,
 			tileDesc,
 			img;
 			
-		tileList=sel.select(transform.prj, transform.res, ulXY.x, ulXY.y, width, height, true);
+		tileList=sel.select(transform.prj, displayResolution, ulXY.x, ulXY.y, width, height, true);
 
 		element.innerHTML='';
 		for (i=0; i<tileList.length; i++) {
 			tileDesc=tileList[i];
+			scaleFactor=tileDesc.res / displayResolution;
 			img=map.createElement('img');
 			img.style.visibility='hidden';
 			img.onload=makeVisibleOnLoad;
+			img.width=tileDesc.size*scaleFactor;
+			img.height=tileDesc.size*scaleFactor;
 			img.src=sel.resolveSrc(tileDesc);
 			img.style.position='absolute';
-			img.style.left=(tileDesc.x - zpX) + 'px';
-			img.style.top=(zpY - tileDesc.y) + 'px';	// y-axis inversion
-			//img.style.border='1px solid red';
+			img.style.left=(tileDesc.x*scaleFactor - zpX) + 'px';
+			img.style.top=(zpY - tileDesc.y*scaleFactor) + 'px';	// y-axis inversion
 			element.appendChild(img);
 			
 			/*
@@ -587,7 +591,7 @@ StdTileLayerDelegate.prototype={
 	},
 	
 	onposition: function(map, element) {
-		
+		this.onreset(map, element);
 	}
 };
 
