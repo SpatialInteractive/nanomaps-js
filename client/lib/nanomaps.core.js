@@ -799,6 +799,7 @@ function TileCache() {
 }
 
 function createStdTileLayer(options) {
+	if (!options) options={};
 	var element=document.createElement('div');
 	element.style.position='absolute';
 	element.style.left='0px';

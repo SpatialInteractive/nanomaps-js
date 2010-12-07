@@ -2,6 +2,7 @@
 <html>
 <head>
 	<script src="../lib/nanomaps.core.js"></script>
+	<script src="../lib/nanomaps.desktop.js"></script>
 	
 	<script src="jspec/jspec.js"></script>
 	<link rel="stylesheet" href="jspec/jspec.css" />
@@ -19,6 +20,7 @@
 		function runSuites() {
 			JSpec
 				.exec('spec.autoprojections.js')
+				.exec('spec.mapgeometry.js')
 				.include(module)
 				.run({ })
 				.report();
