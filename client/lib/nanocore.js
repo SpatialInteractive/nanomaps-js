@@ -20,16 +20,13 @@ var EventEmitterMethods=EventEmitter.prototype={};
  * name.  Always allocates objects as necessary.
  */
 EventEmitterMethods._evt=EventEmitterMethods.listeners=function(name) {
-	var ret=this.__evt, list;
-	if (!ret) {
-		this.__evt=ret={};
+	var hash=this.__evt, list;
+	if (!hash) {
+		this.__evt=hash={};
 	}
-	if (name) {
-		list=ret[name];
-		if (!list) list=ret[name]=[];
-		return list;
-	}
-	return ret;
+	list=hash[name];
+	if (!list) list=hash[name]=[];
+	return list;
 };
 EventEmitterMethods.addListener=EventEmitterMethods.on=function(event, listener) {
 	this._evt(event).push(listener);
@@ -61,17 +58,17 @@ EventEmitterMethods.emit=function(event /*, arg1..argn */) {
 		handler.apply(this, eventArgs);
 	}
 	
-	// Emit standard events
-	for (i=0; i<list.length; i++) {
-		list[i].apply(this, eventArgs);
-	}
-	
 	// Emit once events
 	list=this._evt(event+'$once');
 	for (i=0; i<list.length; i++) {
 		list[i].apply(this, eventArgs);
 	}
 	list.length=0;	// Zero the once only array
+
+	// Emit standard events
+	for (i=0; i<list.length; i++) {
+		list[i].apply(this, eventArgs);
+	}
 };
 
 
@@ -766,7 +763,7 @@ StdTileLayerDelegate.prototype={
 		
 		if (refreshBackground) {
 			bgCache.each(function(tileDesc) {
-				self.placeTile(tileDesc);
+				self.placeTile(map, element, tileDesc);
 			});
 		}
 		
