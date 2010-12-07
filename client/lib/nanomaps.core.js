@@ -50,7 +50,7 @@ EventEmitterMethods.removeAllListeners=function(event) {
 	this._evt(event+'$once').length=0;
 };
 EventEmitterMethods.emit=function(event /*, arg1..argn */) {
-	var i, list=this._evt(event), eventArgs=Array.prototype.slice(arguments, 1),
+	var i, list=this._evt(event), eventArgs=Array.prototype.slice.call(arguments, 1),
 		handler=this['on_' + event];
 	
 	// Emit on this object
@@ -71,6 +71,62 @@ EventEmitterMethods.emit=function(event /*, arg1..argn */) {
 	}
 };
 
+/**
+ * Overrides the given methodName on this instance applying the given
+ * advice ("before" or "after").  The given target method is invoked
+ * for the advice.
+ */
+EventEmitterMethods.advise=function(methodName, advice, target) {
+	var originalMethod=this[methodName],
+		advisorStub, adviceList;
+		
+	if (!originalMethod || !originalMethod.__stub__ || !this.hasOwnProperty(methodName))
+		advisorStub=this[methodName]=getAdvisorStub(originalMethod);
+	else
+		advisorStub=originalMethod;
+	
+	adviceList=advisorStub[advice];
+	if (adviceList) adviceList.push(target);
+};
+
+function getAdvisorStub(method) {
+	var stub=function() {
+		var i, thisFunction=arguments.callee,
+			list, retValue;
+		
+		// Apply before advice
+		list=thisFunction.before;
+		for (i=0; i<list.length; i++) {
+			list[i].apply(this, arguments);
+		}
+		
+		// Invoke original method
+		if (method) retValue=method.apply(this, arguments);
+		
+		// Invoke after method
+		list=thisFunction.after;
+		for (i=0; i<list.length; i++) {
+			list[i].apply(this, arguments);
+		}
+	};
+	stub.__stub__=true;
+	stub.before=[];
+	stub.after=[];
+	return stub;
+}
+
+/**
+ * Creates and returns a listener function that can be used with Element.addEventListener
+ * and routes the event to the target instance, calling its emit method with
+ * the given eventName.
+ * The instance event will be emitted with two arguments: event, element
+ * This method only supports W3C DOM.  IE is not supported.
+ */
+function createDomEventDispatcher(target, eventName) {
+	return function(event) {
+		target.emit(eventName, event||window.event, this);
+	};
+}
 
 /**
  * Instantiate a MapSurface, attaching it to the given element.
@@ -90,7 +146,6 @@ function MapSurface(elt, options) {
 		viewportElt, globalElt, center, projection;
 		
 	this._elt=elt;
-	this._document=document;
 	
 	// Local functions
 	function createElement(name) {
@@ -164,6 +219,13 @@ function MapSurface(elt, options) {
 	viewportElt.appendChild(globalElt);
 	this._global=globalElt;
 	
+	// Dictionary of elements
+	this.elements={
+		document: document,
+		global: globalElt,
+		viewport: viewportElt
+	};
+	
 	// TODO: Create corner references
 	
 	// Initialize transform
@@ -181,6 +243,9 @@ function MapSurface(elt, options) {
 	
 	// Setup initial state by setting center
 	this.setCenter(center);
+	
+	// Initialization hook
+	this.initialize(options);
 }
 var MapSurfaceMethods=MapSurface.prototype=new EventEmitter();
 /**
@@ -225,7 +290,30 @@ MapSurfaceMethods._notifyResetSingle=function(element) {
 	if (typeof handler==='function')
 		handler.call(delegate, this, element);
 	
-},
+};
+
+/**
+ * Initialization hook.  Performs initialization after map structures have
+ * been initialized.
+ */
+MapSurfaceMethods.initialize=function(options) {
+};
+
+/**
+ * Adds a DOM event listener to the given elementName (as found in the 
+ * this.elements map) with the given event domEventName and eventName
+ * to be raised on this instance.
+ * @param domEventName DOM event name to listen
+ * @param eventName Name of event to emit on this instance (defaults to "dom_${domEventName})
+ * @param elementName Name of element in this.elements collection (defaults to
+ * viewport)
+ */
+MapSurfaceMethods.routeDomEvent=function(domEvent, thisEvent, elementName) {
+	var element=this.elements[elementName||'viewport'],
+		listener=createDomEventDispatcher(this, thisEvent||('dom_'+domEvent));
+	if (element.addEventListener) element.addEventListener(domEvent, listener, false);
+	else if (element.attachEvent) element.attachEvent('on' + domEvent, listener);
+};
 
 MapSurfaceMethods.attach=function(element) {
 	element.style.position='absolute';	// Make positioned
@@ -242,6 +330,15 @@ MapSurfaceMethods.update=function(element) {
  * Set the map center to {lat:, lng:}
  */
 MapSurfaceMethods.setCenter=function(centerLatLng) {
+	this._updateCenter(centerLatLng);	
+	this._notifyPosition();
+};
+
+/**
+ * Internal method - update the center but don't notify layers of a
+ * position change.
+ */
+MapSurfaceMethods._updateCenter=function(centerLatLng) {
 	// Update the offset of the global container
 	var global=this._global, transform=this.transform,
 		lat=centerLatLng.lat||0, lng=centerLatLng.lng||0,
@@ -253,8 +350,6 @@ MapSurfaceMethods.setCenter=function(centerLatLng) {
 	
 	global.style.left=(-xy[0]) + 'px';
 	global.style.top=(-xy[1]) + 'px';
-	
-	this._notifyPosition();
 };
 
 MapSurfaceMethods.getCenter=function() {
@@ -265,15 +360,38 @@ MapSurfaceMethods.getResolution=function() {
 	return this.transform.res;
 };
 
-MapSurfaceMethods.setResolution=function(resolution) {
-	var center=this._center;
+MapSurfaceMethods.setResolution=function(resolution, centerXY) {
+	var center=this._center, deltaX, deltaY;
+	
+	if (centerXY) {
+		// re-interpret the center such that the point at the given
+		// offset in the viewport stays at the given point
+		console.log('original center: lat=' + center.lat + ', lng=' + center.lng);
+		center=this.toLatLng(centerXY.x, centerXY.y);
+		console.log('revised center: lat=' + center.lat + ', lng=' + center.lng);
+		deltaX=centerXY.x + this.width/2;
+		deltaY=centerXY.y + this.height/2;
+	}
+	
 	this.transform=this.transform.rescale(resolution, [center.lng, center.lat]);
+	
+	if (centerXY) {
+		// Reset the center based on the offset
+		//center=this.toLatLng(deltaX, deltaY);
+	}
+	
+	this._updateCenter(center);
 	this._notifyReset();
 };
 
-MapSurfaceMethods.setLevel=function(zoomLevel) {
-	this.setResolution(levelResolution(zoomLevel));
+MapSurfaceMethods.setLevel=function(zoomLevel, offset) {
+	if (!zoomLevel) return;
+	if (zoomLevel>18) zoomLevel=18;
+	else if (zoomLevel<1) zoomLevel=1;	// TODO: Make configurable
+	
+	this.setResolution(levelResolution(zoomLevel), offset);
 };
+
 
 MapSurfaceMethods.getLevel=function() {
 	return resolutionLevel(this.transform.res);
@@ -311,6 +429,7 @@ MapSurfaceMethods.toGlobalPixels=function(x, y) {
  */
 MapSurfaceMethods.moveBy=function(deltax, deltay) {
 	var latLng=this.toLatLng(this.width/2 + deltax, this.height/2 + deltay);
+	console.log('moveto: lat=' + latLng.lat + ', lng=' + latLng.lng + ' for deltax=' + deltax + ', deltay=' + deltay);
 	if (latLng) this.setCenter(latLng);
 };
 
@@ -418,7 +537,7 @@ MapTransform.prototype={
 	 * Convert from viewport coordinates to [lng, lat]
 	 */
 	fromSurface: function(x, y) {
-		return this.fromPixels(x+this.zpx[0], y+this.zpx[1]);
+		return this.fromPixels(x+this.zpx[0], y+this.zpx[1]);	// Note Y axis inversion
 	}
 };
 
