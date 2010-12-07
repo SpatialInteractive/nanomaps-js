@@ -344,9 +344,9 @@ MapSurfaceMethods._updateCenter=function(centerLatLng) {
 		lat=centerLatLng.lat||0, lng=centerLatLng.lng||0,
 		xy;
 	this._center={lat:lat,lng:lng};
-	xy=transform.toPixels(lng, lat);
-	xy[0]-=transform.zpx[0] + this.width/2;
-	xy[1]-=transform.zpx[1] + this.height/2;
+	xy=transform.toSurface(lng, lat);
+	xy[0]-=this.width/2;
+	xy[1]-=this.height/2;
 	
 	global.style.left=(-xy[0]) + 'px';
 	global.style.top=(-xy[1]) + 'px';
@@ -360,24 +360,36 @@ MapSurfaceMethods.getResolution=function() {
 	return this.transform.res;
 };
 
-MapSurfaceMethods.setResolution=function(resolution, centerXY) {
-	var center=this._center, deltaX, deltaY;
+MapSurfaceMethods.setResolution=function(resolution, preserveXY) {
+	var center=this._center, deltaX, deltaY, centerLngLat;
 	
-	if (centerXY) {
+	//if (preserveXY) console.log('setResolution(' + resolution + ', preserveX=' + preserveXY.x + ', preserveY=' + preserveXY.y + ')');
+	if (preserveXY) {
 		// re-interpret the center such that the point at the given
 		// offset in the viewport stays at the given point
-		console.log('original center: lat=' + center.lat + ', lng=' + center.lng);
-		center=this.toLatLng(centerXY.x, centerXY.y);
-		console.log('revised center: lat=' + center.lat + ', lng=' + center.lng);
-		deltaX=centerXY.x + this.width/2;
-		deltaY=centerXY.y + this.height/2;
+		//console.log('original center: lat=' + center.lat + ', lng=' + center.lng);
+		center=this.toLatLng(preserveXY.x, preserveXY.y);
+		//console.log('revised center: lat=' + center.lat + ', lng=' + center.lng);
+		deltaX=this.width/2-preserveXY.x;
+		deltaY=this.height/2-preserveXY.y;
+		// deltaX and deltaY = offset from center to recenter at
 	}
 	
 	this.transform=this.transform.rescale(resolution, [center.lng, center.lat]);
 	
-	if (centerXY) {
+	if (preserveXY) {
 		// Reset the center based on the offset
-		//center=this.toLatLng(deltaX, deltaY);
+		// Can't use this.toLatLng here because we are not yet in a consistent
+		// state (_updateCenter has not been called) and toLatLng uses this to
+		// do viewport relative coordinates.  Take advantage of the fact that
+		// we know the zero pixel point to be the lat/lng under the original
+		// prserveXY coordinates to avoid the need for viewport biasing.
+		//console.log('Biasing center by (' + deltaX + ',' + deltaY + ')px');
+		centerLngLat=this.transform.fromSurface(deltaX, deltaY);
+		if (centerLngLat) {
+			center.lng=centerLngLat[0];
+			center.lat=centerLngLat[1];
+		}
 	}
 	
 	this._updateCenter(center);
@@ -403,8 +415,15 @@ MapSurfaceMethods.getLevel=function() {
  */
 MapSurfaceMethods.toLatLng=function(x, y) {
 	var transform=this.transform, global=this._global, lngLat;
+	
+	//console.log('toLatLng(' + x + ',' + y + ')');
+	//console.log('global left=' + global.style.left + ', top=' + global.style.top);
+	
 	x-=parseInt(global.style.left);
 	y-=parseInt(global.style.top);
+	
+	//console.log('zpx rel xy=(' + x + ',' + y + ')');
+	
 	lngLat=transform.fromSurface(x, y);
 	if (!lngLat) return null;
 	return {lng: lngLat[0], lat: lngLat[1]};
@@ -427,9 +446,9 @@ MapSurfaceMethods.toGlobalPixels=function(x, y) {
 /**
  * Reposition the map by the given number of pixels
  */
-MapSurfaceMethods.moveBy=function(deltax, deltay) {
-	var latLng=this.toLatLng(this.width/2 + deltax, this.height/2 + deltay);
-	console.log('moveto: lat=' + latLng.lat + ', lng=' + latLng.lng + ' for deltax=' + deltax + ', deltay=' + deltay);
+MapSurfaceMethods.moveBy=function(eastingPx, northingPx) {
+	var latLng=this.toLatLng(this.width/2 + eastingPx, this.height/2 - northingPx);
+	//console.log('moveto: lat=' + latLng.lat + ', lng=' + latLng.lng + ' for deltax=' + eastingPx + ', deltay=' + northingPx);
 	if (latLng) this.setCenter(latLng);
 };
 
@@ -515,13 +534,13 @@ MapTransform.prototype={
 	},
 	
 	/**
-	 * Return viewport coordinates of the given lat/lng
+	 * Return surface coordinates of the given lat/lng
 	 */
 	toSurface: function(lng, lat) {
 		var xy=this.toPixels(lng, lat);
 		if (!xy) return null;
 		xy[0]-=this.zpx[0];
-		xy[1]-=this.zpx[1];
+		xy[1]=this.zpx[1] - xy[1]; // Note Y axis inversion
 		return xy;
 	},
 	
@@ -534,10 +553,10 @@ MapTransform.prototype={
 	},
 	
 	/**
-	 * Convert from viewport coordinates to [lng, lat]
+	 * Convert from surface coordinates to [lng, lat]
 	 */
 	fromSurface: function(x, y) {
-		return this.fromPixels(x+this.zpx[0], y+this.zpx[1]);	// Note Y axis inversion
+		return this.fromPixels(x+this.zpx[0], this.zpx[1] - y);	// Note Y axis inversion
 	}
 };
 

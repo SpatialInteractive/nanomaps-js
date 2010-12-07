@@ -88,7 +88,7 @@
 				deltaY=mouseState.last.y-coords.y;
 				mouseState.last=coords;
 				
-				map.moveBy(deltaX, deltaY);
+				map.moveBy(deltaX, -deltaY);
 			}
 			break;
 		}
