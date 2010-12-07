@@ -5,10 +5,75 @@ Core map display library.
 
 
 var nanocore=(function(exports) {
+var __nextId=0;
 
-var __nextId=0,
-	DPI_TO_DPM=100/2.54;
+/**
+ * EventEmitter base class.  Based on Node.js EventEmitter.
+ */
+function EventEmitter() {
+}
+var EventEmitterMethods=EventEmitter.prototype={};
+
+/**
+ * If called without a name, returns the object of event lists.
+ * If called with a name, returns the event list for the given
+ * name.  Always allocates objects as necessary.
+ */
+EventEmitterMethods._evt=EventEmitterMethods.listeners=function(name) {
+	var ret=this.__evt, list;
+	if (!ret) {
+		this.__evt=ret={};
+	}
+	if (name) {
+		list=ret[name];
+		if (!list) list=ret[name]=[];
+		return list;
+	}
+	return ret;
+};
+EventEmitterMethods.addListener=EventEmitterMethods.on=function(event, listener) {
+	this._evt(event).push(listener);
+};
+EventEmitterMethods.once=function(event, listener) {
+	this._evt(event+'$once').push(listener);
+};
+EventEmitterMethods.removeListener=function(event, listener) {
+	removeFromList(this._evt(event));
+	removeFromList(this._evt(event+'$once'));
 	
+	function removeFromList(list) {
+		for (var i=list.length-1; i>=0; i--) {
+			if (list[i]===listener)
+				list.splice(i, 1);
+		}
+	}
+};
+EventEmitterMethods.removeAllListeners=function(event) {
+	this._evt(event).length=0;
+	this._evt(event+'$once').length=0;
+};
+EventEmitterMethods.emit=function(event /*, arg1..argn */) {
+	var i, list=this._evt(event), eventArgs=Array.prototype.slice(arguments, 1),
+		handler=this['on_' + event];
+	
+	// Emit on this object
+	if (typeof handler==='function') {
+		handler.apply(this, eventArgs);
+	}
+	
+	// Emit standard events
+	for (i=0; i<list.length; i++) {
+		list[i].apply(this, eventArgs);
+	}
+	
+	// Emit once events
+	list=this._evt(event+'$once');
+	for (i=0; i<list.length; i++) {
+		list[i].apply(this, eventArgs);
+	}
+	list.length=0;	// Zero the once only array
+};
+
 
 /**
  * Instantiate a MapSurface, attaching it to the given element.
@@ -120,139 +185,142 @@ function MapSurface(elt, options) {
 	// Setup initial state by setting center
 	this.setCenter(center);
 }
-MapSurface.prototype={
-	/**
-	 * Iterate over each child element of the global layer, invoking
-	 * callback.  The this reference is preserved as this instance in
-	 * calls.
-	 */
-	_eachGlobal: function(callback) {
-		var childElt=this._global.firstChild;
-		for (var childElt=this._global.firstChild; childElt; childElt=childElt.nextSibling) {
-			if (childElt.nodeType!==1) continue;	// Skip non-elements
-			callback.call(this, childElt);
-		}
-	},
-	
-	/**
-	 * Iterate over contained global elements and trigger listeners.
-	 */
-	_notifyPosition: function() {
-		this._eachGlobal(function(element) {
-			var delegate=element.mapDelegate||DEFAULT_MAP_DELEGATE,
-				handler=delegate.onposition;
-			if (typeof handler==='function') {
-				handler.call(delegate, this, element);
-			}
-		});
-	},
-	
-	/**
-	 * Reset all elements
-	 */
-	_notifyReset: function() {
-		this._eachGlobal(this._notifyResetSingle);
-	},
-	
-	/**
-	 * Reset a single element
-	 */
-	_notifyResetSingle: function(element) {
-		var delegate=element.mapDelegate||DEFAULT_MAP_DELEGATE,
-			handler=delegate.onreset;
-		if (typeof handler==='function')
-			handler.call(delegate, this, element);
-		
-	},
-	
-	attach: function(element) {
-		element.style.position='absolute';	// Make positioned
-		this._global.appendChild(element);
-		this._notifyResetSingle(element);
-	},
-	
-	update: function(element) {
-		if (!element.parentElement) this.attach(element);
-		else this._notifyResetSingle(element);
-	},
-	
-	/**
-	 * Set the map center to {lat:, lng:}
-	 */
-	setCenter: function(centerLatLng) {
-		// Update the offset of the global container
-		var global=this._global, transform=this.transform,
-			lat=centerLatLng.lat||0, lng=centerLatLng.lng||0,
-			xy;
-		this._center={lat:lat,lng:lng};
-		xy=transform.toPixels(lng, lat);
-		xy[0]-=transform.zpx[0] + this.width/2;
-		xy[1]-=transform.zpx[1] + this.height/2;
-		
-		global.style.left=(-xy[0]) + 'px';
-		global.style.top=(-xy[1]) + 'px';
-		
-		this._notifyPosition();
-	},
-	
-	getCenter: function() {
-		return this._center;
-	},
-	
-	getResolution: function() {
-		return this.transform.res;
-	},
-	
-	setResolution: function(resolution) {
-		var center=this._center;
-		this.transform=this.transform.rescale(resolution, [center.lng, center.lat]);
-		this._notifyReset();
-	},
-	
-	setLevel: function(zoomLevel) {
-		this.setResolution(levelResolution(zoomLevel));
-	},
-	
-	getLevel: function() {
-		return resolutionLevel(this.transform.res);
-	},
-	
-	/**
-	 * Given x,y coordinates relative to the visible area of the viewport,
-	 * return the corresponding lat/lng
-	 */
-	toLatLng: function(x, y) {
-		var transform=this.transform, global=this._global, lngLat;
-		x-=parseInt(global.style.left);
-		y-=parseInt(global.style.top);
-		lngLat=transform.fromSurface(x, y);
-		if (!lngLat) return null;
-		return {lng: lngLat[0], lat: lngLat[1]};
-	},
-	
-	/**
-	 * Translate a viewport coordinate relative to the visible area to the
-	 * global pixel coordinates at the current resolution.
-	 */
-	toGlobalPixels: function(x, y) {
-		var transform=this.transform, global=this._global;
-		x-=parseInt(global.style.left);
-		y-=parseInt(global.style.top);
-		return {
-			x: x + transform.zpx[0],
-			y: transform.zpx[1] - y
-		};
-	},
-	
-	/**
-	 * Reposition the map by the given number of pixels
-	 */
-	moveBy: function(deltax, deltay) {
-		var latLng=this.toLatLng(this.width/2 + deltax, this.height/2 + deltay);
-		if (latLng) this.setCenter(latLng);
+var MapSurfaceMethods=MapSurface.prototype=new EventEmitter();
+/**
+ * Iterate over each child element of the global layer, invoking
+ * callback.  The this reference is preserved as this instance in
+ * calls.
+ */
+MapSurfaceMethods._eachGlobal=function(callback) {
+	var childElt=this._global.firstChild;
+	for (var childElt=this._global.firstChild; childElt; childElt=childElt.nextSibling) {
+		if (childElt.nodeType!==1) continue;	// Skip non-elements
+		callback.call(this, childElt);
 	}
 };
 
+/**
+ * Iterate over contained global elements and trigger listeners.
+ */
+MapSurfaceMethods._notifyPosition=function() {
+	this._eachGlobal(function(element) {
+		var delegate=element.mapDelegate||DEFAULT_MAP_DELEGATE,
+			handler=delegate.onposition;
+		if (typeof handler==='function') {
+			handler.call(delegate, this, element);
+		}
+	});
+};
+
+/**
+ * Reset all elements
+ */
+MapSurfaceMethods._notifyReset=function() {
+	this._eachGlobal(this._notifyResetSingle);
+};
+
+/**
+ * Reset a single element
+ */
+MapSurfaceMethods._notifyResetSingle=function(element) {
+	var delegate=element.mapDelegate||DEFAULT_MAP_DELEGATE,
+		handler=delegate.onreset;
+	if (typeof handler==='function')
+		handler.call(delegate, this, element);
+	
+},
+
+MapSurfaceMethods.attach=function(element) {
+	element.style.position='absolute';	// Make positioned
+	this._global.appendChild(element);
+	this._notifyResetSingle(element);
+};
+
+MapSurfaceMethods.update=function(element) {
+	if (!element.parentElement) this.attach(element);
+	else this._notifyResetSingle(element);
+};
+
+/**
+ * Set the map center to {lat:, lng:}
+ */
+MapSurfaceMethods.setCenter=function(centerLatLng) {
+	// Update the offset of the global container
+	var global=this._global, transform=this.transform,
+		lat=centerLatLng.lat||0, lng=centerLatLng.lng||0,
+		xy;
+	this._center={lat:lat,lng:lng};
+	xy=transform.toPixels(lng, lat);
+	xy[0]-=transform.zpx[0] + this.width/2;
+	xy[1]-=transform.zpx[1] + this.height/2;
+	
+	global.style.left=(-xy[0]) + 'px';
+	global.style.top=(-xy[1]) + 'px';
+	
+	this._notifyPosition();
+};
+
+MapSurfaceMethods.getCenter=function() {
+	return this._center;
+};
+
+MapSurfaceMethods.getResolution=function() {
+	return this.transform.res;
+};
+
+MapSurfaceMethods.setResolution=function(resolution) {
+	var center=this._center;
+	this.transform=this.transform.rescale(resolution, [center.lng, center.lat]);
+	this._notifyReset();
+};
+
+MapSurfaceMethods.setLevel=function(zoomLevel) {
+	this.setResolution(levelResolution(zoomLevel));
+};
+
+MapSurfaceMethods.getLevel=function() {
+	return resolutionLevel(this.transform.res);
+};
+
+/**
+ * Given x,y coordinates relative to the visible area of the viewport,
+ * return the corresponding lat/lng
+ */
+MapSurfaceMethods.toLatLng=function(x, y) {
+	var transform=this.transform, global=this._global, lngLat;
+	x-=parseInt(global.style.left);
+	y-=parseInt(global.style.top);
+	lngLat=transform.fromSurface(x, y);
+	if (!lngLat) return null;
+	return {lng: lngLat[0], lat: lngLat[1]};
+};
+
+/**
+ * Translate a viewport coordinate relative to the visible area to the
+ * global pixel coordinates at the current resolution.
+ */
+MapSurfaceMethods.toGlobalPixels=function(x, y) {
+	var transform=this.transform, global=this._global;
+	x-=parseInt(global.style.left);
+	y-=parseInt(global.style.top);
+	return {
+		x: x + transform.zpx[0],
+		y: transform.zpx[1] - y
+	};
+};
+
+/**
+ * Reposition the map by the given number of pixels
+ */
+MapSurfaceMethods.moveBy=function(deltax, deltay) {
+	var latLng=this.toLatLng(this.width/2 + deltax, this.height/2 + deltay);
+	if (latLng) this.setCenter(latLng);
+};
+
+
+/**
+ * Defult delegate for positioned objects that don't supply their own.
+ */
 var DEFAULT_MAP_DELEGATE={
 	onreset: function(map, element) {
 		var geo=element.geo, latLng, offset, xy;
@@ -711,6 +779,7 @@ StdTileLayerDelegate.prototype={
 
 
 // Exports
+exports.EventEmitter=EventEmitter;
 exports.MapSurface=MapSurface;
 exports.Projections=Projections;
 exports.MapTransform=MapTransform;
