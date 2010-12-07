@@ -61,7 +61,7 @@
 				
 				if (mouseState.ccount>1) {
 					// trigger double click
-					console.log('double click');
+					//console.log('double click');
 					mouseState.ccount=0;
 					
 					deltaY=Math.ceil(map.getLevel()+0.1);
@@ -71,7 +71,7 @@
 						mouseState.clickTimer=null;
 						
 						// single click
-						console.log('single click: lat=' + map.toLatLng(coords.x, coords.y).lat + ', lng=' + map.toLatLng(coords.x, coords.y).lng);
+						//console.log('single click: lat=' + map.toLatLng(coords.x, coords.y).lat + ', lng=' + map.toLatLng(coords.x, coords.y).lng);
 						mouseState.ccount=0;
 					}, DOUBLE_CLICK_TIME);
 				}

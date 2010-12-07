@@ -145,24 +145,13 @@ function MapSurface(elt, options) {
 		width=options.width, height=options.height, attr,
 		viewportElt, globalElt, center, projection;
 		
-	this._elt=elt;
-	
 	// Local functions
 	function createElement(name) {
 		return document.createElement(name);
 	}
 	this.createElement=createElement;
 	
-	// Fixed size or autosize
-	if (typeof width!=='number' || typeof height!=='number') {
-		// Auto width/height (get inner size)
-		width=elt.clientWidth;
-		height=elt.clientHeight;
-	}
-	
-	// Hardcode size and z-index
-	elt.style.width=width+'px';
-	elt.style.height=height+'px';
+	// Hardcode some important styles
 	elt.style.overflow='visible';
 	attr=elt.style.position;
 	if (attr!='relative' && attr!='absolute' && attr!='fixed')
@@ -170,9 +159,6 @@ function MapSurface(elt, options) {
 	attr=elt.style.zIndex;
 	if (attr==='' || attr==='auto')
 		elt.style.zIndex='inherit';	// Establish a new stacking context
-	
-	this.width=width;
-	this.height=height;
 	
 	/* 
 	DOM Structure:
@@ -207,8 +193,7 @@ function MapSurface(elt, options) {
 	viewportElt.style.top='0px';
 	viewportElt.style.width='100%';
 	viewportElt.style.height='100%';
-	elt.appendChild(viewportElt);
-	this._viewport=viewportElt;
+	elt.insertBefore(viewportElt, elt.firstChild);
 	
 	// create global
 	globalElt=createElement('div');
@@ -217,16 +202,24 @@ function MapSurface(elt, options) {
 	globalElt.style.width='100%';
 	globalElt.style.height='100%';
 	viewportElt.appendChild(globalElt);
-	this._global=globalElt;
 	
 	// Dictionary of elements
 	this.elements={
 		document: document,
 		global: globalElt,
-		viewport: viewportElt
+		viewport: viewportElt,
+		parent: elt
 	};
 	
-	// TODO: Create corner references
+	// Fixed size or autosize
+	if (typeof width!=='number' || typeof height!=='number') {
+		this.setSize();
+		// Auto width/height (get inner size)
+		width=elt.clientWidth;
+		height=elt.clientHeight;
+	} else {
+		this.setSize(width, height);
+	}
 	
 	// Initialize transform
 	projection=options.projection||Projections.WebMercator;
@@ -254,8 +247,8 @@ var MapSurfaceMethods=MapSurface.prototype=new EventEmitter();
  * calls.
  */
 MapSurfaceMethods._eachGlobal=function(callback) {
-	var childElt=this._global.firstChild;
-	for (var childElt=this._global.firstChild; childElt; childElt=childElt.nextSibling) {
+	var childElt=this.elements.global.firstChild;
+	for (var childElt=this.elements.global.firstChild; childElt; childElt=childElt.nextSibling) {
 		if (childElt.nodeType!==1) continue;	// Skip non-elements
 		callback.call(this, childElt);
 	}
@@ -317,13 +310,31 @@ MapSurfaceMethods.routeDomEvent=function(domEvent, thisEvent, elementName) {
 
 MapSurfaceMethods.attach=function(element) {
 	element.style.position='absolute';	// Make positioned
-	this._global.appendChild(element);
+	this.elements.global.appendChild(element);
 	this._notifyResetSingle(element);
 };
 
 MapSurfaceMethods.update=function(element) {
 	if (!element.parentElement) this.attach(element);
 	else this._notifyResetSingle(element);
+};
+
+MapSurfaceMethods.setSize=function(width, height) {
+	var elt=this.elements.parent, center=this._center;
+	if (arguments.length<2) {
+		elt.style.left='';
+		elt.style.top='';
+		width=elt.clientWidth;
+		height=elt.clientHeight;
+	}
+	
+	elt.style.width=width+'px';
+	elt.style.height=height+'px';
+	this.width=width;
+	this.height=height;
+	
+	// center will be undefined at init-time setSize
+	if (center) this.setCenter(center);
 };
 
 /**
@@ -340,7 +351,7 @@ MapSurfaceMethods.setCenter=function(centerLatLng) {
  */
 MapSurfaceMethods._updateCenter=function(centerLatLng) {
 	// Update the offset of the global container
-	var global=this._global, transform=this.transform,
+	var global=this.elements.global, transform=this.transform,
 		lat=centerLatLng.lat||0, lng=centerLatLng.lng||0,
 		xy;
 	this._center={lat:lat,lng:lng};
@@ -414,7 +425,7 @@ MapSurfaceMethods.getLevel=function() {
  * return the corresponding lat/lng
  */
 MapSurfaceMethods.toLatLng=function(x, y) {
-	var transform=this.transform, global=this._global, lngLat;
+	var transform=this.transform, global=this.elements.global, lngLat;
 	
 	//console.log('toLatLng(' + x + ',' + y + ')');
 	//console.log('global left=' + global.style.left + ', top=' + global.style.top);
@@ -434,7 +445,7 @@ MapSurfaceMethods.toLatLng=function(x, y) {
  * global pixel coordinates at the current resolution.
  */
 MapSurfaceMethods.toGlobalPixels=function(x, y) {
-	var transform=this.transform, global=this._global;
+	var transform=this.transform, global=this.elements.global;
 	x-=parseInt(global.style.left);
 	y-=parseInt(global.style.top);
 	return {
