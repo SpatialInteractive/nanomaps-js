@@ -9,27 +9,6 @@
 	
 	var MapSurfaceMethods=nanocore.MapSurface.prototype;
 	
-	/**
-	 * Translates a mouse event to viewport relative coordinates and returns
-	 * {x:, y: }
-	 * TODO: Fix this.  It doesn't work in a number of corner cases.
-	 */
-	MapSurfaceMethods.eventToContainer=function(event, elementName) {
-		var relativeTo=this.elements[elementName||'viewport'], start=relativeTo,
-			coords={x: event.clientX, y: event.clientY};
-		
-		do {
-			coords.x-=start.offsetLeft;
-			coords.y-=start.offsetTop;
-		} while (start=start.offsetParent);
-		
-		// Add window.page?Offset
-		coords.x+=window.pageXOffset||0;
-		coords.y+=window.pageYOffset||0;
-		
-		return coords;
-	};
-	
 	// State management
 	function updateMouseState(map, action, event) {
 		var mouseState=map._mouseState, coords=map.eventToContainer(event),
@@ -136,12 +115,12 @@
 	// Attach to initialization
 	MapSurfaceMethods.advise('initialize', 'after', function(options) {
 		this._mouseState={};
-		this.routeDomEvent('mousedown');
+		this.routeDomEvent('mousedown', null, 'glass');
 		this.routeDomEvent('mouseup', null, 'document');
 		this.routeDomEvent('mousemove', null, 'document');
 		if (!options.disableMouseWheel) {
-			this.routeDomEvent('DOMMouseScroll', 'dom_mousewheel');
-			this.routeDomEvent('mousewheel');
+			this.routeDomEvent('DOMMouseScroll', 'dom_mousewheel', 'glass');
+			this.routeDomEvent('mousewheel', null, 'glass');
 		}
 		this.elements.viewport.style.cursor='move';
 	});

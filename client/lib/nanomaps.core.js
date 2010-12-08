@@ -143,7 +143,7 @@ function MapSurface(elt, options) {
 	if (!options) options={};
 	var document=options.document||elt.ownerDocument||window.document,
 		width=options.width, height=options.height, attr,
-		viewportElt, globalElt, center, projection;
+		viewportElt, glassElt, globalElt, center, projection;
 		
 	// Local functions
 	function createElement(name) {
@@ -184,15 +184,27 @@ function MapSurface(elt, options) {
 		</div>
 	
 	*/
+	function createOverlay() {
+		var overlay=createElement('div');
+		overlay.style.overflow='hidden';
+		overlay.style.position='absolute';
+		overlay.style.left='0px';
+		overlay.style.top='0px';
+		overlay.style.width='100%';
+		overlay.style.height='100%';
+		return overlay;
+	}
+	
+	// create glass
+	glassElt=createOverlay();
+	glassElt.className='glass';
+	glassElt.style.display='none';
+	elt.insertBefore(glassElt, elt.firstChild);
+	
+	
 	// create viewport
-	viewportElt=createElement('div');
+	viewportElt=createOverlay();
 	viewportElt.className='viewport';
-	viewportElt.style.overflow='hidden';
-	viewportElt.style.position='absolute';
-	viewportElt.style.left='0px';
-	viewportElt.style.top='0px';
-	viewportElt.style.width='100%';
-	viewportElt.style.height='100%';
 	elt.insertBefore(viewportElt, elt.firstChild);
 	
 	// create global
@@ -208,6 +220,7 @@ function MapSurface(elt, options) {
 		document: document,
 		global: globalElt,
 		viewport: viewportElt,
+		glass: glassElt,
 		parent: elt
 	};
 	
@@ -290,6 +303,27 @@ MapSurfaceMethods._notifyResetSingle=function(element) {
  * been initialized.
  */
 MapSurfaceMethods.initialize=function(options) {
+};
+
+/**
+ * Translates a mouse event to viewport relative coordinates and returns
+ * {x:, y: }
+ * TODO: Fix this.  It doesn't work in a number of corner cases.
+ */
+MapSurfaceMethods.eventToContainer=function(event, elementName) {
+	var relativeTo=this.elements[elementName||'viewport'], start=relativeTo,
+		coords={x: event.clientX, y: event.clientY};
+	
+	do {
+		coords.x-=start.offsetLeft;
+		coords.y-=start.offsetTop;
+	} while (start=start.offsetParent);
+	
+	// Add window.page?Offset
+	coords.x+=window.pageXOffset||0;
+	coords.y+=window.pageYOffset||0;
+	
+	return coords;
 };
 
 /**
