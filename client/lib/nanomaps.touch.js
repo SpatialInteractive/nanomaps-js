@@ -35,6 +35,10 @@
 		touchState.l=null;
 		touchState.c=null;
 		touchState.z=null;
+		if (touchState.iid) {
+			clearInterval(touchState.iid);
+			touchState.iid=null;
+		}
 		if (touchState.tkey) {
 			clearTimeout(touchState.tkey);
 			touchState.tkey=null;
@@ -51,6 +55,24 @@
 		y/=i;
 		
 		return {x:x,y:y};
+	}
+	
+	function clampMove(delta) {
+		var absDelta=Math.abs(delta), sign=delta/absDelta, limit=100;
+		if (absDelta>250 || absDelta<limit) return delta;
+		return limit*sign;
+	}
+	
+	function startInterval(map, touchState) {
+		if (touchState.iid) clearInterval(touchState.iid);
+		touchState.iid=setInterval(function() {
+			var	northing=clampMove(touchState.dn), easting=clampMove(touchState.de);
+			if (northing || easting) {
+				map.moveBy(easting, northing);
+				touchState.dn-=northing;
+				touchState.de-=easting;
+			}
+		}, 65);
 	}
 	
 	/*
@@ -82,11 +104,11 @@
 			recordTouches(this, touchState, event);
 			if ((touchState.s==='move' || touchState.s==='start') && touchState.t.length===1) {
 				touchState.s='move';
-				deltaX=touchState.l.x - touchState.t[0].x;
-				deltaY=touchState.l.y - touchState.t[0].y;
+				touchState.de+=touchState.l.x - touchState.t[0].x;
+				touchState.dn+=touchState.t[0].y - touchState.l.y; // invert northing
 				touchState.l=touchState.t[0];
 				
-				this.moveBy(deltaX, -deltaY);	// Invert northing
+				//this.moveBy(touchState.de, touchState.dn);
 			}
 			
 			break;
@@ -118,6 +140,11 @@
 				// Transition from no touches to a first touch
 				touchState.s='start';
 				
+				touchState.dn=0;	// Delta-northing
+				touchState.de=0;	// Delta-easting
+				
+				startInterval(this, touchState);
+				
 				// Reset last (for moving)
 				touchState.l=touchState.t[0];
 			}			
@@ -126,6 +153,7 @@
 		case 'touchend':
 			recordTouches(this, touchState, event);
 			if (!touchState.t.length) clearTouchState(touchState);
+			if (touchState.de||touchState.dn) this.moveBy(touchState.de, touchState.dn);
 			break;
 			
 		case 'gestureend':
