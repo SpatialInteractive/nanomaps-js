@@ -1,5 +1,5 @@
 #!/bin/bash
-SRC_FILES="nanomaps.core.js nanomaps.desktop.js nanomaps.touch.js"
+SRC_FILES="nanomaps.core.js nanomaps.desktop.js nanomaps.touch.js nanomaps.tiles.js"
 
 cd $(dirname $0)
 test -d build || mkdir -p build/lib
