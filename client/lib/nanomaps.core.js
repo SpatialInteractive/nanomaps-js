@@ -235,7 +235,7 @@ function MapSurface(elt, options) {
 	}
 	
 	// Initialize transform
-	projection=options.projection||Projections.WebMercator;
+	projection=options.projection||new Projections.WebMercator();
 	center=options.center||projection.DEFAULT_CENTER;
 	this.transform=new MapTransform();
 	this.transform.init(
@@ -343,8 +343,25 @@ MapSurfaceMethods.routeDomEvent=function(domEvent, thisEvent, elementName) {
 };
 
 MapSurfaceMethods.attach=function(element) {
+	// Detect if HTMLElement in standards compliant way with fallbacks for IE
+	var isHTML=window.HTMLElement ? element instanceof HTMLElement : (element.nodeType===1);
+	if (!isHTML) {
+		// Treat as a delegate
+		element=element.createElement(this);
+	}
+	
+	var delegate=element.mapDelegate||DEFAULT_MAP_DELEGATE,
+		elements=this.elements;
+
 	element.style.position='absolute';	// Make positioned
-	this.elements.global.appendChild(element);
+	if (delegate.global) {
+		// Add to the global element
+		elements.global.appendChild(element);
+	} else {
+		// Add to the viewport before the global element
+		elements.viewport.insertBefore(element, elements.global);
+	}
+	
 	this._notifyResetSingle(element);
 };
 
@@ -441,17 +458,20 @@ MapSurfaceMethods.setResolution=function(resolution, preserveXY) {
 	this._notifyReset();
 };
 
-MapSurfaceMethods.setLevel=function(zoomLevel, offset) {
-	if (!zoomLevel) return;
-	if (zoomLevel>18) zoomLevel=18;
-	else if (zoomLevel<1) zoomLevel=1;	// TODO: Make configurable
+MapSurfaceMethods.setLevel=function(level, offset) {
+	var prj=this.transform.prj, minLevel=prj.MIN_LEVEL, maxLevel=prj.MAX_LEVEL;
 	
-	this.setResolution(levelResolution(zoomLevel), offset);
+	if (!level) return;
+	if (level>maxLevel) level=maxLevel;
+	else if (level<minLevel) level=minLevel;
+	
+	this.setResolution(prj.fromLevel(level), offset);
 };
 
 
 MapSurfaceMethods.getLevel=function() {
-	return resolutionLevel(this.transform.res);
+	var transform=this.transform;
+	return transform.prj.toLevel(transform.res);
 };
 
 /**
@@ -502,6 +522,8 @@ MapSurfaceMethods.moveBy=function(eastingPx, northingPx) {
  * Defult delegate for positioned objects that don't supply their own.
  */
 var DEFAULT_MAP_DELEGATE={
+	global: true,
+	
 	onreset: function(map, element) {
 		var geo=element.geo, latLng, offset, xy;
 		if (geo) {
@@ -609,8 +631,12 @@ MapTransform.prototype={
 var Projections={
 	/**
 	 * Standard "Web Mercator" projection as used by Google, Microsoft, OSM, et al.
+	 * Instantiate as new WebMercator(options).  Options can include:
+	 *   - MIN_LEVEL: Minimum zoom level.  Default==1.
+	 *   - MAX_LEVEL: Maximum zoom level.  Default==18.
 	 */
-	WebMercator: new function() {
+	WebMercator: function(options) {
+		if (!options) options={};
 		this.DEFAULT_CENTER={lat:39.7406, lng:-104.985441};
 		this.DEFAULT_RESOLUTION=611.4962;
 	
@@ -618,7 +644,11 @@ var Projections={
 			DEG_TO_RAD=.0174532925199432958,
 			RAD_TO_DEG=57.29577951308232,
 			FOURTHPI=0.78539816339744833,
-			HALFPI=1.5707963267948966;
+			HALFPI=1.5707963267948966,
+			HIGHEST_RES=78271.5170;
+		
+		this.MIN_LEVEL=options.MIN_LEVEL||1;
+		this.MAX_LEVEL=options.MAX_LEVEL||18;
 		
 		this.forward=function(x, y) {
 			return [
@@ -633,143 +663,25 @@ var Projections={
 				RAD_TO_DEG * (HALFPI - 2. * Math.atan(Math.exp(-y/EARTH_RADIUS)))
 			];
 		};
+		
+		/**
+		 * Return the resolution (m/px) for the given zoom index given a standard
+		 * power of two zoom breakdown.
+		 */
+		this.fromLevel=function(level) {
+			return HIGHEST_RES/Math.pow(2, level-1);
+		}
+		
+		this.toLevel=function(resolution) {
+			return Math.log(HIGHEST_REST/resolution) / Math.log(2) + 1;
+		}
+		
+		// release memory from closure
+		options=null;
 	}
 };
 
-/**
- * Return the resolution (m/px) for the given zoom index given a standard
- * power of two zoom breakdown.
- */
-function levelResolution(level) {
-	level=Number(level);
-	if (level<1) level=1;
 
-	var rootRes=78271.5170,
-		divisor=Math.pow(2, level-1);
-		
-	return rootRes/divisor;
-}
-
-function resolutionLevel(resolution) {
-	var rootRes=78271.5170,
-		divisor=rootRes/resolution;
-		
-	return Math.log(divisor) / Math.log(2) + 1;
-}
-
-/**
- * Class representing a tile selector for the layout of OSM, MS, Google, et al.
- * Options:
- *
- */
-function StdTileSelector(options) {
-	// set defaults
-	this.tileSize=options.tileSize||256;
-	this.srcSpec="http://otile${modulo:1,2}.mqcdn.com/tiles/1.0.0/osm/${level}/${tileX}/${tileY}.png";
-}
-StdTileSelector.prototype={
-	/**
-	 * Gets the origin in physical units [x, y] for the tile coordinate space
-	 */
-	origin: function(projection) {
-		var ret=this._origin;
-		if (!ret) {
-			ret=projection.forward(-180, 85.05112878);
-			this._origin=ret;
-		}
-		return ret;
-	},
-	
-	/**
-	 * Get an img src from the tileDesc
-	 */
-	resolveSrc: function(tileDesc) {
-		return this.srcSpec.replace(/\$\{([A-Za-z]+)(\:([^\}]*))?\}/g, function(s, name, ignore, args) {
-			if (name==='modulo') {
-				// get the args and modulo it by the tileDesc.tileX
-				args=args.split(/\,/);
-				return args[tileDesc.tileX%args.length];
-			} else {
-				return tileDesc[name];
-			}
-		});
-	},
-	
-	/**
-	 * Select all tiles that intersect the given bounding box at the
-	 * given resolution.  Return an array of TileDesc elements, where
-	 * each TileDesc has the following attributes:
-	 *   - key: an opaque string that uniquely identifies this tile within
-	 *     this instance where multiple requests for the same physical tile
-	 *     have the same key
-	 *   - res: the native resolution of the tile
-	 *	 - level: the native zoom level
-	 *   - x, y: origin at native resolution,
-	 *	 - size: tile size (width/height) at native resolution
-	 *   - tileX, tileY: the tile x and y
-	 */
-	select: function(projection, resolution, x, y, width, height, sort) {
-		var tileStartX, tileStartY,
-			tileEndX, tileEndY,
-			tileMidX, tileMidY,
-			i, j, tileDesc,
-			nativeLevel=Math.round(resolutionLevel(resolution)),
-			nativeResolution=levelResolution(nativeLevel),
-			unscaledOrigin=this.origin(projection),
-			tileSize=this.tileSize,
-			nativeOriginX=unscaledOrigin[0]/nativeResolution,
-			nativeOriginY=unscaledOrigin[1]/nativeResolution,
-			nativeScaleFactor=resolution / nativeResolution,
-			retList=[];
-
-		// Scale x,y,width,height to our nativeResolution
-		x=x*nativeScaleFactor;
-		y=y*nativeScaleFactor;
-		width=width*nativeScaleFactor;
-		height=height*nativeScaleFactor;
-		
-		// Find the grid of tiles that intersect
-		tileStartX=Math.floor( (x - nativeOriginX) / tileSize );
-		tileStartY=Math.floor( (nativeOriginY - y) / tileSize );		// y-axis inversion
-		tileEndX=Math.floor( ((x+width) - nativeOriginX ) / tileSize );
-		tileEndY=Math.floor( (nativeOriginY - (y-height)) / tileSize );	// y-axis inversion
-		//debugger;
-		// Loop and report each one
-		for (j=tileStartY; j<=tileEndY; j++) {
-			for (i=tileStartX; i<=tileEndX; i++) {
-				tileDesc={
-					key: nativeLevel + ':' + i + ':' + j,
-					res: nativeResolution,
-					level: nativeLevel,
-					tileX: i,
-					tileY: j,
-					size: tileSize,
-					x: nativeOriginX + i*tileSize,
-					y: nativeOriginY - j*tileSize	// y-axis inversion
-				};
-				
-				retList.push(tileDesc);
-			}
-		}
-		
-		// Sort by proximity to center tile
-		if (sort) {
-			tileMidX=(tileStartX+tileEndX)/2;
-			tileMidY=(tileStartY+tileEndY)/2;
-			retList.sort(function(a, b) {
-				var xa=Math.abs(a.tileX-tileMidX),
-					ya=Math.abs(a.tileY-tileMidY),
-					weighta=xa*xa+ya*ya,
-					xb=Math.abs(b.tileX-tileMidX),
-					yb=Math.abs(b.tileY-tileMidY),
-					weightb=xb*xb+yb*yb;
-				return weighta-weightb;
-			});
-		}
-		
-		return retList;
-	}
-};
 
 // -- Tile Layer
 function makeVisibleOnLoad() {
