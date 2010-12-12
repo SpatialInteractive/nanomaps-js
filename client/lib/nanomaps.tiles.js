@@ -13,6 +13,8 @@ function CanvasTileLayer(options) {
 	
 }
 CanvasTileLayer.prototype={
+	unmanaged: true,
+	
 	createElement: function(map) {
 		var screen=map.createElement('canvas');
 		screen.mapDelegate=this;

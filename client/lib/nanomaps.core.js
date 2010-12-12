@@ -143,7 +143,7 @@ function MapSurface(elt, options) {
 	if (!options) options={};
 	var document=options.document||elt.ownerDocument||window.document,
 		width=options.width, height=options.height, attr,
-		viewportElt, glassElt, globalElt, center, projection;
+		viewportElt, glassElt, managedElt, center, projection;
 		
 	// Local functions
 	function createElement(name) {
@@ -167,7 +167,7 @@ function MapSurface(elt, options) {
 			<!-- main map viewport (overflow: hidden) -->
 			<div class="viewport" 
 				style="overflow: hidden; position: absolute; left: 0px; top: 0px; width: 100%; height: 100%;">
-				<div class="global" style="position: absolute; width: 100%; height: 100%">
+				<div class="managed" style="position: absolute; width: 100%; height: 100%">
 					<!-- globally positioned elements go here -->
 				</div>
 				<div class="vpul" style="position: absolute; left: 0px; top: 0px; width: 0px; height: 0px;"></div>
@@ -207,18 +207,18 @@ function MapSurface(elt, options) {
 	viewportElt.className='viewport';
 	elt.insertBefore(viewportElt, elt.firstChild);
 	
-	// create global
-	globalElt=createElement('div');
-	globalElt.className='global';
-	globalElt.style.position='absolute';
-	globalElt.style.width='100%';
-	globalElt.style.height='100%';
-	viewportElt.appendChild(globalElt);
+	// create manage
+	managedElt=createElement('div');
+	managedElt.className='managed';
+	managedElt.style.position='absolute';
+	managedElt.style.width='100%';
+	managedElt.style.height='100%';
+	viewportElt.appendChild(managedElt);
 	
 	// Dictionary of elements
 	this.elements={
 		document: document,
-		global: globalElt,
+		managed: managedElt,
 		viewport: viewportElt,
 		glass: glassElt,
 		parent: elt
@@ -259,10 +259,18 @@ var MapSurfaceMethods=MapSurface.prototype=new EventEmitter();
  * callback.  The this reference is preserved as this instance in
  * calls.
  */
-MapSurfaceMethods._eachGlobal=function(callback) {
-	var childElt=this.elements.global.firstChild;
-	for (var childElt=this.elements.global.firstChild; childElt; childElt=childElt.nextSibling) {
+MapSurfaceMethods._each=function(includeManaged, callback) {
+	var elements=this.elements, managed=elements.managed, viewport=elements.viewport;
+	for (var childElt=viewport.firstChild; childElt; childElt=childElt.nextSibling) {
 		if (childElt.nodeType!==1) continue;	// Skip non-elements
+		if (childElt===managed) {
+			// End of list.  Descend to children if includeManaged.
+			if (includeManaged&&childElt.firstChild) {
+				childElt=childElt.firstChild;
+				continue;
+			} else break;
+				
+		}
 		callback.call(this, childElt);
 	}
 };
@@ -271,8 +279,8 @@ MapSurfaceMethods._eachGlobal=function(callback) {
  * Iterate over contained global elements and trigger listeners.
  */
 MapSurfaceMethods._notifyPosition=function() {
-	this._eachGlobal(function(element) {
-		var delegate=element.mapDelegate||DEFAULT_MAP_DELEGATE,
+	this._each(false, function(element) {
+		var delegate=element.mapDelegate||{},
 			handler=delegate.onposition;
 		if (typeof handler==='function') {
 			handler.call(delegate, this, element);
@@ -284,7 +292,7 @@ MapSurfaceMethods._notifyPosition=function() {
  * Reset all elements
  */
 MapSurfaceMethods._notifyReset=function() {
-	this._eachGlobal(this._notifyResetSingle);
+	this._each(true, this._notifyResetSingle);
 };
 
 /**
@@ -354,12 +362,12 @@ MapSurfaceMethods.attach=function(element) {
 		elements=this.elements;
 
 	element.style.position='absolute';	// Make positioned
-	if (delegate.global) {
-		// Add to the global element
-		elements.global.appendChild(element);
-	} else {
+	if (delegate.unmanaged) {
 		// Add to the viewport before the global element
-		elements.viewport.insertBefore(element, elements.global);
+		elements.viewport.insertBefore(element, elements.managed);
+	} else {
+		// Add to the managed element
+		elements.managed.appendChild(element);
 	}
 	
 	this._notifyResetSingle(element);
@@ -401,8 +409,8 @@ MapSurfaceMethods.setCenter=function(centerLatLng) {
  * position change.
  */
 MapSurfaceMethods._updateCenter=function(centerLatLng) {
-	// Update the offset of the global container
-	var global=this.elements.global, transform=this.transform,
+	// Update the offset of the managed container
+	var managed=this.elements.managed, transform=this.transform,
 		lat=centerLatLng.lat||0, lng=centerLatLng.lng||0,
 		xy;
 	this._center={lat:lat,lng:lng};
@@ -410,8 +418,8 @@ MapSurfaceMethods._updateCenter=function(centerLatLng) {
 	xy[0]-=this.width/2;
 	xy[1]-=this.height/2;
 	
-	global.style.left=(-xy[0]) + 'px';
-	global.style.top=(-xy[1]) + 'px';
+	managed.style.left=(-xy[0]) + 'px';
+	managed.style.top=(-xy[1]) + 'px';
 };
 
 MapSurfaceMethods.getCenter=function() {
@@ -479,13 +487,13 @@ MapSurfaceMethods.getLevel=function() {
  * return the corresponding lat/lng
  */
 MapSurfaceMethods.toLatLng=function(x, y) {
-	var transform=this.transform, global=this.elements.global, lngLat;
+	var transform=this.transform, managed=this.elements.managed, lngLat;
 	
 	//console.log('toLatLng(' + x + ',' + y + ')');
 	//console.log('global left=' + global.style.left + ', top=' + global.style.top);
 	
-	x-=parseInt(global.style.left);
-	y-=parseInt(global.style.top);
+	x-=parseInt(managed.style.left);
+	y-=parseInt(managed.style.top);
 	
 	//console.log('zpx rel xy=(' + x + ',' + y + ')');
 	
@@ -496,12 +504,12 @@ MapSurfaceMethods.toLatLng=function(x, y) {
 
 /**
  * Translate a viewport coordinate relative to the visible area to the
- * global pixel coordinates at the current resolution.
+ * managed pixel coordinates at the current resolution.
  */
-MapSurfaceMethods.toGlobalPixels=function(x, y) {
-	var transform=this.transform, global=this.elements.global;
-	x-=parseInt(global.style.left);
-	y-=parseInt(global.style.top);
+MapSurfaceMethods.toManagedPixels=function(x, y) {
+	var transform=this.transform, managed=this.elements.managed;
+	x-=parseInt(managed.style.left);
+	y-=parseInt(managed.style.top);
 	return {
 		x: x + transform.zpx[0],
 		y: transform.zpx[1] - y
@@ -522,8 +530,6 @@ MapSurfaceMethods.moveBy=function(eastingPx, northingPx) {
  * Defult delegate for positioned objects that don't supply their own.
  */
 var DEFAULT_MAP_DELEGATE={
-	global: true,
-	
 	onreset: function(map, element) {
 		var geo=element.geo, latLng, offset, xy;
 		if (geo) {
@@ -673,7 +679,7 @@ var Projections={
 		}
 		
 		this.toLevel=function(resolution) {
-			return Math.log(HIGHEST_REST/resolution) / Math.log(2) + 1;
+			return Math.log(HIGHEST_RES/resolution) / Math.log(2) + 1;
 		}
 		
 		// release memory from closure
@@ -825,7 +831,7 @@ StdTileLayerDelegate.prototype={
 		var self=this,
 			transform=map.transform,
 			buffer=self.options.buffer||64,
-			ulXY=map.toGlobalPixels(-buffer,-buffer),
+			ulXY=map.toManagedPixels(-buffer,-buffer),
 			width=map.width+buffer,
 			height=map.height+buffer,
 			curResolution=self.curResolution,
