@@ -20,6 +20,10 @@ CanvasTileLayer.prototype={
 		screen.mapDelegate=this;
 		
 		return screen;
+	},
+	
+	onreset: function(map, screen) {
+		console.log('onreset: level=' + map.getLevel());
 	}
 };
 	
