@@ -9,11 +9,11 @@ describe 'MapGeometry'
 		mapElt.style.backgroundColor='gray';
 		document.body.appendChild(mapElt);
 		
-		var testMap=this.testMap=new nanocore.MapSurface(this.mapElt, {
+		var testMap=this.testMap=new nanomaps.MapSurface(this.mapElt, {
 			center: { lat: 39.74, lng: -104.99 },
 			resolution: 611
 		});
-		//testMap.attach(nanocore.createStdTileLayer());
+		//testMap.attach(nanomaps.createStdTileLayer());
 	end
 	
 	after_each

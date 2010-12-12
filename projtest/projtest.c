@@ -88,7 +88,7 @@ int main(int argc, char** argv)
 	
 	printf("describe 'Projections'\n");
 	printf("\tbefore_each\n");
-	printf("\t\tProjections=nanocore.Projections\n");
+	printf("\t\tProjections=nanomaps.Projections\n");
 	printf("\tend\n\n");
 	
 	for (i=0; i<(sizeof(PROJECTIONS)/sizeof(projection_t)); i++) {

@@ -16,12 +16,12 @@
 	function initialize() {
 		var mapElt=document.getElementById('map'), tagElt;
 		
-		map=new nanocore.MapSurface(mapElt, {});
+		map=new nanomaps.MapSurface(mapElt, {});
 		map.setLevel(12);
 		
 		resize();
 		
-		var tileLayer=nanocore.createStdTileLayer({
+		var tileLayer=nanomaps.createStdTileLayer({
 			
 		});
 		map.attach(tileLayer);

@@ -4,8 +4,17 @@
  *  - mouse cursors
  *  - translation of desktop events to gestures
  */
-(function(nanocore) {
-	var MapSurfaceMethods=nanocore.MapSurface.prototype;
+(function(nanomaps) {
+	var MapSurfaceMethods=nanomaps.MapSurface.prototype;
+	
+	/**
+	 * Return true if the device may be touch enabled.  This does not actually
+	 * detect if touch is absolutely supported but filters out legacy browsers
+	 * that won't even run the code.
+	 */
+	function touchEligible() {
+		return !!document.addEventListener;
+	}
 	
 	function getTouchState(map) {
 		return map._touchState;
@@ -150,21 +159,23 @@
 	}
 	
 	// Attach to initialization
-	MapSurfaceMethods.advise('initialize', 'after', function(options) {
-		this._touchState={t:[]};
-		var events=['touchstart', 'touchend', 'touchmove', 'touchcancel',
-					'gesturechange', 'gestureend' ],
-			listener=touchEventDispatcher(this);
-			
-		// NOTE: We must attach touch events to the glass element.  Webkit
-		// seems to randomly cancel touch events if any DOM structure
-		// in the containment hierarchy gets modified "too much".  The only
-		// way I could find around this was to use such a transparent overlay.
-		// We're going to need to pump events back to the source later.
-		this.elements.glass.style.display='block';
-		for (i=0; i<events.length; i++) {
-			this.elements.glass.addEventListener(events[i], listener, true);
-		}
-	});
-})(nanocore);
+	if (touchEligible()) {
+		MapSurfaceMethods.advise('initialize', 'after', function(options) {
+			this._touchState={t:[]};
+			var events=['touchstart', 'touchend', 'touchmove', 'touchcancel',
+						'gesturechange', 'gestureend' ],
+				listener=touchEventDispatcher(this);
+				
+			// NOTE: We must attach touch events to the glass element.  Webkit
+			// seems to randomly cancel touch events if any DOM structure
+			// in the containment hierarchy gets modified "too much".  The only
+			// way I could find around this was to use such a transparent overlay.
+			// We're going to need to pump events back to the source later.
+			this.elements.glass.style.display='block';
+			for (i=0; i<events.length; i++) {
+				this.elements.glass.addEventListener(events[i], listener, true);
+			}
+		});
+	}
+})(nanomaps);
 

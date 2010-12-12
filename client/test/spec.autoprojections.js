@@ -1,6 +1,6 @@
 describe 'Projections'
 	before_each
-		Projections=nanocore.Projections
+		Projections=nanomaps.Projections
 	end
 
 	describe 'WebMercator'

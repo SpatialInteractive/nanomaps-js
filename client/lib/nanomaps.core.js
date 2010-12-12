@@ -1,10 +1,10 @@
 /**
-nanocore.js
+nanomaps.core.js
 Core map display library.
 */
 
 
-var nanocore=(function(exports) {
+var nanomaps=(function(exports) {
 var __nextId=0;
 
 /**

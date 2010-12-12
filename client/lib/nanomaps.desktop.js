@@ -4,10 +4,10 @@
  *  - mouse cursors
  *  - translation of desktop events to gestures
  */
-(function(nanocore) {
+(function(nanomaps) {
 	var DOUBLE_CLICK_TIME=100;
 	
-	var MapSurfaceMethods=nanocore.MapSurface.prototype;
+	var MapSurfaceMethods=nanomaps.MapSurface.prototype;
 	
 	// State management
 	function updateMouseState(map, action, event) {
@@ -124,5 +124,5 @@
 		}
 		this.elements.viewport.style.cursor='move';
 	});
-})(nanocore);
+})(nanomaps);
 
