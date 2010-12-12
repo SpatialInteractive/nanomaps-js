@@ -506,7 +506,7 @@ MapSurfaceMethods.toLatLng=function(x, y) {
  * Translate a viewport coordinate relative to the visible area to the
  * managed pixel coordinates at the current resolution.
  */
-MapSurfaceMethods.toManagedPixels=function(x, y) {
+MapSurfaceMethods.toGlobalPixels=function(x, y) {
 	var transform=this.transform, managed=this.elements.managed;
 	x-=parseInt(managed.style.left);
 	y-=parseInt(managed.style.top);
@@ -831,7 +831,7 @@ StdTileLayerDelegate.prototype={
 		var self=this,
 			transform=map.transform,
 			buffer=self.options.buffer||64,
-			ulXY=map.toManagedPixels(-buffer,-buffer),
+			ulXY=map.toGlobalPixels(-buffer,-buffer),
 			width=map.width+buffer,
 			height=map.height+buffer,
 			curResolution=self.curResolution,
