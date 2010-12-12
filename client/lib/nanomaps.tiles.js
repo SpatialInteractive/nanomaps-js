@@ -9,231 +9,200 @@
  */
 (function(nanomaps) {
 
-function CanvasTileLayer(options) {
-	options=options||{};
-	this.sel=new TileSelector(options);
+// -- Tile Layer
+function makeVisibleOnLoad() {
+	this.style.visibility='';
 }
-CanvasTileLayer.prototype={
-	unmanaged: true,
 
-	createElement: function(map) {
-		var screen=map.createElement('canvas');
-		screen.style.position='absolute';
-		screen.style.left='0px';
-		screen.style.top='0px';
-		screen.invalid=true;
-		screen.mapDelegate=this;
-		
-		return screen;
-	},
+function TileCache() {
+	var contents={},
+		marked=[];
 	
-	/**
-	 * Checks that the current canvas geometry matches the map.  If not,
-	 * this will reset it and schedule a redraw.  Proper usage:
-	 *  if (!checkGeom(map, screen)) return;
-	 */
-	checkGeom: function(map, screen) {
-		if (!screen.invalid && map.width===screen.width && map.height===screen.height) return true;
+	function disposeTileDesc(tileDesc) {
+		if (tileDesc.img&&tileDesc.img.parentNode) 
+			// Detach
+			tileDesc.img.parentNode.removeChild(tileDesc.img);
+	}
 		
-		// Reset (clears canvas)
-		screen.width=map.width;
-		screen.height=map.height;
-		screen.invalid=false;
-		
-		this.buffer=document.createElement('canvas');
-		this.buffer.width=map.width;
-		this.buffer.height=map.height;
-		
-		this.invalidate(map, screen, 0, 0, screen.width, screen.height);
-		
-		return false;
-	},
+	this.mark=function() {
+		marked.length=0;
+	};
 	
-	/**
-	 * Invalidates a portion of the screen.
-	 */
-	invalidate: function(map, screen, x, y, width, height) {
-		var self=this,
-			tiles,
-			transform=map.transform,
-			sel=this.sel,
-			globalXY=map.toGlobalPixels(0, 0),
-			i;
-		
-		console.log('screen invalidate (' + x + ',' + y + ') -> (' + width + ',' + height + ')');
-		tiles=sel.select(transform.prj, transform.res, globalXY.x, globalXY.y, width, height, true);
-		//console.log('got ' + tiles.length + ' tiles');
-		
-		// Store the current canvas extent in global coordinates
-		screen.mapRes=transform.res;
-		screen.mapX=globalXY.x;
-		screen.mapY=globalXY.y;
-		
-		for (i=0; i<tiles.length; i++) {
-			processTile(tiles[i]);
+	this.free=function() {
+		var newContents={},
+			key, i, tileDesc;
+			
+		// Add all marked to the new dictionary
+		for (i=0; i<marked.length; i++) {
+			tileDesc=marked[i];
+			key=tileDesc.key;
+			newContents[key]=tileDesc;
+			delete contents[key];
 		}
 		
-		// free memory from closures
-		tiles=null;
+		// Any existing in contents are to be discarded
+		for (i in contents) {
+			tileDesc=contents[i];
+			disposeTileDesc(tileDesc);
+		}
+		
+		// Swap
+		contents=newContents;
+		marked.length=0;
+	};
+	
+	this.use=function(tileDesc) {
+		var key=tileDesc.key,
+			existing=contents[key];
+		if (existing) {
+			disposeTileDesc(tileDesc);
+			tileDesc=existing;
+		}
+		contents[key]=tileDesc;
+		if (marked) marked.push(tileDesc);
+		return tileDesc;
+	};
+	
+	this.take=function(tileDesc) {
+		var key=tileDesc.key,
+			existing=contents[key];
+		if (existing) {
+			delete contents[key];
+			return existing;
+		}
+		return tileDesc;
+	};
+	
+	this.each=function(callback) {
+		var i, tileDesc;
+		for (i in contents) {
+			tileDesc=contents[i];
+			if (tileDesc && typeof tileDesc==='object')
+				callback(tileDesc);
+		}
+	};
+	
+	this.clear=function() {
+		contents={};
+		marked.length=0;
+	};
+	
+	this.moveFrom=function(otherCache) {
+		otherCache.each(function(tileDesc) {
+			var key=tileDesc.key;
+			if (contents[key]) {
+				// Already exists.  Delete
+				disposeTileDesc(tileDesc);
+			} else
+				contents[tileDesc.key]=tileDesc;
+		});
+		otherCache.clear();
+	};
+}
 
-		// aux function
-		function processTile(tileDesc) {
-			self.loadImage(map, sel.resolveSrc(tileDesc), function(image) {
-				var context=screen.getContext('2d'),
-					scaleFactor=tileDesc.res / screen.mapRes,
-					globalX=screen.mapX,
-					globalY=screen.mapY,
-					srcSize=tileDesc.size,
-					sx, sy, sw, sh,
-					dx=Math.round(tileDesc.x*scaleFactor - globalX),
-					dy=Math.round(globalY - tileDesc.y*scaleFactor),	// y-axis inversion
-					dw=Math.ceil(srcSize*scaleFactor),
-					dh=dw,
-					ow, oh;
-				
-				// Clip left side
-				if (dx>=0) {
-					// Non-negative dx.  Left side completely visible.
-					sx=0;
-					sw=srcSize;
-				} else {
-					// Negative dx (clipped off left edge)
-					dw=dw+dx;
-					sx=-dx/scaleFactor;
-					dx=0;
-					sw=srcSize - sx;
-				}
-				
-				// Clip top side
-				if (dy>=0) {
-					// Non-negative dy.  Top side completely visible
-					sy=0;
-					sh=srcSize;
-				} else {
-					// Negative dy (clipped off top edge)
-					dh=dh+dy;
-					sy=-dy/scaleFactor;
-					dy=0;
-					sh=srcSize-sy;
-				}
-				
-				// Clip right side
-				ow=screen.width-(dx+dw);
-				if (ow<0) {
-					dw+=ow;
-					sw+=ow/scaleFactor;
-				}
-				
-				// Clip bottom side
-				oh=screen.height-(dy+dh);
-				if (oh<0) {
-					dh+=oh;
-					sh+=oh/scaleFactor;
-				}
-				
-				if (dh>0 && dw>0) {
-					//console.log('blit tile: (' + [sx,sy,sw,sh,dx,dy,dw,dh].join(',') + ')');
-					context.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh);
-					/*
-					context.strokeRect(dx, dy, dw, dh);
-					context.font='bold 16px sans-serif';
-					context.textBaseline='middle';
-					context.textAlign='center';
-					context.fillText(tileDesc.key, dx+dw/2, dy+dh/2);
-					*/
-				}
+function TileLayer(options) {
+	this.options=options=options||{};
+	this.sel=new TileSelector(options);
+	this.fgCache=new TileCache();
+	this.bgCache=new TileCache();
+}
+TileLayer.prototype={
+	createElement: function(map) {
+		var element=document.createElement('div');
+		element.style.position='absolute';
+		element.style.left='0px';
+		element.style.top='0px';
+		element.mapDelegate=this;
+		return element;
+	},
+	
+	placeTile: function(map, element, tileDesc, moveToFront) {
+		var img=tileDesc.img,
+			transform=map.transform,
+			zpx=transform.zpx,
+			scaleFactor=tileDesc.res / transform.res;
+			
+		if (img&&img._error) {
+			// Zero it out
+			if (img.parentElement) img.parentElement.removeChild(img);
+			tileDesc.img=null;
+			img=null;
+		}
+		
+		// If no valid img, instantiate it
+		if (!img) {
+			img=map.createElement('img');
+			img.style.visibility='hidden';
+			img.onload=makeVisibleOnLoad;
+			img.style.position='absolute';
+			img.src=this.sel.resolveSrc(tileDesc);
+			tileDesc.img=img;
+		}
+		
+		// Set position and size
+		img.width=Math.ceil(tileDesc.size*scaleFactor);
+		img.height=Math.ceil(tileDesc.size*scaleFactor);
+		img.style.left=Math.round(tileDesc.x*scaleFactor - zpx[0]) + 'px';
+		img.style.top=Math.round(zpx[1] - tileDesc.y*scaleFactor) + 'px';	// y-axis inversion
+		if (moveToFront || img.parentNode!==element) element.appendChild(img);
+	},
+	
+	onreset: function(map, element) {
+		var self=this,
+			transform=map.transform,
+			buffer=self.options.buffer||64,
+			ulXY=map.toGlobalPixels(-buffer,-buffer),
+			width=map.width+buffer,
+			height=map.height+buffer,
+			curResolution=self.curResolution,
+			displayResolution=transform.res,
+			tileList=self.sel.select(transform.prj, displayResolution, ulXY.x, ulXY.y, width, height, true),
+			fgCache=self.fgCache,
+			bgCache=self.bgCache,
+			refreshBackground=false,
+			i,
+			tileDesc;
+			
+		if (curResolution&&curResolution!==displayResolution) {
+			// We have a scale change.  Snapshot the current tile
+			// cache as the background cache and start on a new one
+			bgCache.mark();
+			bgCache.free();
+			bgCache.moveFrom(fgCache);
+			refreshBackground=true;
+		}
+
+		fgCache.mark();
+		for (i=0; i<tileList.length; i++) {
+			tileDesc=fgCache.use(bgCache.take(tileList[i]));
+			self.placeTile(map, element, tileDesc, true);
+		}
+		fgCache.free();
+
+		// Record so that the next time through we can tell whether
+		// this is a simple change
+		this.curResolution=displayResolution;
+		
+		if (refreshBackground) {
+			bgCache.each(function(tileDesc) {
+				self.placeTile(map, element, tileDesc);
 			});
 		}
-	},
-	
-	loadImage: function(map, url, callback) {
-		var img=map.createElement('img');
-		img.onload=function() {
-			callback(img);
-		};
-		img.src=url;
-	},
-	
-	onreset: function(map, screen) {
-		if (!this.checkGeom(map, screen)) return;
 		
-		console.log('onreset: level=' + map.getLevel());
-		this.invalidate(0,0,screen.width,screen.height);
 	},
 	
-	onposition: function(map, screen) {
-		if (!this.checkGeom(map, screen)) return;
-
-		var self=this,
-			transform=map.transform,
-			curXY=map.toGlobalPixels(0, 0),
-			context,
-			deltaX=Math.round(curXY.x - screen.mapX),
-			deltaY=Math.round(screen.mapY - curXY.y),	// y-axis inversion
-			copyWidth=screen.width-Math.abs(deltaX), 
-			copyHeight=screen.height-Math.abs(deltaY),
-			cx, cy,
-			sx, sy,
-			dx, dy;
-		
-		if (copyWidth>0 && copyHeight>0) {
-			// Copy-Invalidate.
-			// Invalidation areas:
-			//   - Positive deltaX/deltaY: Invalidate right/bottom.
-			//   - Negative deltaX/deltaY: Invalidate left/top
-			//console.log('Copy-Invalidate: deltaXY=(' + deltaX + ',' + deltaY + ')');
-			
-			if (deltaX>0) {
-				dx=0;
-				sx=deltaX;
-				cx=screen.width-sx;
-			} else {
-				dx=-deltaX;
-				sx=0;
-				cx=0;
-			}
-			
-			if (deltaY>0) {
-				dy=0;
-				sy=deltaY;
-				cy=screen.height-sy;
-			} else {
-				dy=-deltaY;
-				sy=0;
-				cy=0;
-			}
-			
-			// Store the current canvas extent in global coordinates
-			screen.mapRes=transform.res;
-			screen.mapX=curXY.x;
-			screen.mapY=curXY.y;
-
-			context=screen.getContext('2d');
-			context.globalCompositeOperation='copy';
-			context.clearRect(cx, 0, Math.abs(deltaX), screen.height);
-			context.clearRect(0, cy, screen.width, Math.abs(deltaY));
-			context.drawImage(screen, sx, sy, copyWidth, copyHeight, dx, dy, copyWidth, copyHeight);
-
-			this.invalidate(map, screen, cx, 0, Math.abs(deltaX), screen.height);
-			this.invalidate(map, screen, 0, cy, screen.width, Math.abs(deltaY));
-			
-			/*
-			console.log('Copy-Invalidate: (' +
-			[sx,sy,copyWidth,copyHeight,dx,dy].join(',') + ') -> (' + [cx,cy].join(',') + '), (' + [deltaX,deltaY].join(',') + ')');
-			*/
-		} else {
-			// Complete invalidate
-			this.invalidate(map, screen, 0,0,screen.width,screen.height);
-		}
+	onposition: function(map, element) {
+		this.onreset(map, element);
 	}
 };
-	
+
 /**
  * Class representing a tile selector for the layout of OSM, MS, Google, et al.
  * Options:
  *
  */
 function TileSelector(options) {
+	options=options||{};
 	// set defaults
 	this.tileSize=options.tileSize||256;
 	this.srcSpec="http://otile${modulo:1,2}.mqcdn.com/tiles/1.0.0/osm/${level}/${tileX}/${tileY}.png";
@@ -346,7 +315,8 @@ TileSelector.prototype={
 
 // Exports
 nanomaps.TileSelector=TileSelector;
-nanomaps.CanvasTileLayer=CanvasTileLayer;
+//nanomaps.CanvasTileLayer=CanvasTileLayer;
+nanomaps.TileLayer=TileLayer;
 
 })(nanomaps);
 
