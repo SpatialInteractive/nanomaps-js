@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script src="../lib/nanocore.js"></script>
+	
+	<script src="jspec/jspec.js"></script>
+	<link rel="stylesheet" href="jspec/jspec.css" />
+	
+	<script>
+		var module={
+			matchers: {
+				equal_approximately: function(actual, value, error) {
+					if (typeof(error)!=='number') error=1.e-10;
+					return Math.abs(actual - value) < error;
+				}
+			}
+		};
+	
+		function runSuites() {
+			JSpec
+				.exec('spec.autoprojections.js')
+				.include(module)
+				.run({ })
+				.report();
+		}
+	</script>
+</head>
+<body onload="runSuites()" onerror="alert('Error executing tests')">
+	<div id="jspec"></div>
+</body>
+</html>
