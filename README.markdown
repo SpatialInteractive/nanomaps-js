@@ -3,6 +3,8 @@ Nanomaps
 Nanomaps is a small JavaScript library for displaying no-frills slippy maps
 on click and touch devices.
 
+http://www.laurenzo.org/~stella/nanomaps/demo.html
+
 Niche
 -----
 This project really doesn't compete with OpenLayers, Google Maps v3 or any of the
