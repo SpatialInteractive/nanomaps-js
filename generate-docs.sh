@@ -29,3 +29,10 @@ then
 	echo "Error generating documentation."
 	exit 1
 fi
+
+if [ -d $td/pages ]; then
+	echo "Updating website with documentation"
+	mkdir -p $td/pages/apidocs
+	cp -a $out/* $td/pages/apidocs	
+fi
+

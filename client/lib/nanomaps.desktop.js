@@ -82,23 +82,23 @@
 	
 	
 	// Event handlers
-	MapSurfaceMethods.on_dom_mousedown=function(event) {
+	MapSurfaceMethods.ondom_mousedown=function(event) {
 		updateMouseState(this, 'down', event);
 		event.preventDefault();
 	};
-	MapSurfaceMethods.on_dom_mouseup=function(event) {
+	MapSurfaceMethods.ondom_mouseup=function(event) {
 		if (!this._mouseState.s) return;	// Only process a move if in a state
 
 		updateMouseState(this, 'up', event);
 		event.preventDefault();
 	};
-	MapSurfaceMethods.on_dom_mousemove=function(event) {
+	MapSurfaceMethods.ondom_mousemove=function(event) {
 		if (!this._mouseState.s) return;	// Only process a move if in a state
 		
 		updateMouseState(this, 'move', event);
 		event.preventDefault();
 	};
-	MapSurfaceMethods.on_dom_mousewheel=function(event) {
+	MapSurfaceMethods.ondom_mousewheel=function(event) {
 		clearMouseState(this);
 		event.preventDefault();
 		

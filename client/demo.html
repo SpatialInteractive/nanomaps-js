@@ -35,9 +35,10 @@
 		tagElt.style.textAlign='center';
 		tagElt.style.position='absolute';
 		tagElt.geo={
-			latLng: { lat: 39.741071, lng: -104.985808 },
-			//latLng: {lat:39.7406, lng:-104.885441},
-			offset: {x: -9, y: -9}
+			latitude: 39.741071,
+			longitude: -104.985808,
+			xoffset: -9,
+			yoffset: -9
 		};
 		
 		map.attach(tagElt);
@@ -54,6 +55,7 @@
 	}
 	
 	#mapcopy {
+		z-index: 50;
 		position: absolute;
 		right: 2px; bottom: 2px;
 		text-align: right;
@@ -65,6 +67,13 @@
 	}
 	#mapcopy a:visited {
 		color: #00f;
+	}
+	
+	.poi {
+		z-index: 100;
+		margin-left: -10px;
+		margin-top: -32px;
+		display: none;
 	}
 	</style>
 </head>
@@ -83,6 +92,7 @@
 	-->
 	
 	<div id="map">
+		<img class="poi" src="images/red-pushpin.png" latitude="39.780533" longitude="-104.988896" />
 		<div id="mapcopy" onselectstart="return false">
 			<span>Tiles Courtesy of <a href="http://open.mapquest.co.uk/" target="_blank">MapQuest</a> <img width="16" height="16" src="http://developer.mapquest.com/content/osm/mq_logo.png" border="0"></span>
 			<br />

@@ -3,21 +3,30 @@ nanomaps.core.js
 Core map display library.
 */
 
-
+/**
+ * @namespace
+ */
 var nanomaps=(function(exports) {
 var __nextId=0;
 
 /**
  * EventEmitter base class.  Based on Node.js EventEmitter.
+ * @class
+ * @name nanomaps.EventEmitter
  */
 function EventEmitter() {
 }
+
 var EventEmitterMethods=EventEmitter.prototype={};
 
 /**
  * If called without a name, returns the object of event lists.
  * If called with a name, returns the event list for the given
  * name.  Always allocates objects as necessary.
+ *
+ * @private
+ * @methodOf nanomaps.EventEmitter
+ * @name _evt
  */
 EventEmitterMethods._evt=EventEmitterMethods.listeners=function(name) {
 	var hash=this.__evt, list;
@@ -28,12 +37,49 @@ EventEmitterMethods._evt=EventEmitterMethods.listeners=function(name) {
 	if (!list) list=hash[name]=[];
 	return list;
 };
+
+/**
+ * Add an event listener that will be invoked on every following occurence of the
+ * named event.  The listener is invoked with <b>this</b> equal to the instance
+ * that raised the event and arguments specific to the event type.
+ * 
+ * The method "on" is a synonym of addListener.
+ * 
+ * @public
+ * @methodOf nanomaps.EventEmitter.prototype
+ * @name addListener
+ * @param {string} event Event name to add listener to
+ * @param {function} listener Callback to be invoked on event
+ */
 EventEmitterMethods.addListener=EventEmitterMethods.on=function(event, listener) {
 	this._evt(event).push(listener);
 };
+
+/**
+ * Add an event listener that will be invoked on the very next occurence of the
+ * named event.  The listener is invoked with <b>this</b> equal to the instance
+ * that raised the event and arguments specific to the event type.
+ *
+ * @public
+ * @methodOf nanomaps.EventEmitter.prototype
+ * @name once
+ * @param {string} event Event name to add listener to
+ * @param {function} listener Callback to be invoked on event
+ */
 EventEmitterMethods.once=function(event, listener) {
 	this._evt(event+'$once').push(listener);
 };
+
+/**
+ * Remove a previously added listener.  Does nothing if the given listener
+ * is not found.
+ 
+ * @public
+ * @methodOf nanomaps.EventEmitter.prototype
+ * @name removeListener
+ * @param {string} event Event name to add listener to
+ * @param {function} listener Previously added callback to remove
+ */
 EventEmitterMethods.removeListener=function(event, listener) {
 	removeFromList(this._evt(event));
 	removeFromList(this._evt(event+'$once'));
@@ -45,13 +91,41 @@ EventEmitterMethods.removeListener=function(event, listener) {
 		}
 	}
 };
+
+/**
+ * Remove all listeners for a given event.
+ *
+ * @public
+ * @methodOf nanomaps.EventEmitter.prototype
+ * @name removeAllListeners
+ * @param {string} event Event name to add listener to
+ */
 EventEmitterMethods.removeAllListeners=function(event) {
 	this._evt(event).length=0;
 	this._evt(event+'$once').length=0;
 };
+
+/**
+ * Invokes a given event by name, triggering all registered persistent listeners
+ * and once only listeners.  All arguments after the first are taken to be the
+ * arguments to the event listeners.  Once only listeners are invoked first
+ * followed by persistent listeners.  Otherwise, listeners are invoked in the
+ * order added.
+ * <p>
+ * If a method exists on the instance named 'on' + event, then that method
+ * will be invoked as an event listener prior to any others.
+ *
+ * <p><i>TODO: Make listener add/remove durable from within a callback</i>
+ *
+ * @public
+ * @methodOf nanomaps.EventEmitter.prototype
+ * @name emit
+ * @param {string} event Event name to add listener to
+ * @param ... Arguments to registred listeners 
+ */
 EventEmitterMethods.emit=function(event /*, arg1..argn */) {
 	var i, list=this._evt(event), eventArgs=Array.prototype.slice.call(arguments, 1),
-		handler=this['on_' + event];
+		handler=this['on' + event];
 	
 	// Emit on this object
 	if (typeof handler==='function') {
@@ -75,6 +149,25 @@ EventEmitterMethods.emit=function(event /*, arg1..argn */) {
  * Overrides the given methodName on this instance applying the given
  * advice ("before" or "after").  The given target method is invoked
  * for the advice.
+ * 
+ * <p>Invoking this method supports the arbitrary augmentation of a class's
+ * methods with before or after advice.  The original method is replaced with
+ * a stub that invokes a list of other methods before and after the original
+ * target.  If the original method doesn't exist, the stub will still be
+ * defined.
+ * <p>It is safe to use this method on prototypes or instances as it will only
+ * modify the outermost prototype (target of the call).
+ *
+ * @example MapSurface.prototype.advise('initialize', 'after', 
+ *		function() { alert('Initialized'); });
+ * @example myMap.advise('onzoom', 'after', 
+ *		function() { alert('zoomed'); });
+ * @public
+ * @methodOf nanomaps.EventEmitter.prototype
+ * @name advise
+ * @param {string} methodName Name of the method to override
+ * @param {string} advice Advice to apply ("before" or "after")
+ * @param {function} target Function which is the target of advice
  */
 EventEmitterMethods.advise=function(methodName, advice, target) {
 	var originalMethod=this[methodName],
@@ -89,6 +182,9 @@ EventEmitterMethods.advise=function(methodName, advice, target) {
 	if (adviceList) adviceList.push(target);
 };
 
+/**
+ * @private
+ */
 function getAdvisorStub(method) {
 	var stub=function() {
 		var i, thisFunction=arguments.callee,
@@ -121,6 +217,8 @@ function getAdvisorStub(method) {
  * the given eventName.
  * The instance event will be emitted with two arguments: event, element
  * This method only supports W3C DOM.  IE is not supported.
+ *
+ * @private
  */
 function createDomEventDispatcher(target, eventName) {
 	return function(event) {
@@ -129,15 +227,23 @@ function createDomEventDispatcher(target, eventName) {
 }
 
 /**
- * Instantiate a MapSurface, attaching it to the given element.
- * Options can contain the following attributes:
- *		- width/height: If specified, then the size of the owning element is
- * 			set accordingly.  Otherwise, get the width/height from the element's
- *			bounds.
- *		- center: If specified should be an object containing lat/lng fields
- *			representing the initial center (defaults to 0,0)
- *		- locked: If true, then the lock count is initialized to 1, requiring a
- * 			call to unlock() in order to update visuals
+ * Initialize an existing DOM element as a map.  All internal map structures
+ * are added before any existing content in the element.
+ *
+ * <h2>Sizing</h2>
+ * The map size must be explicitly maintained.  If not specified, then the natural
+ * size of the containing element is used.  If this natural size ever changes,
+ * setSize() must be called to reset it.
+ * 
+ * @constructor
+ * @extends nanomaps.EventEmitter
+ * @name nanomaps.MapSurface
+ * @param {HTMLElement} elt The map container element
+ * @param {integer} [options.width] Explicit width of the map
+ * @param {integer} [options.height] Explicit height of the map
+ * @param {number} [options.resolution] Initial resolution
+ * @param {Projection} [options.projection=new nanomaps.WebMercatorProjection()] Map projection 
+ * @param {LatLngObject} [options.center] Initial center of the map
  */
 function MapSurface(elt, options) {
 	if (!options) options={};
@@ -149,6 +255,13 @@ function MapSurface(elt, options) {
 	function createElement(name) {
 		return document.createElement(name);
 	}
+	
+	/**
+	 * Create an element in the document that this map exists in.
+	 * @methodOf nanomaps.MapSurface#
+	 * @name createElement
+	 * @return {HTMLElement}
+	 */
 	this.createElement=createElement;
 	
 	// Hardcode some important styles
@@ -160,30 +273,6 @@ function MapSurface(elt, options) {
 	if (attr==='' || attr==='auto')
 		elt.style.zIndex='inherit';	// Establish a new stacking context
 	
-	/* 
-	DOM Structure:
-	
-		<div style="width: xxpx; height: yypx; z-index: inherit; overflow: visible; position: relative;">
-			<!-- main map viewport (overflow: hidden) -->
-			<div class="viewport" 
-				style="overflow: hidden; position: absolute; left: 0px; top: 0px; width: 100%; height: 100%;">
-				<div class="managed" style="position: absolute; width: 100%; height: 100%">
-					<!-- globally positioned elements go here -->
-				</div>
-				<div class="vpul" style="position: absolute; left: 0px; top: 0px; width: 0px; height: 0px;"></div>
-				<div class="vpur" style="position: absolute; left: 100%; top: 0px; width: 0px; height: 0px;"></div>
-				<div class="vpll" style="position: absolute; left: 0px; top: 100%; width: 0px; height: 0px;"></div>
-				<div class="vplr" style="position: absolute; left: 100%; top: 100%; width: 0px; height: 0px;"></div>
-			</div>
-			
-			<!-- unconstrained corners -->
-			<div class="scul" style="position: absolute; left: 0px; top: 0px; width: 0px; height: 0px;"></div>
-			<div class="scur" style="position: absolute; left: 100%; top: 0px; width: 0px; height: 0px;"></div>
-			<div class="scll" style="position: absolute; left: 0px; top: 100%; width: 0px; height: 0px;"></div>
-			<div class="sclr" style="position: absolute; left: 100%; top: 100%; width: 0px; height: 0px;"></div>
-		</div>
-	
-	*/
 	function createOverlay() {
 		var overlay=createElement('div');
 		overlay.style.overflow='hidden';
@@ -198,7 +287,7 @@ function MapSurface(elt, options) {
 	// create glass
 	glassElt=createOverlay();
 	glassElt.className='glass';
-	glassElt.style.display='none';
+	glassElt.style.display='block';
 	elt.insertBefore(glassElt, elt.firstChild);
 	
 	
@@ -244,20 +333,23 @@ function MapSurface(elt, options) {
 		[center.lng, center.lat]
 		);
 	
-	// Initialize display locking
-	this._lock=(options.locked ? 1 : 0);
-	
 	// Setup initial state by setting center
 	this.setCenter(center);
 	
 	// Initialization hook
 	this.initialize(options);
+	
+	// Collect loose content
+	this.collect();
 }
 var MapSurfaceMethods=MapSurface.prototype=new EventEmitter();
 /**
  * Iterate over each child element of the global layer, invoking
  * callback.  The this reference is preserved as this instance in
  * calls.
+ * @private
+ * @methodOf nanomaps.MapSurface.prototype
+ * @name _each
  */
 MapSurfaceMethods._each=function(includeManaged, callback) {
 	var elements=this.elements, managed=elements.managed, viewport=elements.viewport;
@@ -275,6 +367,9 @@ MapSurfaceMethods._each=function(includeManaged, callback) {
 
 /**
  * Iterate over contained global elements and trigger listeners.
+ * @private
+ * @methodOf nanomaps.MapSurface.prototype
+ * @name _notifyPosition
  */
 MapSurfaceMethods._notifyPosition=function() {
 	this._each(true, function(element) {
@@ -288,6 +383,9 @@ MapSurfaceMethods._notifyPosition=function() {
 
 /**
  * Reset all elements
+ * @private
+ * @methodOf nanomaps.MapSurface.prototype
+ * @name _notifyReset
  */
 MapSurfaceMethods._notifyReset=function() {
 	this._each(true, this._notifyResetSingle);
@@ -295,6 +393,9 @@ MapSurfaceMethods._notifyReset=function() {
 
 /**
  * Reset a single element
+ * @private
+ * @methodOf nanomaps.MapSurface.prototype
+ * @name _notifyResetSingle
  */
 MapSurfaceMethods._notifyResetSingle=function(element) {
 	var delegate=element.mapDelegate||DEFAULT_MAP_DELEGATE,
@@ -306,7 +407,12 @@ MapSurfaceMethods._notifyResetSingle=function(element) {
 
 /**
  * Initialization hook.  Performs initialization after map structures have
- * been initialized.
+ * been initialized but before content is added to the map.  This method
+ * does nothing but is an override hook for adding additional functionality.
+ *
+ * @public
+ * @methodOf nanomaps.MapSurface.prototype
+ * @name initialize
  */
 MapSurfaceMethods.initialize=function(options) {
 };
@@ -314,7 +420,14 @@ MapSurfaceMethods.initialize=function(options) {
 /**
  * Translates a mouse event to viewport relative coordinates and returns
  * {x:, y: }
- * TODO: Fix this.  It doesn't work in a number of corner cases.
+ * <p>TODO: Fix this.  It doesn't work in a number of corner cases.
+ *
+ * @public
+ * @methodOf nanomaps.MapSurface.prototype
+ * @name eventToContainer
+ * @param {string} event DOM event object
+ * @param {string} [elementName='viewport'] Relative to which element in the containment hierarchy
+ *
  */
 MapSurfaceMethods.eventToContainer=function(event, elementName) {
 	var relativeTo=this.elements[elementName||'viewport'], start=relativeTo,
@@ -336,6 +449,12 @@ MapSurfaceMethods.eventToContainer=function(event, elementName) {
  * Adds a DOM event listener to the given elementName (as found in the 
  * this.elements map) with the given event domEventName and eventName
  * to be raised on this instance.
+ *
+ * @public
+ * @methodOf nanomaps.MapSurface.prototype
+ * @name routeDomEvent
+ * @deprecated
+ *
  * @param domEventName DOM event name to listen
  * @param eventName Name of event to emit on this instance (defaults to "dom_${domEventName})
  * @param elementName Name of element in this.elements collection (defaults to
@@ -348,6 +467,36 @@ MapSurfaceMethods.routeDomEvent=function(domEvent, thisEvent, elementName) {
 	else if (element.attachEvent) element.attachEvent('on' + domEvent, listener);
 };
 
+/**
+ * Adds content to the map.  This is the primary method of attaching DOM content
+ * to the map after construction.  Give it either an HTMLElement or a factory
+ * object that supports a createElement(mapSurface) method.
+ * 
+ * <h2>Display Management</h2>
+ * The primary thing that map content needs to be able to do is position itself
+ * relative to a global coordinate system.  Each element managed by the map
+ * viewport is checked for a special "mapDelegate" property.  If defined, then
+ * this delegate object provides callbacks that will be invoked on map geometry
+ * changes and are responsible for displaying the element properly.  See the
+ * documentation for a complete treatment of MapDelegate objects.
+ *
+ * <h2>Default Behavior</h2>
+ * If an element added to the map does not have a mapDelegate property, the
+ * default delegate is used instead.  This default delegate defines standard
+ * and intuitive behavior for positioning a simple object.  The position and
+ * pixel offset are determined by taking the first defined result from the
+ * following sequence:
+ * <ol>
+ * <li>If the "geo" property exists on the DOM object.  Take the "latitude", 
+ *		"longitude", "x" and "y" properties.
+ * <li>Read the "latitude" and "longitude" attributes of the element.
+ * </ol>
+ *
+ * @public
+ * @methodOf nanomaps.MapSurface.prototype
+ * @name attach
+ * @param {HTMLElement or factory} element Element or factory to add
+ */
 MapSurfaceMethods.attach=function(element) {
 	// Detect if HTMLElement in standards compliant way with fallbacks for IE
 	var isHTML=window.HTMLElement ? element instanceof HTMLElement : (element.nodeType===1);
@@ -369,6 +518,23 @@ MapSurfaceMethods.attach=function(element) {
 	}
 	
 	this._notifyResetSingle(element);
+};
+
+/**
+ * Collects all unattached DOM elements from the container which have geo
+ * referencing information and attaches them.
+ *
+ * @public
+ * @methodOf nanomaps.MapSurface.prototype
+ * @name collect
+ * @param {HTMLElement or factory} element Element or factory to add
+ */
+MapSurfaceMethods.collect=function() {
+	for (var child=this.elements.parent.firstChild; child; child=child.nextSibling) {
+		if (child.nodeType===1 && child.hasAttribute('latitude') && child.hasAttribute('longitude')) {
+			this.attach(child);
+		}
+	}
 };
 
 MapSurfaceMethods.update=function(element) {
@@ -525,27 +691,39 @@ MapSurfaceMethods.moveBy=function(eastingPx, northingPx) {
 
 
 /**
+ * @private
+ * @return {longitude:, latitude:, xoffset:, yoffset:}
+ */
+function extractDefaultPosition(element) {
+	var geo=element.geo;
+	if (!geo) {
+		geo={};
+		if (isNaN(geo.latitude=Number(element.getAttribute('latitude')||'NaN'))) return null;
+		if (isNaN(geo.longitude=Number(element.getAttribute('longitude')||'NaN'))) return null;
+		geo.xoffset=Number(element.getAttribute('xoffset')||'NaN');
+		geo.yoffset=Number(element.getAttribute('yoffset')||'NaN');
+	}
+	return geo;
+}
+
+/**
  * Defult delegate for positioned objects that don't supply their own.
  */
 var DEFAULT_MAP_DELEGATE={
 	onreset: function(map, element) {
-		var geo=element.geo, latLng, offset, xy;
+		var geo=extractDefaultPosition(element), xy;
 		if (geo) {
-			latLng=geo.latLng;
-			offset=geo.offset;
-			if (latLng) {
-				// Calculate position
-				xy=map.transform.toSurface(latLng.lng, latLng.lat);
-				if (xy) {
-					if (offset&&offset.x) xy[0]+=offset.x;
-					if (offset&&offset.y) xy[1]+=offset.y;
-					
-					// set position
-					element.style.left=(xy[0])+'px';
-					element.style.top=(xy[1])+'px';
-					element.style.display='block';
-					return;
-				}
+			// Calculate position
+			xy=map.transform.toSurface(geo.longitude, geo.latitude);
+			if (xy) {
+				xy[0]+=Number(geo.xoffset||0);
+				xy[1]+=Number(geo.yoffset||0);
+				
+				// set position
+				element.style.left=(xy[0])+'px';
+				element.style.top=(xy[1])+'px';
+				element.style.display='block';
+				return;
 			}
 		}
 		
