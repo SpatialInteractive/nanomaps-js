@@ -5,7 +5,7 @@
 		<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
 		<meta name="generator" content="JsDoc Toolkit" />
 		
-		<title>JsDoc Reference - nanomaps.Projections.WebMercator</title>
+		<title>JsDoc Reference - nanomaps.TileSelector</title>
 
 		<style type="text/css">
 			/* default.css */
@@ -216,7 +216,7 @@ ul.inheritsList
 <!-- ============================== class title ============================ -->
 			<h1 class="classTitle">
 				
-				Class nanomaps.Projections.WebMercator
+				Class nanomaps.TileSelector
 			</h1>
 
 <!-- ============================== class summary ========================== -->			
@@ -227,13 +227,13 @@ ul.inheritsList
 				
 				
 				
-					<br /><i>Defined in: </i> <a href="../symbols/src/client_lib_nanomaps.core.js.html">nanomaps.core.js</a>.
+					<br /><i>Defined in: </i> <a href="../symbols/src/client_lib_nanomaps.tiles.js.html">nanomaps.tiles.js</a>.
 				
 			</p>
 
 <!-- ============================== constructor summary ==================== -->			
 			
-			<table class="summaryTable" cellspacing="0" summary="A summary of the constructor documented in the class nanomaps.Projections.WebMercator.">
+			<table class="summaryTable" cellspacing="0" summary="A summary of the constructor documented in the class nanomaps.TileSelector.">
 				<caption>Class Summary</caption>
 				<thead>
 					<tr>
@@ -246,9 +246,9 @@ ul.inheritsList
 						<td class="attributes">&nbsp;</td>
 						<td class="nameDescription" >
 							<div class="fixedFont">
-								<b><a href="../symbols/nanomaps.Projections.WebMercator.html#constructor">nanomaps.Projections.WebMercator</a></b>()
+								<b><a href="../symbols/nanomaps.TileSelector.html#constructor">nanomaps.TileSelector</a></b>()
 							</div>
-							<div class="description">Standard "Web Mercator" projection as used by Google, Microsoft, OSM, et al.</div>
+							<div class="description">Class representing a tile selector for the layout of OSM, MS, Google, et al.</div>
 						</td>
 					</tr>
 				</tbody>
@@ -257,70 +257,12 @@ ul.inheritsList
 
 <!-- ============================== properties summary ===================== -->
 			
-				
-				
-				<table class="summaryTable" cellspacing="0" summary="A summary of the fields documented in the class nanomaps.Projections.WebMercator.">
-					<caption>Field Summary</caption>
-					<thead>
-						<tr>
-							<th scope="col">Field Attributes</th>
-							<th scope="col">Field Name and Description</th>
-						</tr>
-					</thead>
-					<tbody>
-					
-						<tr>
-							<td class="attributes">&nbsp;</td>
-							<td class="nameDescription">
-								<div class="fixedFont">
-								<b><a href="../symbols/nanomaps.Projections.WebMercator.html#DEFAULT_CENTER">DEFAULT_CENTER</a></b>
-								</div>
-								<div class="description">Default center for this projection</div>
-							</td>
-						</tr>
-					
-						<tr>
-							<td class="attributes">&nbsp;</td>
-							<td class="nameDescription">
-								<div class="fixedFont">
-								<b><a href="../symbols/nanomaps.Projections.WebMercator.html#DEFAULT_RESOLUTION">DEFAULT_RESOLUTION</a></b>
-								</div>
-								<div class="description">Default resolution for this projection</div>
-							</td>
-						</tr>
-					
-						<tr>
-							<td class="attributes">&nbsp;</td>
-							<td class="nameDescription">
-								<div class="fixedFont">
-								<b><a href="../symbols/nanomaps.Projections.WebMercator.html#MAX_LEVEL">MAX_LEVEL</a></b>
-								</div>
-								<div class="description">Maximum valid level</div>
-							</td>
-						</tr>
-					
-						<tr>
-							<td class="attributes">&nbsp;</td>
-							<td class="nameDescription">
-								<div class="fixedFont">
-								<b><a href="../symbols/nanomaps.Projections.WebMercator.html#MIN_LEVEL">MIN_LEVEL</a></b>
-								</div>
-								<div class="description">Minimum valid level</div>
-							</td>
-						</tr>
-					
-					</tbody>
-				</table>
-				
-				
-				
-			
 
 <!-- ============================== methods summary ======================== -->
 			
 				
 				
-				<table class="summaryTable" cellspacing="0" summary="A summary of the methods documented in the class nanomaps.Projections.WebMercator.">
+				<table class="summaryTable" cellspacing="0" summary="A summary of the methods documented in the class nanomaps.TileSelector.">
 					<caption>Method Summary</caption>
 					<thead>
 						<tr>
@@ -333,38 +275,19 @@ ul.inheritsList
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont"><b><a href="../symbols/nanomaps.Projections.WebMercator.html#forward">forward</a></b>(x, y)
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.TileSelector.html#resolveSrc">resolveSrc</a></b>(tileDesc)
 								</div>
-								<div class="description">Convert from global to projected units</div>
+								<div class="description">Get an img src from the tileDesc</div>
 							</td>
 						</tr>
 					
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont"><b><a href="../symbols/nanomaps.Projections.WebMercator.html#fromLevel">fromLevel</a></b>(level)
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.TileSelector.html#select">select</a></b>(projection, resolution, x, y, width, height, sort)
 								</div>
-								<div class="description">Return the resolution (m/px) for the given zoom index given a standard
-power of two zoom breakdown.</div>
-							</td>
-						</tr>
-					
-						<tr>
-							<td class="attributes">&nbsp;</td>
-							<td class="nameDescription">
-								<div class="fixedFont"><b><a href="../symbols/nanomaps.Projections.WebMercator.html#inverse">inverse</a></b>(x, y)
-								</div>
-								<div class="description">Convert from projected to global units</div>
-							</td>
-						</tr>
-					
-						<tr>
-							<td class="attributes">&nbsp;</td>
-							<td class="nameDescription">
-								<div class="fixedFont"><b><a href="../symbols/nanomaps.Projections.WebMercator.html#toLevel">toLevel</a></b>(resolution)
-								</div>
-								<div class="description">Return the level for the given resolution on the standard power of
-two scale.</div>
+								<div class="description">Select all tiles that intersect the given bounding box at the
+given resolution.</div>
 							</td>
 						</tr>
 					
@@ -385,12 +308,32 @@ two scale.</div>
 				</div>
 				
 				<div class="fixedFont">
-						<b>nanomaps.Projections.WebMercator</b>()
+						<b>nanomaps.TileSelector</b>()
 				</div>
 				
 				<div class="description">
-					Standard "Web Mercator" projection as used by Google, Microsoft, OSM, et al.
-Instantiate as new WebMercator(options).
+					Class representing a tile selector for the layout of OSM, MS, Google, et al.
+<p>
+Typically, all that will need to be specified is options.tileSrc.  This string
+will be interpolated relative to the tile information with the following
+substitutions made:
+<ul>
+<li>${level} - Native level of the tile
+<li>${tileX} - X coordinate of the tile
+<li>${tileY} - Y coordinate of the tile
+<li>${modulo:a,b} - Select one of the values in the list (in this case 'a' and 'b')
+    based on a stable modulus based on the tile coordinate system.  Used to
+    pick a domain name for a given tile.
+</ul>
+<p>
+Remember to always provide proper attribution and get permission for using tiles.
+<p>
+The following tileSrc can be used to display tiles from different providers:
+<ul>
+<li>OSM (MapQuest): 
+		"http://otile${modulo:1,2,3}.mqcdn.com/tiles/1.0.0/osm/${level}/${tileX}/${tileY}.png"
+<li>OSM (Mapnik from openstreetmap.org): "http://${modulo:a,b,c}.tile.openstreetmap.org/${level}/${tileX}/${tileY}.png"
+</ul>
 					
 				</div>
 				
@@ -402,14 +345,14 @@ Instantiate as new WebMercator(options).
 						<dt class="heading">Parameters:</dt>
 						
 							<dt>
-								<span class="light fixedFont">{Number}</span>  <b>options.MIN_LEVEL</b>
-								<i>Optional, Default: 1</i>
+								<span class="light fixedFont">{integer}</span>  <b>options.tileSize</b>
+								<i>Optional, Default: 256</i>
 							</dt>
 								<dd></dd>
 						
 							<dt>
-								<span class="light fixedFont">{Number}</span>  <b>options.MAX_LEVEL</b>
-								<i>Optional, Default: 18</i>
+								<span class="light fixedFont">{string}</span>  <b>options.tileSrc</b>
+								<i>Optional, Default: ''</i>
 							</dt>
 								<dd></dd>
 						
@@ -427,99 +370,6 @@ Instantiate as new WebMercator(options).
 
 <!-- ============================== field details ========================== -->		
 			
-				<div class="sectionTitle">
-					Field Detail
-				</div>
-				
-					<a name="DEFAULT_CENTER"> </a>
-					<div class="fixedFont">
-					
-					
-					<b>DEFAULT_CENTER</b>
-					
-					</div>
-					<div class="description">
-						Default center for this projection
-						
-						
-					</div>
-					
-					
-
-						
-						
-						
-						
-
-					<hr />
-				
-					<a name="DEFAULT_RESOLUTION"> </a>
-					<div class="fixedFont">
-					
-					
-					<b>DEFAULT_RESOLUTION</b>
-					
-					</div>
-					<div class="description">
-						Default resolution for this projection
-						
-						
-					</div>
-					
-					
-
-						
-						
-						
-						
-
-					<hr />
-				
-					<a name="MAX_LEVEL"> </a>
-					<div class="fixedFont">
-					
-					
-					<b>MAX_LEVEL</b>
-					
-					</div>
-					<div class="description">
-						Maximum valid level
-						
-						
-					</div>
-					
-					
-
-						
-						
-						
-						
-
-					<hr />
-				
-					<a name="MIN_LEVEL"> </a>
-					<div class="fixedFont">
-					
-					
-					<b>MIN_LEVEL</b>
-					
-					</div>
-					<div class="description">
-						Minimum valid level
-						
-						
-					</div>
-					
-					
-
-						
-						
-						
-						
-
-					
-				
-			
 
 <!-- ============================== method details ========================= -->		
 			
@@ -527,15 +377,15 @@ Instantiate as new WebMercator(options).
 					Method Detail
 				</div>
 				
-					<a name="forward"> </a>
+					<a name="resolveSrc"> </a>
 					<div class="fixedFont">
 					
-					<span class="light">{Array[x|y]}</span>
-					<b>forward</b>(x, y)
+					
+					<b>resolveSrc</b>(tileDesc)
 					
 					</div>
 					<div class="description">
-						Convert from global to projected units
+						Get an img src from the tileDesc
 						
 						
 					</div>
@@ -547,45 +397,43 @@ Instantiate as new WebMercator(options).
 							<dt class="heading">Parameters:</dt>
 							
 								<dt>
-									<span class="light fixedFont">{Number}</span> <b>x</b>
+									<span class="light fixedFont">{TileDesc}</span> <b>tileDesc</b>
 									
 								</dt>
-								<dd></dd>
-							
-								<dt>
-									<span class="light fixedFont">{Number}</span> <b>y</b>
-									
-								</dt>
-								<dd></dd>
+								<dd>tile description returned from select</dd>
 							
 							</dl>
 						
 						
 						
 						
-						
-							<dl class="detailList">
-							<dt class="heading">Returns:</dt>
-							
-								<dd><span class="light fixedFont">{Array[x|y]}</span> </dd>
-							
-							</dl>
 						
 						
 						
 
 					<hr />
 				
-					<a name="fromLevel"> </a>
+					<a name="select"> </a>
 					<div class="fixedFont">
 					
-					<span class="light">{Number}</span>
-					<b>fromLevel</b>(level)
+					<span class="light">{Array[TileDesc]}</span>
+					<b>select</b>(projection, resolution, x, y, width, height, sort)
 					
 					</div>
 					<div class="description">
-						Return the resolution (m/px) for the given zoom index given a standard
-power of two zoom breakdown.
+						Select all tiles that intersect the given bounding box at the
+given resolution.  Return an array of TileDesc elements, where
+each TileDesc has the following attributes:
+<ul>
+  <li>key: an opaque string that uniquely identifies this tile within
+    this instance where multiple requests for the same physical tile
+    have the same key
+  <li>res: the native resolution of the tile
+	 <li>level: the native zoom level
+  <li>x, y: origin at native resolution,
+	 <li>size: tile size (width/height) at native resolution
+  <li>tileX, tileY: the tile x and y
+</ul>
 						
 						
 					</div>
@@ -597,103 +445,48 @@ power of two zoom breakdown.
 							<dt class="heading">Parameters:</dt>
 							
 								<dt>
-									<span class="light fixedFont">{Number}</span> <b>level</b>
+									<span class="light fixedFont">{Projection}</span> <b>projection</b>
 									
 								</dt>
-								<dd></dd>
-							
-							</dl>
-						
-						
-						
-						
-						
-							<dl class="detailList">
-							<dt class="heading">Returns:</dt>
-							
-								<dd><span class="light fixedFont">{Number}</span> resolution</dd>
-							
-							</dl>
-						
-						
-						
-
-					<hr />
-				
-					<a name="inverse"> </a>
-					<div class="fixedFont">
-					
-					<span class="light">{Array[x|y]}</span>
-					<b>inverse</b>(x, y)
-					
-					</div>
-					<div class="description">
-						Convert from projected to global units
-						
-						
-					</div>
-					
-					
-					
-						
-							<dl class="detailList">
-							<dt class="heading">Parameters:</dt>
-							
-								<dt>
-									<span class="light fixedFont">{Number}</span> <b>x</b>
-									
-								</dt>
-								<dd></dd>
-							
-								<dt>
-									<span class="light fixedFont">{Number}</span> <b>y</b>
-									
-								</dt>
-								<dd></dd>
-							
-							</dl>
-						
-						
-						
-						
-						
-							<dl class="detailList">
-							<dt class="heading">Returns:</dt>
-							
-								<dd><span class="light fixedFont">{Array[x|y]}</span> </dd>
-							
-							</dl>
-						
-						
-						
-
-					<hr />
-				
-					<a name="toLevel"> </a>
-					<div class="fixedFont">
-					
-					<span class="light">{Number}</span>
-					<b>toLevel</b>(resolution)
-					
-					</div>
-					<div class="description">
-						Return the level for the given resolution on the standard power of
-two scale.
-						
-						
-					</div>
-					
-					
-					
-						
-							<dl class="detailList">
-							<dt class="heading">Parameters:</dt>
+								<dd>map projection</dd>
 							
 								<dt>
 									<span class="light fixedFont">{Number}</span> <b>resolution</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>resolution at which tiles will be rendered</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>x</b>
+									
+								</dt>
+								<dd>Global pixel coordinate relative to projection and resolution
+of the upper left corner of the region to select</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>y</b>
+									
+								</dt>
+								<dd>Global pixel coordinate relative to projection and resolution
+of the upper left corner of the region to select</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>width</b>
+									
+								</dt>
+								<dd>Pixel width of region to select</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>height</b>
+									
+								</dt>
+								<dd>Pixel height of the region to select</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Boolean}</span> <b>sort</b>
+									
+								</dt>
+								<dd>If true, then returns the tiles sorted by most visually impactful</dd>
 							
 							</dl>
 						
@@ -704,7 +497,7 @@ two scale.
 							<dl class="detailList">
 							<dt class="heading">Returns:</dt>
 							
-								<dd><span class="light fixedFont">{Number}</span> level</dd>
+								<dd><span class="light fixedFont">{Array[TileDesc]}</span> </dd>
 							
 							</dl>
 						

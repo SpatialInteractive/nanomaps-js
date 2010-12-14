@@ -5,7 +5,7 @@
 		<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
 		<meta name="generator" content="JsDoc Toolkit" />
 		
-		<title>JsDoc Reference - _global_</title>
+		<title>JsDoc Reference - nanomaps.TileLayer</title>
 
 		<style type="text/css">
 			/* default.css */
@@ -216,7 +216,7 @@ ul.inheritsList
 <!-- ============================== class title ============================ -->
 			<h1 class="classTitle">
 				
-				Built-In Namespace _global_
+				Class nanomaps.TileLayer
 			</h1>
 
 <!-- ============================== class summary ========================== -->			
@@ -227,9 +227,32 @@ ul.inheritsList
 				
 				
 				
+					<br /><i>Defined in: </i> <a href="../symbols/src/client_lib_nanomaps.tiles.js.html">nanomaps.tiles.js</a>.
+				
 			</p>
 
 <!-- ============================== constructor summary ==================== -->			
+			
+			<table class="summaryTable" cellspacing="0" summary="A summary of the constructor documented in the class nanomaps.TileLayer.">
+				<caption>Class Summary</caption>
+				<thead>
+					<tr>
+						<th scope="col">Constructor Attributes</th>
+						<th scope="col">Constructor Name and Description</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td class="attributes">&nbsp;</td>
+						<td class="nameDescription" >
+							<div class="fixedFont">
+								<b><a href="../symbols/nanomaps.TileLayer.html#constructor">nanomaps.TileLayer</a></b>()
+							</div>
+							<div class="description">Construct a standard TileLayer that can be attached to a MapSurface.</div>
+						</td>
+					</tr>
+				</tbody>
+			</table>
 			
 
 <!-- ============================== properties summary ===================== -->
@@ -237,16 +260,148 @@ ul.inheritsList
 
 <!-- ============================== methods summary ======================== -->
 			
+				
+				
+				<table class="summaryTable" cellspacing="0" summary="A summary of the methods documented in the class nanomaps.TileLayer.">
+					<caption>Method Summary</caption>
+					<thead>
+						<tr>
+							<th scope="col">Method Attributes</th>
+							<th scope="col">Method Name and Description</th>
+						</tr>
+					</thead>
+					<tbody>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.TileLayer.html#createElement">createElement</a></b>(map)
+								</div>
+								<div class="description">Returns a new element ready to be added to the MapSurface.</div>
+							</td>
+						</tr>
+					
+					</tbody>
+				</table>
+				
+				
+				
+			
 <!-- ============================== events summary ======================== -->
 			
 
 <!-- ============================== constructor details ==================== -->		
+			
+			<div class="details"><a name="constructor"> </a>
+				<div class="sectionTitle">
+					Class Detail
+				</div>
+				
+				<div class="fixedFont">
+						<b>nanomaps.TileLayer</b>()
+				</div>
+				
+				<div class="description">
+					Construct a standard TileLayer that can be attached to a MapSurface.  If a
+TileSelector is not passed in the options, then a default is constructed and
+options are passed to it.  See the options accepted by the TileSelector
+constructor for additional parameters.
+					
+				</div>
+				
+				
+				
+				<pre class="code">
+var map=new nanomaps.MapSurface(someElement);
+map.attach(new nanomaps.TileLayer({ 
+   tileSrc: "http://otile${modulo:1,2,3}.mqcdn.com/tiles/1.0.0/osm/${level}/${tileX}/${tileY}.png" }));</pre>
+				
+				
+				
+				
+					
+						<dl class="detailList">
+						<dt class="heading">Parameters:</dt>
+						
+							<dt>
+								<span class="light fixedFont">{TileSelector}</span>  <b>options.selector</b>
+								<i>Optional</i>
+							</dt>
+								<dd>describes the source and geometry of the
+tiles</dd>
+						
+							<dt>
+								<span class="light fixedFont">{integer}</span>  <b>options.buffer</b>
+								<i>Optional, Default: 64</i>
+							</dt>
+								<dd>The number of pixels to actively buffer on
+all sides of the map</dd>
+						
+						</dl>
+					
+					
+					
+					
+					
+					
+					
+
+			</div>
 			
 
 <!-- ============================== field details ========================== -->		
 			
 
 <!-- ============================== method details ========================= -->		
+			
+				<div class="sectionTitle">
+					Method Detail
+				</div>
+				
+					<a name="createElement"> </a>
+					<div class="fixedFont">
+					
+					<span class="light">{HTMLElement}</span>
+					<b>createElement</b>(map)
+					
+					</div>
+					<div class="description">
+						Returns a new element ready to be added to the MapSurface.  This method
+fulfills the contract for MapSurface.attach.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{MapSurface}</span> <b>map</b>
+									
+								</dt>
+								<dd></dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{HTMLElement}</span> </dd>
+							
+							</dl>
+						
+						
+						
+
+					
+				
 			
 			
 <!-- ============================== event details ========================= -->		
