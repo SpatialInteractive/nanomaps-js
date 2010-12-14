@@ -22,7 +22,10 @@
 		
 		resize();
 		
-		var tileLayer=new nanomaps.TileLayer();
+		var tileLayer=new nanomaps.TileLayer({
+			//tileSrc: "http://otile${modulo:1,2,3}.mqcdn.com/tiles/1.0.0/osm/${level}/${tileX}/${tileY}.png"
+			tileSrc: "http://${modulo:a,b,c}.tile.openstreetmap.org/${level}/${tileX}/${tileY}.png"
+		});
 		map.attach(tileLayer);
 		
 		tagElt=document.createElement('div');
