@@ -17,6 +17,6 @@ ls -l build/dist/lib
 
 if [ -d pages ]; then
 	echo "Updating demo in pages"
-	cp -R build/dist pages/demo
+	cp -R build/dist/* pages/demo
 fi
 
