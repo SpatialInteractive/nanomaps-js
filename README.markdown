@@ -27,6 +27,62 @@ shapes, info windows, etc.
 In exchange for this minimalism, you get to add maps to your pages for just a
 handful of kilobytes of JavaScript.
 
+Quick Start
+-----------
+Once you have a map, the "attach" method can be used to add either raw HTML
+elements or "factory object" (of which a TileLayer is one) directly to the map.
+In order to position properly, elements must have "latitude" and "longitude"
+attributes.  The element will be maintained on the map with its upper left corner
+at the given coordinates.  Use standard CSS techniques to reposition (ie. margin
+or padding) to match the tail of the icon.
+
+When a map is constructed, any positioned elements (having a latitude and longitude attribute)
+are positioned onto the map (due to a bug, they also need a z-index for the moment).
+Non-positioned elements remain in the container and map content is added before them
+in the DOM.
+	
+	<style>
+		#map {
+			width: 640px;
+			height: 480px;
+		}
+		
+		#mapcopy {
+			z-index: 50;
+			position: absolute;
+			right: 2px; bottom: 2px;
+			text-align: right;
+			font-family: sans-serif;
+			font-size: 10px;
+			-webkit-user-select:none;
+			-moz-user-select:none;
+			cursor: default;
+		}
+		#mapcopy a:visited {
+			color: #00f;
+		}
+		
+		.poi {
+			z-index: 100;
+			margin-left: -10px;
+			margin-top: -32px;
+			display: none;	/* make not displayed by default to avoid startup flicker */
+		}
+	</style>
+
+	<div id="mymap">
+		<img class="poi" src="images/red-pushpin.png" latitude="39.780533" longitude="-104.988896" />
+		
+		<span>Tiles Courtesy of <a href="http://open.mapquest.co.uk/" target="_blank">MapQuest</a> <img width="16" height="16" src="http://developer.mapquest.com/content/osm/mq_logo.png" border="0"></span>
+		<br />
+		<span>&copy; <a href="http://www.openstreetmap.org/">OpenStreetMap</a> and contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a></span>
+	</div>
+	
+	<script>
+		var map=new nanomaps.MapSurface(document.getElementById("mymap"));
+		map.attach(new nanomaps.TileLayer({ 
+		   tileSrc: "http://otile${modulo:1,2,3}.mqcdn.com/tiles/1.0.0/osm/${level}/${tileX}/${tileY}.png" }));
+	</script>
 Status
 ------
 This project is very young and I am developing it in tandem with a product I am
