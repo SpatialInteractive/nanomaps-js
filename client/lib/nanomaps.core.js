@@ -496,6 +496,7 @@ MapSurfaceMethods.routeDomEvent=function(domEvent, thisEvent, elementName) {
  * @methodOf nanomaps.MapSurface.prototype
  * @name attach
  * @param {HTMLElement or factory} element Element or factory to add
+ * @return {HTMLElement} the element attached
  */
 MapSurfaceMethods.attach=function(element) {
 	// Detect if HTMLElement in standards compliant way with fallbacks for IE
@@ -518,6 +519,8 @@ MapSurfaceMethods.attach=function(element) {
 	}
 	
 	this._notifyResetSingle(element);
+	
+	return element;
 };
 
 /**
