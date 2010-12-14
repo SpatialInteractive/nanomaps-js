@@ -5,7 +5,7 @@
 		<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
 		<meta name="generator" content="JsDoc Toolkit" />
 		
-		<title>JsDoc Reference - nanomaps.EventEmitter</title>
+		<title>JsDoc Reference - nanomaps.MapTransform</title>
 
 		<style type="text/css">
 			/* default.css */
@@ -212,7 +212,7 @@ ul.inheritsList
 <!-- ============================== class title ============================ -->
 			<h1 class="classTitle">
 				
-				Class nanomaps.EventEmitter
+				Class nanomaps.MapTransform
 			</h1>
 
 <!-- ============================== class summary ========================== -->			
@@ -229,7 +229,7 @@ ul.inheritsList
 
 <!-- ============================== constructor summary ==================== -->			
 			
-			<table class="summaryTable" cellspacing="0" summary="A summary of the constructor documented in the class nanomaps.EventEmitter.">
+			<table class="summaryTable" cellspacing="0" summary="A summary of the constructor documented in the class nanomaps.MapTransform.">
 				<caption>Class Summary</caption>
 				<thead>
 					<tr>
@@ -242,9 +242,9 @@ ul.inheritsList
 						<td class="attributes">&nbsp;</td>
 						<td class="nameDescription" >
 							<div class="fixedFont">
-								<b><a href="../symbols/nanomaps.EventEmitter.html#constructor">nanomaps.EventEmitter</a></b>()
+								<b><a href="../symbols/nanomaps.MapTransform.html#constructor">nanomaps.MapTransform</a></b>()
 							</div>
-							<div class="description">EventEmitter base class.</div>
+							<div class="description">Construct a new MapTransform with the given parameters.</div>
 						</td>
 					</tr>
 				</tbody>
@@ -258,7 +258,7 @@ ul.inheritsList
 			
 				
 				
-				<table class="summaryTable" cellspacing="0" summary="A summary of the methods documented in the class nanomaps.EventEmitter.">
+				<table class="summaryTable" cellspacing="0" summary="A summary of the methods documented in the class nanomaps.MapTransform.">
 					<caption>Method Summary</caption>
 					<thead>
 						<tr>
@@ -271,58 +271,55 @@ ul.inheritsList
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont"><b><a href="../symbols/nanomaps.EventEmitter.html#addListener">addListener</a></b>(event, listener)
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapTransform.html#fromPixels">fromPixels</a></b>(x, y)
 								</div>
-								<div class="description">Add an event listener that will be invoked on every following occurence of the
-named event.</div>
+								<div class="description">Convert from global pixel coordinates to lng/lat.</div>
 							</td>
 						</tr>
 					
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont"><b><a href="../symbols/nanomaps.EventEmitter.html#advise">advise</a></b>(methodName, advice, target)
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapTransform.html#fromSurface">fromSurface</a></b>(x, y)
 								</div>
-								<div class="description">Overrides the given methodName on this instance applying the given
-advice ("before" or "after").</div>
+								<div class="description">Convert from surface coordinates to [lng, lat] offset from the zero point.</div>
 							</td>
 						</tr>
 					
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont"><b><a href="../symbols/nanomaps.EventEmitter.html#emit">emit</a></b>(event)
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapTransform.html#init">init</a></b>(projection, resolution, Longitude/Latitude)
 								</div>
-								<div class="description">Invokes a given event by name, triggering all registered persistent listeners
-and once only listeners.</div>
+								<div class="description"></div>
 							</td>
 						</tr>
 					
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont"><b><a href="../symbols/nanomaps.EventEmitter.html#once">once</a></b>(event, listener)
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapTransform.html#rescale">rescale</a></b>(resolution, zeroLngLat)
 								</div>
-								<div class="description">Add an event listener that will be invoked on the very next occurence of the
-named event.</div>
+								<div class="description">Return a new MapTransform at a new scale and zeroLatLng</div>
 							</td>
 						</tr>
 					
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont"><b><a href="../symbols/nanomaps.EventEmitter.html#removeAllListeners">removeAllListeners</a></b>(event)
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapTransform.html#toPixels">toPixels</a></b>(lng, lat)
 								</div>
-								<div class="description">Remove all listeners for a given event.</div>
+								<div class="description">Convert the given longitude/latitude to returned [x, y] coordinates.</div>
 							</td>
 						</tr>
 					
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont"><b><a href="../symbols/nanomaps.EventEmitter.html#removeListener">removeListener</a></b>(event, listener)
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapTransform.html#toSurface">toSurface</a></b>(lng, lat)
 								</div>
-								<div class="description">Remove a previously added listener.</div>
+								<div class="description">Return surface coordinates of the given lat/lng (offset relative to
+the zero point)</div>
 							</td>
 						</tr>
 					
@@ -343,11 +340,14 @@ named event.</div>
 				</div>
 				
 				<div class="fixedFont">
-						<b>nanomaps.EventEmitter</b>()
+						<b>nanomaps.MapTransform</b>()
 				</div>
 				
 				<div class="description">
-					EventEmitter base class.  Based on Node.js EventEmitter.
+					Construct a new MapTransform with the given parameters.  Implementations
+will typically call init(...) next.  Note that this class typically represents
+longitude and latitude as ordered arrays as [longitude, latitude], corresponding
+to x and y.
 					
 				</div>
 				
@@ -374,19 +374,15 @@ named event.</div>
 					Method Detail
 				</div>
 				
-					<a name="addListener"> </a>
+					<a name="fromPixels"> </a>
 					<div class="fixedFont">
 					
-					
-					<b>addListener</b>(event, listener)
+					<span class="light">{Array[lng|lat]}</span>
+					<b>fromPixels</b>(x, y)
 					
 					</div>
 					<div class="description">
-						Add an event listener that will be invoked on every following occurence of the
-named event.  The listener is invoked with <b>this</b> equal to the instance
-that raised the event and arguments specific to the event type.
-
-The method "on" is a synonym of addListener.
+						Convert from global pixel coordinates to lng/lat.
 						
 						
 					</div>
@@ -398,16 +394,121 @@ The method "on" is a synonym of addListener.
 							<dt class="heading">Parameters:</dt>
 							
 								<dt>
-									<span class="light fixedFont">{string}</span> <b>event</b>
+									<span class="light fixedFont">{Number}</span> <b>x</b>
 									
 								</dt>
-								<dd>Event name to add listener to</dd>
+								<dd></dd>
 							
 								<dt>
-									<span class="light fixedFont">{function}</span> <b>listener</b>
+									<span class="light fixedFont">{Number}</span> <b>y</b>
 									
 								</dt>
-								<dd>Callback to be invoked on event</dd>
+								<dd></dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{Array[lng|lat]}</span> Lng/lat corresponding to the global pixels</dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="fromSurface"> </a>
+					<div class="fixedFont">
+					
+					<span class="light">{Array[lng|lat]}</span>
+					<b>fromSurface</b>(x, y)
+					
+					</div>
+					<div class="description">
+						Convert from surface coordinates to [lng, lat] offset from the zero point.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>x</b>
+									
+								</dt>
+								<dd></dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>y</b>
+									
+								</dt>
+								<dd></dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{Array[lng|lat]}</span> Lng/lat corresponding to the suface pixels</dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="init"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>init</b>(projection, resolution, Longitude/Latitude)
+					
+					</div>
+					<div class="description">
+						
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Projection object}</span> <b>projection</b>
+									
+								</dt>
+								<dd>map projection</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>resolution</b>
+									
+								</dt>
+								<dd>the resolution that the transform describes</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Array[lng|lat]}</span> <b>Longitude/Latitude</b>
+									
+								</dt>
+								<dd>corresponding to the viewport
+zero pixel coordinate</dd>
 							
 							</dl>
 						
@@ -420,36 +521,18 @@ The method "on" is a synonym of addListener.
 
 					<hr />
 				
-					<a name="advise"> </a>
+					<a name="rescale"> </a>
 					<div class="fixedFont">
 					
 					
-					<b>advise</b>(methodName, advice, target)
+					<b>rescale</b>(resolution, zeroLngLat)
 					
 					</div>
 					<div class="description">
-						Overrides the given methodName on this instance applying the given
-advice ("before" or "after").  The given target method is invoked
-for the advice.
-
-<p>Invoking this method supports the arbitrary augmentation of a class's
-methods with before or after advice.  The original method is replaced with
-a stub that invokes a list of other methods before and after the original
-target.  If the original method doesn't exist, the stub will still be
-defined.
-<p>It is safe to use this method on prototypes or instances as it will only
-modify the outermost prototype (target of the call).
+						Return a new MapTransform at a new scale and zeroLatLng
 						
 						
 					</div>
-					
-					
-					
-					<pre class="code">MapSurface.prototype.advise('initialize', 'after', 
-		function() { alert('Initialized'); });</pre>
-					
-					<pre class="code">myMap.advise('onzoom', 'after', 
-		function() { alert('zoomed'); });</pre>
 					
 					
 					
@@ -458,22 +541,16 @@ modify the outermost prototype (target of the call).
 							<dt class="heading">Parameters:</dt>
 							
 								<dt>
-									<span class="light fixedFont">{string}</span> <b>methodName</b>
+									<span class="light fixedFont">{Number}</span> <b>resolution</b>
 									
 								</dt>
-								<dd>Name of the method to override</dd>
+								<dd>new resolution</dd>
 							
 								<dt>
-									<span class="light fixedFont">{string}</span> <b>advice</b>
+									<span class="light fixedFont">{Array[lng|lat]}</span> <b>zeroLngLat</b>
 									
 								</dt>
-								<dd>Advice to apply ("before" or "after")</dd>
-							
-								<dt>
-									<span class="light fixedFont">{function}</span> <b>target</b>
-									
-								</dt>
-								<dd>Function which is the target of advice</dd>
+								<dd>new zero point</dd>
 							
 							</dl>
 						
@@ -486,24 +563,20 @@ modify the outermost prototype (target of the call).
 
 					<hr />
 				
-					<a name="emit"> </a>
+					<a name="toPixels"> </a>
 					<div class="fixedFont">
 					
-					
-					<b>emit</b>(event)
+					<span class="light">{Array[x|y]}</span>
+					<b>toPixels</b>(lng, lat)
 					
 					</div>
 					<div class="description">
-						Invokes a given event by name, triggering all registered persistent listeners
-and once only listeners.  All arguments after the first are taken to be the
-arguments to the event listeners.  Once only listeners are invoked first
-followed by persistent listeners.  Otherwise, listeners are invoked in the
-order added.
-<p>
-If a method exists on the instance named 'on' + event, then that method
-will be invoked as an event listener prior to any others.
-
-<p><i>TODO: Make listener add/remove durable from within a callback</i>
+						Convert the given longitude/latitude to returned [x, y] coordinates.
+Returns null if the lng/lat is out of bounds.
+NOTE: the order of the parameters is longitude, latitude, corresponding
+with x and y.
+In order to align to the viewport, the return value should be subtracted
+from this.zeroPx (see toViewport).
 						
 						
 					</div>
@@ -515,81 +588,45 @@ will be invoked as an event listener prior to any others.
 							<dt class="heading">Parameters:</dt>
 							
 								<dt>
-									<span class="light fixedFont">{string}</span> <b>event</b>
+									<span class="light fixedFont">{Number}</span> <b>lng</b>
 									
 								</dt>
-								<dd>Event name to add listener to</dd>
+								<dd>longitude</dd>
 							
 								<dt>
-									<b>...</b>
+									<span class="light fixedFont">{Number}</span> <b>lat</b>
 									
 								</dt>
-								<dd>Arguments to registred listeners</dd>
+								<dd>latitude</dd>
 							
 							</dl>
 						
 						
 						
 						
-						
-						
-						
-
-					<hr />
-				
-					<a name="once"> </a>
-					<div class="fixedFont">
-					
-					
-					<b>once</b>(event, listener)
-					
-					</div>
-					<div class="description">
-						Add an event listener that will be invoked on the very next occurence of the
-named event.  The listener is invoked with <b>this</b> equal to the instance
-that raised the event and arguments specific to the event type.
-						
-						
-					</div>
-					
-					
-					
 						
 							<dl class="detailList">
-							<dt class="heading">Parameters:</dt>
+							<dt class="heading">Returns:</dt>
 							
-								<dt>
-									<span class="light fixedFont">{string}</span> <b>event</b>
-									
-								</dt>
-								<dd>Event name to add listener to</dd>
-							
-								<dt>
-									<span class="light fixedFont">{function}</span> <b>listener</b>
-									
-								</dt>
-								<dd>Callback to be invoked on event</dd>
+								<dd><span class="light fixedFont">{Array[x|y]}</span> Global projected pixels of the given lng/lat</dd>
 							
 							</dl>
-						
-						
-						
-						
 						
 						
 						
 
 					<hr />
 				
-					<a name="removeAllListeners"> </a>
+					<a name="toSurface"> </a>
 					<div class="fixedFont">
 					
-					
-					<b>removeAllListeners</b>(event)
+					<span class="light">{Array[x|y]}</span>
+					<b>toSurface</b>(lng, lat)
 					
 					</div>
 					<div class="description">
-						Remove all listeners for a given event.
+						Return surface coordinates of the given lat/lng (offset relative to
+the zero point)
 						
 						
 					</div>
@@ -601,59 +638,29 @@ that raised the event and arguments specific to the event type.
 							<dt class="heading">Parameters:</dt>
 							
 								<dt>
-									<span class="light fixedFont">{string}</span> <b>event</b>
+									<span class="light fixedFont">{Number}</span> <b>lng</b>
 									
 								</dt>
-								<dd>Event name to add listener to</dd>
+								<dd>longitude</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>lat</b>
+									
+								</dt>
+								<dd>latitude</dd>
 							
 							</dl>
 						
 						
 						
 						
-						
-						
-						
-
-					<hr />
-				
-					<a name="removeListener"> </a>
-					<div class="fixedFont">
-					
-					
-					<b>removeListener</b>(event, listener)
-					
-					</div>
-					<div class="description">
-						Remove a previously added listener.  Does nothing if the given listener
-is not found.
-						
-						
-					</div>
-					
-					
-					
 						
 							<dl class="detailList">
-							<dt class="heading">Parameters:</dt>
+							<dt class="heading">Returns:</dt>
 							
-								<dt>
-									<span class="light fixedFont">{string}</span> <b>event</b>
-									
-								</dt>
-								<dd>Event name to add listener to</dd>
-							
-								<dt>
-									<span class="light fixedFont">{function}</span> <b>listener</b>
-									
-								</dt>
-								<dd>Previously added callback to remove</dd>
+								<dd><span class="light fixedFont">{Array[x|y]}</span> Surface pixels of the given lng/lat</dd>
 							
 							</dl>
-						
-						
-						
-						
 						
 						
 						

@@ -197,6 +197,12 @@ ul.inheritsList
 	
 	<li><a href="../symbols/nanomaps.MapSurface.html">nanomaps.MapSurface</a></li>
 	
+	<li><a href="../symbols/nanomaps.MapTransform.html">nanomaps.MapTransform</a></li>
+	
+	<li><a href="../symbols/nanomaps.Projections.html">nanomaps.Projections</a></li>
+	
+	<li><a href="../symbols/nanomaps.Projections.WebMercator.html">nanomaps.Projections.WebMercator</a></li>
+	
 </ul>
 <hr />
 			<!-- end publish.classesIndex -->
@@ -306,9 +312,48 @@ referencing information and attaches them.</div>
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapSurface.html#getCenter">getCenter</a></b>()
+								</div>
+								<div class="description">Return a reference to the current center object, having fields "lat"
+and "lng".</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapSurface.html#getLevel">getLevel</a></b>()
+								</div>
+								<div class="description">Get the current level that represents the map's resolution.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapSurface.html#getResolution">getResolution</a></b>()
+								</div>
+								<div class="description">Get the current resolution in projection units per pixel (most commonly
+meters/pixel).</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
 								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapSurface.html#initialize">initialize</a></b>()
 								</div>
 								<div class="description">Initialization hook.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapSurface.html#moveBy">moveBy</a></b>(eastingPx, northingPx)
+								</div>
+								<div class="description">Reposition the map by the given number of pixels expressed as pixels east
+and north.</div>
 							</td>
 						</tr>
 					
@@ -320,6 +365,75 @@ referencing information and attaches them.</div>
 								<div class="description">Adds a DOM event listener to the given elementName (as found in the 
 this.elements map) with the given event domEventName and eventName
 to be raised on this instance.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapSurface.html#setCenter">setCenter</a></b>(centerLatLng)
+								</div>
+								<div class="description">Set the map center to the given global coordinates as specified by the
+object with properties "lat" and "lng".</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapSurface.html#setLevel">setLevel</a></b>(level, preserveXY)
+								</div>
+								<div class="description">Change the map resolution by specifying a projection dependent level, 
+optionaly preserving the global coordinates
+under an arbitrary location on the map viewport.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapSurface.html#setResolution">setResolution</a></b>(resolution, preserveXY)
+								</div>
+								<div class="description">Change the map resolution, optionaly preserving the global coordinates
+under an arbitrary location on the map viewport.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapSurface.html#setSize">setSize</a></b>(width, height)
+								</div>
+								<div class="description">Set the width/height of the map.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapSurface.html#toGlobalPixels">toGlobalPixels</a></b>(x, y)
+								</div>
+								<div class="description">Translate a viewport coordinate relative to the visible area to the
+projected pixel coordinates relative to the managed layer coordinate system.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapSurface.html#toLatLng">toLatLng</a></b>(x, y)
+								</div>
+								<div class="description">Given x,y coordinates relative to the visible area of the viewport,
+return the corresponding lat/lng.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapSurface.html#update">update</a></b>(element)
+								</div>
+								<div class="description">Attaches or updates an element.</div>
 							</td>
 						</tr>
 					
@@ -593,6 +707,106 @@ referencing information and attaches them.
 
 					<hr />
 				
+					<a name="getCenter"> </a>
+					<div class="fixedFont">
+					
+					<span class="light">{LatLng object}</span>
+					<b>getCenter</b>()
+					
+					</div>
+					<div class="description">
+						Return a reference to the current center object, having fields "lat"
+and "lng".
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{LatLng object}</span> </dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="getLevel"> </a>
+					<div class="fixedFont">
+					
+					<span class="light">{Number}</span>
+					<b>getLevel</b>()
+					
+					</div>
+					<div class="description">
+						Get the current level that represents the map's resolution.  This is a
+calculated value based on the projection, but it is usually a real number,
+not necessarily an integer.
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{Number}</span> </dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="getResolution"> </a>
+					<div class="fixedFont">
+					
+					<span class="light">{Number}</span>
+					<b>getResolution</b>()
+					
+					</div>
+					<div class="description">
+						Get the current resolution in projection units per pixel (most commonly
+meters/pixel).
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{Number}</span> </dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
 					<a name="initialize"> </a>
 					<div class="fixedFont">
 					
@@ -610,6 +824,51 @@ does nothing but is an override hook for adding additional functionality.
 					
 					
 					
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="moveBy"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>moveBy</b>(eastingPx, northingPx)
+					
+					</div>
+					<div class="description">
+						Reposition the map by the given number of pixels expressed as pixels east
+and north.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>eastingPx</b>
+									
+								</dt>
+								<dd>Number of pixels to the right (east) to move towards
+the center</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>northingPx</b>
+									
+								</dt>
+								<dd>Number of pixels to the top (north) to move towards
+the center</dd>
+							
+							</dl>
 						
 						
 						
@@ -669,6 +928,331 @@ viewport)</dd>
 						
 						
 
+					<hr />
+				
+					<a name="setCenter"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>setCenter</b>(centerLatLng)
+					
+					</div>
+					<div class="description">
+						Set the map center to the given global coordinates as specified by the
+object with properties "lat" and "lng".
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{LatLng object}</span> <b>centerLatLng</b>
+									
+								</dt>
+								<dd></dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="setLevel"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>setLevel</b>(level, preserveXY)
+					
+					</div>
+					<div class="description">
+						Change the map resolution by specifying a projection dependent level, 
+optionaly preserving the global coordinates
+under an arbitrary location on the map viewport.  If preserveXY is not
+given, then the coordinates at the center are preserved.
+<p>
+The mapping between level and resolution is done by the projection.  For the
+default WebMercator projection, the level is a positive number representing
+the power of two decimation factor.  It can take any floating point value
+(not just integers) and is interpolated using 2^x exponentiation or a base
+2 logarithm.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>level</b>
+									
+								</dt>
+								<dd>Floating point level between the projections minimum and
+		maximum zoom level (if out of these bounds, it is clamped to min/max
+		values)</dd>
+							
+								<dt>
+									<span class="light fixedFont">{XY object}</span> <b>preserveXY</b>
+									<i>Optional</i>
+								</dt>
+								<dd>Object with "x" and "y" properties specifying
+		a point on the viewport measured from the upper-left</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="setResolution"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>setResolution</b>(resolution, preserveXY)
+					
+					</div>
+					<div class="description">
+						Change the map resolution, optionaly preserving the global coordinates
+under an arbitrary location on the map viewport.  If preserveXY is not
+given, then the coordinates at the center are preserved.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>resolution</b>
+									
+								</dt>
+								<dd></dd>
+							
+								<dt>
+									<span class="light fixedFont">{XY object}</span> <b>preserveXY</b>
+									<i>Optional</i>
+								</dt>
+								<dd>Object with "x" and "y" properties specifying
+		a point on the viewport measured from the upper-left</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="setSize"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>setSize</b>(width, height)
+					
+					</div>
+					<div class="description">
+						Set the width/height of the map.  The style.width and style.height is always
+hardcoded so as to avoid strange effects if the container changes size.
+<p>
+If no arguments are given, the container element's size is set to automatic,
+its natural width/height are measured, and this size is used to lay out the map.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{integer}</span> <b>width</b>
+									
+								</dt>
+								<dd></dd>
+							
+								<dt>
+									<span class="light fixedFont">{integer}</span> <b>height</b>
+									
+								</dt>
+								<dd></dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="toGlobalPixels"> </a>
+					<div class="fixedFont">
+					
+					<span class="light">{XY object}</span>
+					<b>toGlobalPixels</b>(x, y)
+					
+					</div>
+					<div class="description">
+						Translate a viewport coordinate relative to the visible area to the
+projected pixel coordinates relative to the managed layer coordinate system.  
+Note that this assumes an axis inversion
+on the y-axis (ie. Increasing "y" parameters will produce decreasing "y"
+results).  This method is used for a number of internal calculations but
+is unlikely to be of use to end-callers.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>x</b>
+									
+								</dt>
+								<dd>coordinate measured from the left of the viewport</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>y</b>
+									
+								</dt>
+								<dd>coordinate measured from the top of the viewport</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{XY object}</span> </dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="toLatLng"> </a>
+					<div class="fixedFont">
+					
+					<span class="light">{LatLng object}</span>
+					<b>toLatLng</b>(x, y)
+					
+					</div>
+					<div class="description">
+						Given x,y coordinates relative to the visible area of the viewport,
+return the corresponding lat/lng.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>x</b>
+									
+								</dt>
+								<dd>coordinate measured from the left of the viewport</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>y</b>
+									
+								</dt>
+								<dd>coordinate measured from the top of the viewport</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{LatLng object}</span> </dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="update"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>update</b>(element)
+					
+					</div>
+					<div class="description">
+						Attaches or updates an element.  If the element is already a child of the
+map viewport, then it is "reset" (its position is updated).  Otherwise, this
+acts like a call to attach.  This method is only designed to take an element,
+not a factory.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{HTMLElement}</span> <b>element</b>
+									
+								</dt>
+								<dd></dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
 					
 				
 			
@@ -683,7 +1267,7 @@ viewport)</dd>
 <!-- ============================== footer ================================= -->
 		<div class="fineprint" style="clear:both">
 			
-			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.3.2 on Mon Dec 13 2010 14:00:13 GMT-0700 (MST)
+			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.3.2 on Mon Dec 13 2010 17:25:38 GMT-0700 (MST)
 		</div>
 	</body>
 </html>
