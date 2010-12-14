@@ -537,11 +537,36 @@ MapSurfaceMethods.collect=function() {
 	}
 };
 
+/**
+ * Attaches or updates an element.  If the element is already a child of the
+ * map viewport, then it is "reset" (its position is updated).  Otherwise, this
+ * acts like a call to attach.  This method is only designed to take an element,
+ * not a factory.
+ *
+ * @public
+ * @methodOf nanomaps.MapSurface.prototype
+ * @name update
+ * @param {HTMLElement} element
+ */
 MapSurfaceMethods.update=function(element) {
-	if (!element.parentElement) this.attach(element);
+	var parent=element.parentElement, elements=this.elements;
+	if (parent!==elements.viewport||parent!==elements.managed) this.attach(element);
 	else this._notifyResetSingle(element);
 };
 
+/**
+ * Set the width/height of the map.  The style.width and style.height is always
+ * hardcoded so as to avoid strange effects if the container changes size.
+ * <p>
+ * If no arguments are given, the container element's size is set to automatic,
+ * its natural width/height are measured, and this size is used to lay out the map.
+ *
+ * @public
+ * @methodOf nanomaps.MapSurface.prototype
+ * @name setSize
+ * @param {integer} width
+ * @param {integer} height
+ */
 MapSurfaceMethods.setSize=function(width, height) {
 	var elt=this.elements.parent, center=this._center;
 	if (arguments.length<2) {
@@ -561,7 +586,13 @@ MapSurfaceMethods.setSize=function(width, height) {
 };
 
 /**
- * Set the map center to {lat:, lng:}
+ * Set the map center to the given global coordinates as specified by the
+ * object with properties "lat" and "lng".
+ *
+ * @public
+ * @methodOf nanomaps.MapSurface.prototype
+ * @name setCenter
+ * @param {LatLng object} centerLatLng
  */
 MapSurfaceMethods.setCenter=function(centerLatLng) {
 	this._updateCenter(centerLatLng);	
@@ -571,6 +602,10 @@ MapSurfaceMethods.setCenter=function(centerLatLng) {
 /**
  * Internal method - update the center but don't notify layers of a
  * position change.
+ * @private
+ * @methodOf nanomaps.MapSurface.prototype
+ * @name _updateCenter
+ * @param {LatLng object} centerLatLng
  */
 MapSurfaceMethods._updateCenter=function(centerLatLng) {
 	// Update the offset of the managed container
@@ -586,14 +621,44 @@ MapSurfaceMethods._updateCenter=function(centerLatLng) {
 	managed.style.top=(-xy[1]) + 'px';
 };
 
+/**
+ * Return a reference to the current center object, having fields "lat"
+ * and "lng".
+ *
+ * @public
+ * @methodOf nanomaps.MapSurface.prototype
+ * @name getCenter
+ * @return {LatLng object}
+ */
 MapSurfaceMethods.getCenter=function() {
 	return this._center;
 };
 
+/**
+ * Get the current resolution in projection units per pixel (most commonly
+ * meters/pixel).
+ *
+ * @public
+ * @methodOf nanomaps.MapSurface.prototype
+ * @name getResolution
+ * @return {Number}
+ */
 MapSurfaceMethods.getResolution=function() {
 	return this.transform.res;
 };
 
+/**
+ * Change the map resolution, optionaly preserving the global coordinates
+ * under an arbitrary location on the map viewport.  If preserveXY is not
+ * given, then the coordinates at the center are preserved.
+ *
+ * @public
+ * @methodOf nanomaps.MapSurface.prototype
+ * @name setResolution
+ * @param {Number} resolution
+ * @param {XY object} [preserveXY] Object with "x" and "y" properties specifying
+ * 		a point on the viewport measured from the upper-left
+ */
 MapSurfaceMethods.setResolution=function(resolution, preserveXY) {
 	var center=this._center, deltaX, deltaY, centerLngLat;
 	
@@ -630,17 +695,47 @@ MapSurfaceMethods.setResolution=function(resolution, preserveXY) {
 	this._notifyReset();
 };
 
-MapSurfaceMethods.setLevel=function(level, offset) {
+/**
+ * Change the map resolution by specifying a projection dependent level, 
+ * optionaly preserving the global coordinates
+ * under an arbitrary location on the map viewport.  If preserveXY is not
+ * given, then the coordinates at the center are preserved.
+ * <p>
+ * The mapping between level and resolution is done by the projection.  For the
+ * default WebMercator projection, the level is a positive number representing
+ * the power of two decimation factor.  It can take any floating point value
+ * (not just integers) and is interpolated using 2^x exponentiation or a base
+ * 2 logarithm.
+ * 
+ * @public
+ * @methodOf nanomaps.MapSurface.prototype
+ * @name setLevel
+ * @param {Number} level Floating point level between the projections minimum and
+ * 		maximum zoom level (if out of these bounds, it is clamped to min/max
+ *		values)
+ * @param {XY object} [preserveXY] Object with "x" and "y" properties specifying
+ * 		a point on the viewport measured from the upper-left
+ */
+MapSurfaceMethods.setLevel=function(level, preserveXY) {
 	var prj=this.transform.prj, minLevel=prj.MIN_LEVEL, maxLevel=prj.MAX_LEVEL;
 	
 	if (!level) return;
 	if (level>maxLevel) level=maxLevel;
 	else if (level<minLevel) level=minLevel;
 	
-	this.setResolution(prj.fromLevel(level), offset);
+	this.setResolution(prj.fromLevel(level), preserveXY);
 };
 
-
+/**
+ * Get the current level that represents the map's resolution.  This is a
+ * calculated value based on the projection, but it is usually a real number,
+ * not necessarily an integer.
+ *
+ * @public
+ * @methodOf nanomaps.MapSurface.prototype
+ * @name getLevel
+ * @return {Number}
+ */
 MapSurfaceMethods.getLevel=function() {
 	var transform=this.transform;
 	return transform.prj.toLevel(transform.res);
@@ -648,7 +743,14 @@ MapSurfaceMethods.getLevel=function() {
 
 /**
  * Given x,y coordinates relative to the visible area of the viewport,
- * return the corresponding lat/lng
+ * return the corresponding lat/lng.
+ *
+ * @public
+ * @methodOf nanomaps.MapSurface.prototype
+ * @name toLatLng
+ * @param {Number} x coordinate measured from the left of the viewport
+ * @param {Number} y coordinate measured from the top of the viewport
+ * @return {LatLng object}
  */
 MapSurfaceMethods.toLatLng=function(x, y) {
 	var transform=this.transform, managed=this.elements.managed, lngLat;
@@ -668,7 +770,18 @@ MapSurfaceMethods.toLatLng=function(x, y) {
 
 /**
  * Translate a viewport coordinate relative to the visible area to the
- * managed pixel coordinates at the current resolution.
+ * projected pixel coordinates relative to the managed layer coordinate system.  
+ * Note that this assumes an axis inversion
+ * on the y-axis (ie. Increasing "y" parameters will produce decreasing "y"
+ * results).  This method is used for a number of internal calculations but
+ * is unlikely to be of use to end-callers.
+ *
+ * @public
+ * @methodOf nanomaps.MapSurface.prototype
+ * @name toGlobalPixels
+ * @param {Number} x coordinate measured from the left of the viewport
+ * @param {Number} y coordinate measured from the top of the viewport
+ * @return {XY object}
  */
 MapSurfaceMethods.toGlobalPixels=function(x, y) {
 	var transform=this.transform, managed=this.elements.managed;
@@ -681,7 +794,16 @@ MapSurfaceMethods.toGlobalPixels=function(x, y) {
 };
 
 /**
- * Reposition the map by the given number of pixels
+ * Reposition the map by the given number of pixels expressed as pixels east
+ * and north.
+ * 
+ * @public
+ * @methodOf nanomaps.MapSurface.prototype
+ * @name moveBy
+ * @param {Number} eastingPx Number of pixels to the right (east) to move towards
+ * the center
+ * @param {Number} northingPx Number of pixels to the top (north) to move towards
+ * the center
  */
 MapSurfaceMethods.moveBy=function(eastingPx, northingPx) {
 	var latLng=this.toLatLng(this.width/2 + eastingPx, this.height/2 - northingPx);
@@ -708,6 +830,7 @@ function extractDefaultPosition(element) {
 
 /**
  * Defult delegate for positioned objects that don't supply their own.
+ * @private
  */
 var DEFAULT_MAP_DELEGATE={
 	onreset: function(map, element) {
@@ -734,16 +857,30 @@ var DEFAULT_MAP_DELEGATE={
 };
 
 /**
- * Construct a new MapTransform with the given parameters:
- *  - projection: The projection object for the surface
- *  - resolution: Ground resolution in m/px
- *  - zeroLat: The latitude corresponding with the top of the viewport
- *  - zeroLng: The longitude corresponding with the left of the viewport
+ * Construct a new MapTransform with the given parameters.  Implementations
+ * will typically call init(...) next.  Note that this class typically represents
+ * longitude and latitude as ordered arrays as [longitude, latitude], corresponding
+ * to x and y.
+ * 
+ * @class
+ * @name nanomaps.MapTransform
+ * @public
  */
 function MapTransform() {
 	this.sequence=__nextId++;
 }
-MapTransform.prototype={
+MapTransform.prototype=
+/**
+ * @lends nanomaps.MapTransform.prototype
+ */
+{
+	/**
+	 * @public
+	 * @param {Projection object} projection map projection
+	 * @param {Number} resolution the resolution that the transform describes
+	 * @param {Array[lng,lat]} Longitude/Latitude corresponding to the viewport
+	 * zero pixel coordinate
+	 */
 	init: function(projection, resolution, zeroLngLat) {
 		// The sequence number is used to detect if objects are
 		// aligned properly against the current transform
@@ -758,6 +895,9 @@ MapTransform.prototype={
 	
 	/**
 	 * Return a new MapTransform at a new scale and zeroLatLng
+	 * @public
+	 * @param {Number} resolution new resolution
+	 * @param {Array[lng,lat]} zeroLngLat new zero point
 	 */
 	rescale: function(resolution, zeroLngLat) {
 		var transform=new MapTransform();
@@ -772,6 +912,10 @@ MapTransform.prototype={
 	 * with x and y.
 	 * In order to align to the viewport, the return value should be subtracted
 	 * from this.zeroPx (see toViewport).
+	 * @public
+	 * @param {Number} lng longitude
+	 * @param {Number} lat latitude
+	 * @return {Array[x,y]} Global projected pixels of the given lng/lat
 	 */
 	toPixels: function(lng, lat) {
 		var xy=this.prj.forward(lng, lat), resolution=this.res;
@@ -783,7 +927,12 @@ MapTransform.prototype={
 	},
 	
 	/**
-	 * Return surface coordinates of the given lat/lng
+	 * Return surface coordinates of the given lat/lng (offset relative to
+	 * the zero point)
+	 * @public
+	 * @param {Number} lng longitude
+	 * @param {Number} lat latitude
+	 * @return {Array[x,y]} Surface pixels of the given lng/lat
 	 */
 	toSurface: function(lng, lat) {
 		var xy=this.toPixels(lng, lat);
@@ -795,6 +944,11 @@ MapTransform.prototype={
 	
 	/**
 	 * Convert from global pixel coordinates to lng/lat.
+	 * @public
+	 * @param {Number} x
+	 * @param {Number} y
+	 * @return {Array[lng,lat]} Lng/lat corresponding to the global pixels
+	 
 	 */
 	fromPixels: function(x, y) {
 		var resolution=this.res;
@@ -802,24 +956,45 @@ MapTransform.prototype={
 	},
 	
 	/**
-	 * Convert from surface coordinates to [lng, lat]
+	 * Convert from surface coordinates to [lng, lat] offset from the zero point.
+	 * @public
+	 * @param {Number} x
+	 * @param {Number} y
+	 * @return {Array[lng,lat]} Lng/lat corresponding to the suface pixels
 	 */
 	fromSurface: function(x, y) {
 		return this.fromPixels(x+this.zpx[0], this.zpx[1] - y);	// Note Y axis inversion
 	}
 };
 
-
+/**
+ * @namespace Projections
+ * @name nanomaps.Projections
+ */
 var Projections={
 	/**
 	 * Standard "Web Mercator" projection as used by Google, Microsoft, OSM, et al.
-	 * Instantiate as new WebMercator(options).  Options can include:
-	 *   - MIN_LEVEL: Minimum zoom level.  Default==1.
-	 *   - MAX_LEVEL: Maximum zoom level.  Default==18.
+	 * Instantiate as new WebMercator(options). 
+	 * @class
+	 * @name nanomaps.Projections.WebMercator
+	 * @param {Number} [options.MIN_LEVEL=1]
+	 * @param {Number} [options.MAX_LEVEL=18]
 	 */
 	WebMercator: function(options) {
 		if (!options) options={};
+		/**
+		 * Default center for this projection
+		 * @public
+		 * @name DEFAULT_CENTER
+		 * @memberOf nanomaps.Projections.WebMercator#
+		 */
 		this.DEFAULT_CENTER={lat:39.7406, lng:-104.985441};
+		/**
+		 * Default resolution for this projection
+		 * @public
+		 * @name DEFAULT_RESOLUTION
+		 * @memberOf nanomaps.Projections.WebMercator#
+		 */
 		this.DEFAULT_RESOLUTION=611.4962;
 	
 		var EARTH_RADIUS=6378137.0,
@@ -829,9 +1004,30 @@ var Projections={
 			HALFPI=1.5707963267948966,
 			HIGHEST_RES=78271.5170;
 		
+		/**
+		 * Minimum valid level
+		 * @public
+		 * @name MIN_LEVEL
+		 * @memberOf nanomaps.Projections.WebMercator#
+		 */
 		this.MIN_LEVEL=options.MIN_LEVEL||1;
+		/**
+		 * Maximum valid level
+		 * @public
+		 * @name MAX_LEVEL
+		 * @memberOf nanomaps.Projections.WebMercator#
+		 */
 		this.MAX_LEVEL=options.MAX_LEVEL||18;
 		
+		/**
+		 * Convert from global to projected units 
+		 * @public
+		 * @name forward
+		 * @methodOf nanomaps.Projections.WebMercator#
+		 * @param {Number} x
+		 * @param {Number} y
+		 * @return {Array[x,y]}
+		 */
 		this.forward=function(x, y) {
 			return [
 				x*DEG_TO_RAD * EARTH_RADIUS, 
@@ -839,6 +1035,15 @@ var Projections={
 			];
 		};
 		
+		/**
+		 * Convert from projected to global units 
+		 * @public
+		 * @name inverse
+		 * @methodOf nanomaps.Projections.WebMercator#
+		 * @param {Number} x
+		 * @param {Number} y
+		 * @return {Array[x,y]}
+		 */
 		this.inverse=function(x, y) {
 			return [
 				RAD_TO_DEG * x / EARTH_RADIUS,
@@ -849,14 +1054,28 @@ var Projections={
 		/**
 		 * Return the resolution (m/px) for the given zoom index given a standard
 		 * power of two zoom breakdown.
+		 * @public
+		 * @name fromLevel
+		 * @methodOf nanomaps.Projections.WebMercator#
+		 * @param {Number} level
+		 * @return {Number} resolution
 		 */
 		this.fromLevel=function(level) {
 			return HIGHEST_RES/Math.pow(2, level-1);
-		}
+		};
 		
+		/**
+		 * Return the level for the given resolution on the standard power of
+		 * two scale.
+		 * @public
+		 * @name toLevel
+		 * @methodOf nanomaps.Projections.WebMercator#
+		 * @param {Number} resolution
+		 * @return {Number} level
+		 */
 		this.toLevel=function(resolution) {
 			return Math.log(HIGHEST_RES/resolution) / Math.log(2) + 1;
-		}
+		};
 		
 		// release memory from closure
 		options=null;
