@@ -235,6 +235,11 @@ function createDomEventDispatcher(target, eventName) {
  * size of the containing element is used.  If this natural size ever changes,
  * setSize() must be called to reset it.
  * 
+ * @example
+ * var map=new nanomaps.MapSurface(someElement);
+ * map.attach(new nanomaps.TileLayer({ 
+ *    tileSrc: "http://otile${modulo:1,2,3}.mqcdn.com/tiles/1.0.0/osm/${level}/${tileX}/${tileY}.png" }));
+ * 
  * @constructor
  * @extends nanomaps.EventEmitter
  * @name nanomaps.MapSurface

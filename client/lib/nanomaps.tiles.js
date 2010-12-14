@@ -100,13 +100,40 @@ function TileCache() {
 	};
 }
 
+/**
+ * Construct a standard TileLayer that can be attached to a MapSurface.  If a
+ * TileSelector is not passed in the options, then a default is constructed and
+ * options are passed to it.  See the options accepted by the TileSelector
+ * constructor for additional parameters.
+ *
+ * @example 
+ * var map=new nanomaps.MapSurface(someElement);
+ * map.attach(new nanomaps.TileLayer({ 
+ *    tileSrc: "http://otile${modulo:1,2,3}.mqcdn.com/tiles/1.0.0/osm/${level}/${tileX}/${tileY}.png" })); 
+ *
+ * @class
+ * @name nanomaps.TileLayer
+ * @param {TileSelector} [options.selector] describes the source and geometry of the
+ * tiles
+ * @param {integer} [options.buffer=64] The number of pixels to actively buffer on
+ * all sides of the map
+ */
 function TileLayer(options) {
 	this.options=options=options||{};
-	this.sel=new TileSelector(options);
+	this.sel=options.selector||new TileSelector(options);
 	this.fgCache=new TileCache();
 	this.bgCache=new TileCache();
 }
 TileLayer.prototype={
+	/**
+	 * Returns a new element ready to be added to the MapSurface.  This method
+	 * fulfills the contract for MapSurface.attach.
+	 * @public
+	 * @methodOf nanomaps.TileLayer.prototype
+	 * @name createElement
+	 * @param {MapSurface} map
+	 * @return {HTMLElement}
+	 */
 	createElement: function(map) {
 		var element=document.createElement('div');
 		element.style.position='absolute';
@@ -116,6 +143,9 @@ TileLayer.prototype={
 		return element;
 	},
 	
+	/**
+	 * @private
+	 */
 	placeTile: function(map, element, tileDesc, moveToFront) {
 		var img=tileDesc.img,
 			transform=map.transform,
@@ -147,6 +177,9 @@ TileLayer.prototype={
 		if (moveToFront || img.parentNode!==element) element.appendChild(img);
 	},
 	
+	/**
+	 * @private
+	 */
 	onreset: function(map, element) {
 		var self=this,
 			transform=map.transform,
@@ -191,6 +224,9 @@ TileLayer.prototype={
 		
 	},
 	
+	/**
+	 * @private
+	 */
 	onposition: function(map, element) {
 		this.onreset(map, element);
 	}
@@ -198,18 +234,43 @@ TileLayer.prototype={
 
 /**
  * Class representing a tile selector for the layout of OSM, MS, Google, et al.
- * Options:
+ * <p>
+ * Typically, all that will need to be specified is options.tileSrc.  This string
+ * will be interpolated relative to the tile information with the following
+ * substitutions made:
+ * <ul>
+ * <li>${level} - Native level of the tile
+ * <li>${tileX} - X coordinate of the tile
+ * <li>${tileY} - Y coordinate of the tile
+ * <li>${modulo:a,b} - Select one of the values in the list (in this case 'a' and 'b')
+ *     based on a stable modulus based on the tile coordinate system.  Used to
+ *     pick a domain name for a given tile.
+ * </ul>
+ * <p>
+ * Remember to always provide proper attribution and get permission for using tiles.
+ * <p>
+ * The following tileSrc can be used to display tiles from different providers:
+ * <ul>
+ * <li>OSM (MapQuest): 
+ * 		"http://otile${modulo:1,2,3}.mqcdn.com/tiles/1.0.0/osm/${level}/${tileX}/${tileY}.png"
+ * <li>OSM (Mapnik from openstreetmap.org): "http://${modulo:a,b,c}.tile.openstreetmap.org/${level}/${tileX}/${tileY}.png"
+ * </ul>
  *
+ * @class
+ * @name nanomaps.TileSelector
+ * @param {integer} [options.tileSize=256]
+ * @param {string} [options.tileSrc='']
  */
 function TileSelector(options) {
 	options=options||{};
 	// set defaults
 	this.tileSize=options.tileSize||256;
-	this.srcSpec="http://otile${modulo:1,2}.mqcdn.com/tiles/1.0.0/osm/${level}/${tileX}/${tileY}.png";
+	this.srcSpec=options.tileSrc||'';
 }
 TileSelector.prototype={
 	/**
 	 * Gets the origin in physical units [x, y] for the tile coordinate space
+	 * @private
 	 */
 	origin: function(projection) {
 		var ret=this._origin;
@@ -222,6 +283,10 @@ TileSelector.prototype={
 	
 	/**
 	 * Get an img src from the tileDesc
+	 * @public
+	 * @name resolveSrc
+	 * @methodOf nanomaps.TileSelector.prototype
+	 * @param {TileDesc} tileDesc tile description returned from select
 	 */
 	resolveSrc: function(tileDesc) {
 		return this.srcSpec.replace(/\$\{([A-Za-z]+)(\:([^\}]*))?\}/g, function(s, name, ignore, args) {
@@ -239,14 +304,29 @@ TileSelector.prototype={
 	 * Select all tiles that intersect the given bounding box at the
 	 * given resolution.  Return an array of TileDesc elements, where
 	 * each TileDesc has the following attributes:
-	 *   - key: an opaque string that uniquely identifies this tile within
+	 * <ul>
+	 *   <li>key: an opaque string that uniquely identifies this tile within
 	 *     this instance where multiple requests for the same physical tile
 	 *     have the same key
-	 *   - res: the native resolution of the tile
-	 *	 - level: the native zoom level
-	 *   - x, y: origin at native resolution,
-	 *	 - size: tile size (width/height) at native resolution
-	 *   - tileX, tileY: the tile x and y
+	 *   <li>res: the native resolution of the tile
+	 *	 <li>level: the native zoom level
+	 *   <li>x, y: origin at native resolution,
+	 *	 <li>size: tile size (width/height) at native resolution
+	 *   <li>tileX, tileY: the tile x and y
+	 * </ul>
+	 * @public
+	 * @name select
+	 * @methodOf nanomaps.TileSelector.prototype
+	 * @param {Projection} projection map projection
+	 * @param {Number} resolution resolution at which tiles will be rendered
+	 * @param {Number} x Global pixel coordinate relative to projection and resolution
+	 * of the upper left corner of the region to select
+	 * @param {Number} y Global pixel coordinate relative to projection and resolution
+	 * of the upper left corner of the region to select
+	 * @param {Number} width Pixel width of region to select
+	 * @param {Number} height Pixel height of the region to select
+	 * @param {Boolean} sort If true, then returns the tiles sorted by most visually impactful
+	 * @return {Array[TileDesc]}
 	 */
 	select: function(projection, resolution, x, y, width, height, sort) {
 		var tileStartX, tileStartY,
