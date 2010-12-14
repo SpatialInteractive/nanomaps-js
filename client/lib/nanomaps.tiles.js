@@ -9,6 +9,18 @@
  */
 (function(nanomaps) {
 
+function tileXYToQuadkey(tileX, tileY, level) {
+	var i, mask, value, ret='';
+	for (i=level; i>0; i--) {
+		value=48;
+		mask=1<<(i-1);
+		if ((tileX&mask)!==0) value++;
+		if ((tileY&mask)!==0) value+=2;
+		ret+=String.fromCharCode(value);
+	}
+	return ret;
+}
+	
 // -- Tile Layer
 function makeVisibleOnLoad() {
 	this.style.visibility='';
@@ -245,6 +257,7 @@ TileLayer.prototype={
  * <li>${modulo:a,b} - Select one of the values in the list (in this case 'a' and 'b')
  *     based on a stable modulus based on the tile coordinate system.  Used to
  *     pick a domain name for a given tile.
+ * <li>${quadkey} - Microsoft quadkey representation of tile index
  * </ul>
  * <p>
  * Remember to always provide proper attribution and get permission for using tiles.
@@ -290,7 +303,9 @@ TileSelector.prototype={
 	 */
 	resolveSrc: function(tileDesc) {
 		return this.srcSpec.replace(/\$\{([A-Za-z]+)(\:([^\}]*))?\}/g, function(s, name, ignore, args) {
-			if (name==='modulo') {
+			if (name==='quadkey') {
+				return tileXYToQuadkey(tileDesc.tileX, tileDesc.tileY, tileDesc.level);
+			} else if (name==='modulo') {
 				// get the args and modulo it by the tileDesc.tileX
 				args=args.split(/\,/);
 				return args[tileDesc.tileX%args.length];
