@@ -104,7 +104,7 @@
 		
 		// Handle scroll (TODO - this needs to zoom around the mouse point)
 		var delta, factor=10, level=Math.round(this.getLevel()*factor)/factor,
-			coords=map.eventToContainer(event);
+			coords=this.eventToContainer(event);
 		if (event.wheelDelta) delta=event.wheelDelta/120;	// IE
 		else if (event.delta) delta=-event.delta/3;
 		else delta=-event.detail/3;
