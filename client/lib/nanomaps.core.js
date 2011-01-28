@@ -271,13 +271,16 @@ function MapSurface(elt, options) {
 	this.createElement=createElement;
 	
 	// Hardcode some important styles
-	elt.style.overflow='visible';
+	elt.style.overflow='hidden';
 	attr=elt.style.position;
 	if (attr!='relative' && attr!='absolute' && attr!='fixed')
 		elt.style.position='relative';	// Make positioned
+	
+	/* Disable z-index stuff until we can determine actual z-index from css
 	attr=elt.style.zIndex;
 	if (attr==='' || attr==='auto')
 		elt.style.zIndex='inherit';	// Establish a new stacking context
+	*/
 	
 	function createOverlay() {
 		var overlay=createElement('div');
