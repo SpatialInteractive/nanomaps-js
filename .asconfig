@@ -1,0 +1,4 @@
+loadAddon('htmlpack');
+
+mount('/', 'client');
+
