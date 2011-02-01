@@ -1,0 +1,30 @@
+/**
+ * css fragments that control the size and positioning
+ * of standard nanomaps markers
+ */
+.nmim {
+	/* Establish a positioning context.  Top/Left (0,0)
+	 * corresponds to the actual lat/lng location
+	 */
+	position: relative;
+}
+
+/**
+ * Size and positioning for the orb
+ */
+.nmim-orb img.nmim-fg {
+	position: absolute;
+	left: -8px;
+	top: -8px;
+	width: 15px;
+	height: 15px;
+}
+
+.nmim-pin img.nmim-fg {
+	position: absolute;
+	left: -8px;
+	top: -28px;
+	width: 15px;
+	height: 29px;
+}
+

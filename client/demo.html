@@ -3,7 +3,10 @@
 <head>
 	<meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 	<script src="lib/nanomaps.bundle.all.js"></script>
+	<link rel="stylesheet" href="lib/markers/markers.css" />
 	<script>
+	nanomaps.ImgMarker.Settings.baseUri='lib/markers/stdres';
+	
 	var map;
 	
 	function resize() {
@@ -27,23 +30,21 @@
 		});
 		map.attach(tileLayer);
 		
-		tagElt=document.createElement('div');
-		tagElt.innerHTML='X';
-		tagElt.style.color='white';
-		tagElt.style.border='1px solid black';
-		tagElt.style.backgroundColor='red';
-		tagElt.style.width='18px';
-		tagElt.style.height='18px';
-		tagElt.style.textAlign='center';
-		tagElt.style.position='absolute';
-		tagElt.geo={
+		var marker;
+		marker=new nanomaps.ImgMarker({
+			src: 'orb_blue.png',
 			latitude: 39.741071,
-			longitude: -104.985808,
-			xoffset: -9,
-			yoffset: -9
-		};
+			longitude: -104.985808
+		});
+		map.attach(marker);
 		
-		map.attach(tagElt);
+		marker=new nanomaps.ImgMarker({
+			src: 'pin_pink.png',
+			latitude: 39.790533,
+			longitude: -104.988896
+		});
+		map.attach(marker);
+
 	}
 	</script>
 	
