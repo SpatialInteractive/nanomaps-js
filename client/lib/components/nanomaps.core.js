@@ -7,7 +7,73 @@ Core map display library.
  * @namespace
  */
 var nanomaps=(function(exports) {
-var __nextId=0;
+
+///// Some standard utilities
+function createFunction() {
+	return function() { }
+}
+
+// Use a native Object.create if found.  Otherwise, simulate one
+function ObjectCreate(proto) {
+	if (Object.create) return Object.create(proto);
+	var ctor;
+	if (proto) {
+		ctor=createFunction();
+		ctor.prototype=proto;
+		return new ctor();
+	}
+	return {};
+}
+
+/**
+ * Takes a constructor written according to the following pattern and
+ * updates its prototype chain to inherit from the given superCtor's
+ * prototype.
+ * <pre>
+ * function BaseClass() {
+ * }
+ * BaseClass.prototype={
+ *   // base class properties
+ * };
+ *
+ * function DerivedClass() {
+ *   BaseClass.call(this);
+ * }
+ * DerivedClass.prototype={
+ *   // derived properties
+ * };
+ * inherits(DerivedClass, BaseClass)
+ * </pre>
+ * 
+ * Note that the original DerivedClass.prototype is discarded as part of this
+ * operation, being used solely to initialize the newly created inherited
+ * prototype.
+ * @public
+ */
+function inherits(ctor, superCtor) {
+	var newProto=ObjectCreate(superCtor.prototype);
+	ObjectCopy(ctor.prototype, newProto);
+	ctor.prototype=newProto;
+}
+
+/**
+ * Copy all own properties from src to dest (creating if needed)
+ * @return dest
+ */
+function ObjectCopy(src, dest) {
+	dest=dest||{};
+	if (src) {
+		for (var k in src) {
+			if (src.hasOwnProperty(k))
+				dest[k]=src[k];
+		}
+	}
+	return dest;
+}
+
+exports.ObjectCreate=ObjectCreate;
+exports.ObjectCopy=ObjectCopy;
+exports.inherits=inherits;
 
 /**
  * EventEmitter base class.  Based on Node.js EventEmitter.
@@ -880,7 +946,6 @@ var DEFAULT_MAP_DELEGATE={
  * @public
  */
 function MapTransform() {
-	this.sequence=__nextId++;
 }
 MapTransform.prototype=
 /**
