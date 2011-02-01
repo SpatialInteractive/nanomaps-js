@@ -562,8 +562,9 @@ MapSurfaceMethods.collect=function() {
  */
 MapSurfaceMethods.update=function(element) {
 	var parent=element.parentElement, elements=this.elements;
-	if (parent!==elements.viewport||parent!==elements.managed) this.attach(element);
+	if (parent!==elements.viewport&&parent!==elements.managed) this.attach(element);
 	else this._notifyResetSingle(element);
+	return element;
 };
 
 /**
