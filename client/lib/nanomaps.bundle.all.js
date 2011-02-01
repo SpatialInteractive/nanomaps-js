@@ -11,5 +11,6 @@
 ##include('components/nanomaps.desktop.js')
 ##include('components/nanomaps.touch.js')
 ##include('components/nanomaps.imgmarker.js')
+##include('components/nanomaps.svgmarker.js')
 
 

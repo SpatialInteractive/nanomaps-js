@@ -31,6 +31,16 @@
 		map.attach(tileLayer);
 		
 		var marker;
+
+		marker=new nanomaps.EllipseMarker({
+			className: 'errorHalo',
+			latitude: 39.741071,
+			longitude: -104.985808,
+			radius: 5000,
+			unit: 'm'
+		});
+		map.attach(marker);
+
 		marker=new nanomaps.ImgMarker({
 			src: 'orb_blue.png',
 			latitude: 39.741071,
@@ -77,6 +87,13 @@
 		margin-left: -10px;
 		margin-top: -32px;
 		display: none;
+	}
+	
+	svg.errorHalo ellipse {
+		fill-opacity: 0.3;
+		stroke-opacity: 0.7;
+		fill: #03a;
+		stroke: #00f;
 	}
 	</style>
 </head>
