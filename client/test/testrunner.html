@@ -19,8 +19,8 @@
 	
 		function runSuites() {
 			JSpec
-				.exec('spec.autoprojections.js')
-				.exec('spec.mapgeometry.js')
+				.exec('spec.autoprojections.jspec')
+				.exec('spec.mapgeometry.jspec')
 				.include(module)
 				.run({ })
 				.report();
