@@ -3,11 +3,6 @@ nanomaps.core.js
 Core map display library.
 */
 
-/**
- * @namespace
- */
-var nanomaps=(function(exports) {
-
 ///// Some standard utilities
 function createFunction() {
 	return function() { }
@@ -338,8 +333,7 @@ function MapSurface(elt, options) {
 	
 	// Hardcode some important styles
 	elt.style.overflow='hidden';
-	attr=elt.style.position;
-	if (attr!='relative' && attr!='absolute' && attr!='fixed')
+	if (!isPositioned(elt))
 		elt.style.position='relative';	// Make positioned
 	
 	/* Disable z-index stuff until we can determine actual z-index from css
@@ -649,8 +643,8 @@ MapSurfaceMethods.update=function(element) {
 MapSurfaceMethods.setSize=function(width, height) {
 	var elt=this.elements.parent, center=this._center;
 	if (arguments.length<2) {
-		elt.style.left='';
-		elt.style.top='';
+		elt.style.width='';
+		elt.style.height='';
 		width=elt.clientWidth;
 		height=elt.clientHeight;
 	}
@@ -1167,9 +1161,5 @@ exports.EventEmitter=EventEmitter;
 exports.MapSurface=MapSurface;
 exports.Projections=Projections;
 exports.MapTransform=MapTransform;
-
-// module suffix
-return exports;
-})({});
 
 
