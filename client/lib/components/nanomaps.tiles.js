@@ -317,8 +317,8 @@ function setTileBounds(mapState, tile) {
 	var size=tile.sel.tileSize,
 		tileKey=tile.tileKey,
 		scaledSize=Math.round(size * tileKey.res / mapState.res),
-		left=mapState.prjToDspX(tileKey.scaledX * tileKey.res) - mapState.x,
-		top=mapState.prjToDspY(tileKey.scaledY * tileKey.res) - mapState.y;
+		left=Math.round(mapState.prjToDspX(tileKey.scaledX * tileKey.res) - mapState.x),
+		top=Math.round(mapState.prjToDspY(tileKey.scaledY * tileKey.res) - mapState.y);
 		
 	tile.setBounds(left, top, scaledSize, scaledSize);
 }
@@ -369,6 +369,10 @@ function Tile(sel, tileKey) {
 }
 Tile.prototype={
 	_commitBounds: function(drawable) {
+		if (this.width!==this.tileKey.size || this.height!==this.tileKey.size) {
+			console.log('TileSize round error: (' + this.left + ',' + this.top + ') -> (' + this.width + ',' + this.height + ')');
+		}
+		
 		drawable.style.position='absolute';
 		drawable.style.left=this.left+'px';
 		drawable.style.top=this.top+'px';
@@ -402,10 +406,10 @@ Tile.prototype={
 	
 	setBounds: function(left, top, width, height) {
 		var drawable=this.drawable;
-		this.left=left;
-		this.top=top;
-		this.width=width;
-		this.height=height;
+		this.left=parseInt(left);
+		this.top=parseInt(top);
+		this.width=parseInt(width);
+		this.height=parseInt(height);
 		if (drawable) this._commitBounds(drawable);
 	},
 	
