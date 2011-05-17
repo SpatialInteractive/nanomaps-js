@@ -112,13 +112,13 @@ MapSurfaceMethods.ondom_mousewheel=function(event) {
 // Attach to initialization
 MapSurfaceMethods.advise('initialize', 'after', function(options) {
 	this._mouseState={};
-	this.routeDomEvent('mousedown', null, 'glass');
+	this.routeDomEvent('mousedown', null, 'event');
 	this.routeDomEvent('mouseup', null, 'document');
 	this.routeDomEvent('mousemove', null, 'document');
 	if (!options.disableMouseWheel) {
-		this.routeDomEvent('DOMMouseScroll', 'dom_mousewheel', 'glass');
-		this.routeDomEvent('mousewheel', null, 'glass');
+		this.routeDomEvent('DOMMouseScroll', 'dom_mousewheel', 'event');
+		this.routeDomEvent('mousewheel', null, 'event');
 	}
-	this.elements.viewport.style.cursor='move';
+	this.elements.event.style.cursor='move';
 });
 

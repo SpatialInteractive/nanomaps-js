@@ -192,14 +192,8 @@ if (touchEligible()) {
 					'gesturechange', 'gestureend' ],
 			listener=touchEventDispatcher(this);
 			
-		// NOTE: We must attach touch events to the glass element.  Webkit
-		// seems to randomly cancel touch events if any DOM structure
-		// in the containment hierarchy gets modified "too much".  The only
-		// way I could find around this was to use such a transparent overlay.
-		// We're going to need to pump events back to the source later.
-		this.elements.glass.style.display='block';
 		for (i=0; i<events.length; i++) {
-			this.elements.glass.addEventListener(events[i], listener, true);
+			this.elements.event.addEventListener(events[i], listener, true);
 		}
 	});
 }

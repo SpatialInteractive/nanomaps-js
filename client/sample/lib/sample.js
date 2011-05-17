@@ -14,7 +14,8 @@ var map,
 	locationUncertaintyMarker=new nanomaps.EllipseMarker({
 			className: 'errorHalo',
 			unit: 'm'
-		});;
+		}),
+	locationUncertaintyElt;
 
 /** Global scope **/
 function initialize() {
@@ -91,7 +92,11 @@ function handleGeoLocation(position) {
 	locationUncertaintyMarker.settings.latitude=latLng.lat;
 	locationUncertaintyMarker.settings.longitude=latLng.lng;
 	locationUncertaintyMarker.settings.radius=position.coords.accuracy;
-	map.update(locationUncertaintyMarker);
+	if (locationUncertaintyElt) {
+		map.update(locationUncertaintyElt);
+	} else {
+		locationUncertaintyElt=map.attach(locationUncertaintyMarker);
+	}
 	
 	
 	if (!locationElt) {

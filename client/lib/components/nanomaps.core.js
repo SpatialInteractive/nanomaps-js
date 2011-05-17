@@ -182,8 +182,9 @@ function MapSurface(elt, options) {
 	if (!options) options={};
 	var document=options.document||elt.ownerDocument||window.document,
 		width=options.width, height=options.height, attr,
+		eventLayer,
 		mapState,
-		viewportElt, glassElt, managedElt, projection;
+		projection;
 		
 	// Local functions
 	function createElement(name) {
@@ -197,52 +198,29 @@ function MapSurface(elt, options) {
 	 * @return {HTMLElement}
 	 */
 	this.createElement=createElement;
+	this._layers=[];
+	this._surfaces=[];
 	
 	// Hardcode some important styles
+	elt.nmt='parent';
 	elt.style.overflow='hidden';
 	if (!isPositioned(elt))
 		elt.style.position='relative';	// Make positioned
 	
-	function createOverlay() {
-		var overlay=createElement('div');
-		overlay.style.overflow='hidden';
-		overlay.style.position='absolute';
-		overlay.style.left='0px';
-		overlay.style.top='0px';
-		overlay.style.width='100%';
-		overlay.style.height='100%';
-		return overlay;
-	}
-	
-	// create glass
-	glassElt=createOverlay();
-	glassElt.className='glass';
-	glassElt.style.display='block';
-	elt.insertBefore(glassElt, elt.firstChild);
-	
-	
-	// create viewport
-	viewportElt=createOverlay();
-	viewportElt.className='viewport';
-	elt.insertBefore(viewportElt, elt.firstChild);
-	
-	// create managed
-	managedElt=createElement('div');
-	managedElt.className='managed';
-	managedElt.style.position='absolute';
-	managedElt.style.width='100%';
-	managedElt.style.height='100%';
-	viewportElt.appendChild(managedElt);
-	
 	// Dictionary of elements
 	this.elements={
 		document: document,
-		managed: managedElt,
-		viewport: viewportElt,
-		glass: glassElt,
 		parent: elt
 	};
 	
+	// Setup the event layer
+	eventLayer=this.layer(LAYER_NAMES.EVENT);
+	eventLayer.style.position='absolute';
+	eventLayer.style.left='0px';
+	eventLayer.style.top='0px';
+	eventLayer.style.width='100%';
+	eventLayer.style.height='100%';
+	this.elements.event=eventLayer;
 	
 	// Initial mapState
 	this.mapState=mapState=new MapState();
@@ -296,6 +274,141 @@ function clampZoom(map, level) {
 	else if (level>prj.MAX_LEVEL) level=prj.MAX_LEVEL;
 	return level;
 }
+
+var LAYER_NAMES={
+	BACKGROUND: 0,
+	MAP: 10,
+	EVENT: 100,
+	SHADOW: 500,
+	OVERLAY: 1000,
+	FOREGROUND: 10000
+};
+
+function layerIndexToOrdinal(index) {
+	// See if the index is really a layer name
+	var ordinal=LAYER_NAMES[String(index).toUpperCase()];
+	if (ordinal === undefined) {
+		// Parse it as a number
+		ordinal=parseInt(index);
+		if (isNaN(ordinal)) ordinal=LAYER_NAMES.FOREGROUND;
+	}
+	return ordinal;
+}
+
+/**
+ * All map objects exist within a layer.  Layers are ordered by an ordinal index
+ * and correspond to a div within the main map div.  Each layer div is identified
+ * by an attribute "layer" with its numeric layer value.  In this way, loose objects
+ * that need to exist in the layer hierarchy can have their "layer" attribute
+ * set to have them positioned in the correct place.  Loose objects without a layer
+ * are assumed to have a layer index of infinity, making them foreground objects.
+ * <p>
+ * This method will return a div for the layer.  If the layer does not exist, it
+ * will be created.
+ * <p>
+ * Layers do not establish a positioning context, inheriting the context of the
+ * containing map div.  They also have zero width and height but are set to display
+ * overflow.  The system may make the special events layer positioned with full width
+ * and height, but this is considered a special case.
+ * <p>
+ * The following layer names are acceptable arguments to index in addition to numeric
+ * values:
+ * <ul>
+ * <li>background (0): The background layer will contain background drawables, generally the
+ * thatch pattern that is below the map
+ * <li>map (10): The map layer should contain views for drawing the map (ie MapTileView)
+ * stacked in order of display.
+ * <li>event (100): Touch events are handled from this layer.  This layer is special.
+ * <li>shadow (500): By convention, the SHADOW layer is where you will want to put overlay shadows
+ * <li>overlay (1000): By convention, the OVERLAY layer is where map overlays and markers should
+ * be added
+ * <li>foreground (10000): Extreme foreground layer.  This is where unattached map objects go and
+ * is synonymous with infinity.
+ * </ul>
+ * Layer names are case insensitive.  The event layer is a special 100% width/height layer
+ * that catches all background events.  Anything below this ordinal will not receive any ui
+ * events. 
+ *
+ * @public
+ * @methodOf nanomaps.MapSurface.prototype
+ * @name layer
+ * @param index The layer name or ordinal value of the desired layer
+ * @return layer div corresponding to index
+ */
+MapSurfaceMethods.layer=function(index) {
+	var parent=this.elements.parent,
+		layers=this._layers,
+		layer, i,
+		ordinal=layerIndexToOrdinal(index),
+		childOrdinal,
+		insertionPoint;
+		
+	// Look it up in our cache
+	for (i=0; i<layers.length; i++) {
+		layer=layers[i];
+		if (layer.ordinal===ordinal) return layer;
+	}
+	
+	// Need to create it
+	layer=this.createElement('div');
+	layer.ordinal=ordinal;
+	layer.nmt='layer';
+	layer.setAttribute('layer', String(ordinal));	// For debugging in inspector.  Not used otherwise.
+	layer.style.width='0px';
+	layer.style.height='0px';
+	layers.push(layer);
+	
+	// Find insertion point
+	for (insertionPoint=parent.firstChild; insertionPoint; insertionPoint=insertionPoint.nextSibling) {
+		if (insertionPoint.nodeType===1 && insertionPoint.nmt) {
+			childOrdinal=insertionPoint.ordinal;
+			if (childOrdinal!==undefined && childOrdinal>ordinal)
+				break;
+		}
+	}
+	
+	// Put it before the insertionPoint or as the last element
+	parent.insertBefore(layer, insertionPoint);
+	
+	return layer;
+};
+
+/**
+ * Within each layer is a so-called "managed surface".  This div is maintained as the
+ * first child of each layer and has its position managed by the system in such a way
+ * that children placed within it at coordinates returned by globalXY (TODO) will always
+ * move with the map.
+ * <p>
+ * This method returns the managed surface div associated with a layer.  Most map objects
+ * end up in the managed div.
+ */
+MapSurfaceMethods.surface=function(index) {
+	var ordinal=layerIndexToOrdinal(index),
+		mapState=this.mapState,
+		surfaces=this._surfaces,
+		surface, i,
+		layer;
+	for (i=0; i<surfaces.length; i++) {
+		surface=surfaces[i];
+		if (surface.ordinal===ordinal) return surface;
+	}
+	
+	// Not found - create
+	surface=this.createElement('div');
+	surface.ordinal=ordinal;
+	surface.nmt='surface';
+	surface.className='managed';	// To make it obvious in inspector - not used otherwise
+	surface.style.position='absolute';
+	surface.style.left=(-mapState.x) + 'px';
+	surface.style.top=(-mapState.y) + 'px';
+	surfaces.push(surface);
+	
+	// Add to layer
+	layer=this.layer(ordinal);
+	layer.insertBefore(surface, layer.firstChild);
+	
+	return surface;
+};
 
 /**
  * Get the current zoom level
@@ -365,13 +478,24 @@ MapSurfaceMethods.setLocation=function(globalCoord, x, y) {
 	this._invalidate(false);
 };
 
+/**
+ * Update the positioning of all managed surfaces and
+ * notify children of reset (if full) or position (if !full).
+ * @private
+ * @methodOf nanomaps.MapSurface.prototype
+ * @name _invalidate
+ */
 MapSurfaceMethods._invalidate=function(full) {
-	// Update the offset of the managed container
-	var managed=this.elements.managed,
-		mapState=this.mapState;
+	// Update the offset of all managed surfaces and
+	var mapState=this.mapState,
+		surfaces=this._surfaces,
+		surface, i;
 	
-	managed.style.left=(-mapState.x) + 'px';
-	managed.style.top=(-mapState.y) + 'px';
+	for (i=0; i<surfaces.length; i++) {
+		surface=surfaces[i];
+		surface.style.left=(-mapState.x) + 'px';
+		surface.style.top=(-mapState.y) + 'px';
+	}
 	
 	if (full) this._notifyReset();
 	else this._notifyPosition();
@@ -385,16 +509,35 @@ MapSurfaceMethods._invalidate=function(full) {
  * @methodOf nanomaps.MapSurface.prototype
  * @name _each
  */
-MapSurfaceMethods._each=function(includeManaged, callback) {
-	var elements=this.elements, managed=elements.managed, viewport=elements.viewport;
-	for (var childElt=viewport.firstChild; childElt; childElt=childElt.nextSibling) {
-		if (childElt.nodeType!==1 || childElt===managed) continue;	// Skip non-elements
-		callback.call(this, childElt);
-	}
-	if (includeManaged) {
-		for (childElt=managed.firstChild; childElt; childElt=childElt.nextSibling) {
-			if (childElt.nodeType!==1) continue;	// Skip non-elements
+MapSurfaceMethods._each=function(includeSurfaces, callback) {
+	var layers=this._layers,
+		surfaces=this._surfaces,
+		container,
+		i, childElt;
+		
+	// Iterate over layers
+	for (i=0; i<layers.length; i++) {
+		container=layers[i];
+		for (var childElt=container.firstChild; childElt; childElt=childElt.nextSibling) {
+			if (childElt.nodeType!==1 || childElt.nmt==='surface') 
+				continue;	
+				// Skip non-elements and surfaces
+				
 			callback.call(this, childElt);
+		}
+	}
+	
+	// Iterate over surfaces
+	if (includeSurfaces) {
+		for (i=0; i<surfaces.length; i++) {
+			container=surfaces[i];
+			for (var childElt=container.firstChild; childElt; childElt=childElt.nextSibling) {
+				if (childElt.nodeType!==1) 
+					continue;	
+					// Skip non-elements
+					
+				callback.call(this, childElt);
+			}
 		}
 	}
 };
@@ -406,7 +549,7 @@ MapSurfaceMethods._each=function(includeManaged, callback) {
  * @name _notifyPosition
  */
 MapSurfaceMethods._notifyPosition=function() {
-	this._each(true, function(element) {
+	this._each(false, function(element) {
 		var delegate=element.mapDelegate||{},
 			handler=delegate.onposition;
 		if (typeof handler==='function') {
@@ -464,7 +607,7 @@ MapSurfaceMethods.initialize=function(options) {
  *
  */
 MapSurfaceMethods.eventToContainer=function(event, elementName) {
-	var relativeTo=this.elements[elementName||'viewport'], start=relativeTo,
+	var relativeTo=this.elements[elementName||'parent'], start=relativeTo,
 		coords={x: event.clientX, y: event.clientY}, eltZoom;
 	
 	do {
@@ -538,23 +681,21 @@ MapSurfaceMethods.routeDomEvent=function(domEvent, thisEvent, elementName) {
  * @return {HTMLElement} the element attached
  */
 MapSurfaceMethods.attach=function(element) {
-	// Detect if HTMLElement in standards compliant way with fallbacks for IE
-	var isHTML=window.HTMLElement ? element instanceof HTMLElement : (element.nodeType===1);
-	if (!isHTML) {
+	if (!isHtmlElement(element)) {
 		// Treat as a delegate
 		element=element.createElement(this);
 	}
 	
 	var delegate=element.mapDelegate||DEFAULT_MAP_DELEGATE,
-		elements=this.elements;
+		layerIndex=delegate.mapLayer;
 
 	element.style.position='absolute';	// Make positioned
 	if (delegate.unmanaged) {
 		// Add to the viewport before the global element
-		elements.viewport.insertBefore(element, elements.managed);
+		this.layer(layerIndex).appendChild(element);
 	} else {
 		// Add to the managed element
-		elements.managed.appendChild(element);
+		this.surface(layerIndex).appendChild(element);
 	}
 	
 	this._notifyResetSingle(element);
@@ -572,11 +713,13 @@ MapSurfaceMethods.attach=function(element) {
  * @param {HTMLElement or factory} element Element or factory to add
  */
 MapSurfaceMethods.collect=function() {
+	/* TODO
 	for (var child=this.elements.parent.firstChild; child; child=child.nextSibling) {
 		if (child.nodeType===1 && child.hasAttribute('latitude') && child.hasAttribute('longitude')) {
 			this.attach(child);
 		}
 	}
+	*/
 };
 
 /**
@@ -591,8 +734,8 @@ MapSurfaceMethods.collect=function() {
  * @param {HTMLElement} element
  */
 MapSurfaceMethods.update=function(element) {
-	var parent=element.parentElement, elements=this.elements;
-	if (parent!==elements.viewport&&parent!==elements.managed) this.attach(element);
+	var parent=element.parentNode;
+	if (!parent || !parent.nmt) this.attach(element);
 	else this._notifyResetSingle(element);
 	return element;
 };
@@ -690,6 +833,7 @@ function extractDefaultPosition(element) {
  * @private
  */
 var DEFAULT_MAP_DELEGATE={
+	mapLayer: 'overlay',
 	onreset: function(map, element) {
 		var geo=extractDefaultPosition(element), xy, x, y;
 		if (geo) {

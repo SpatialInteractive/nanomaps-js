@@ -45,6 +45,7 @@ function SvgMarker(settings) {
 SvgMarker.prototype={
 	//// -- mapDelegate methods
 	unmanaged: false,
+	mapLayer: 'shadow',
 	
 	createElement: function(map) {
 		if (this.map) throw new Error('Attempt to add SvgMarker to map more than once');

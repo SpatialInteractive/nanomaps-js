@@ -20,3 +20,8 @@ function isPositioned(elt) {
 	return attr==='relative' || attr==='absolute' || attr==='fixed';
 }
 
+function isHtmlElement(object) {
+	// Detect if HTMLElement in standards compliant way with fallbacks for IE
+	return window.HTMLElement ? object instanceof HTMLElement : (object.nodeType===1);
+}
+

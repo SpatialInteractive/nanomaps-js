@@ -264,6 +264,7 @@ function TileLayer(options) {
 }
 TileLayer.prototype={
 	unmanaged: true,
+	mapLayer: 'map',
 	
 	/**
 	 * Returns a new element ready to be added to the MapSurface.  This method
