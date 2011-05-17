@@ -17,7 +17,6 @@
  * to user code acting on the DOM.  This library just takes care of
  * physical unit conversions.
  */
-(function(nanomaps) {
 var svgns='http://www.w3.org/2000/svg';
 
 function createSvgElement(tagName) {
@@ -73,7 +72,7 @@ SvgMarker.prototype={
 		if (this.map) this.onreset(this.map, this.canvas);
 	}
 };
-nanomaps.inherits(SvgMarker, nanomaps.EventEmitter);
+inherits(SvgMarker, EventEmitter);
 
 function EllipseMarker(settings) {
 	SvgMarker.call(this, settings);
@@ -132,7 +131,7 @@ EllipseMarker.prototype={
 		}
 	}
 };
-nanomaps.inherits(EllipseMarker, SvgMarker);
+inherits(EllipseMarker, SvgMarker);
 
 //// -- utilities
 function oddCeil(n) {
@@ -170,9 +169,8 @@ function translateY(map, distance, unit) {
 }
 
 // exports
-nanomaps.SvgMarker=SvgMarker;
-nanomaps.EllipseMarker=EllipseMarker;
+exports.SvgMarker=SvgMarker;
+exports.EllipseMarker=EllipseMarker;
 
-})(nanomaps);
 
 

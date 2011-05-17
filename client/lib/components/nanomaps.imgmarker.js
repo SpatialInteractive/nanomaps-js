@@ -3,8 +3,6 @@
  * Factories for constructing HTML fragments suitable to be used
  * as markers from stock imagery
  */
-(function(nanomaps) {
-
 function makeAbsolute(baseUri, href) {
 	if (href[0]==='/' || href.search(/^http(s)?\:/)>=0) return href;
 	if (baseUri.match(/\/$/)) return baseUri+href;
@@ -123,7 +121,5 @@ SettingsConstructor.prototype=ImgMarker.Settings;
 
 
 // Exports
-nanomaps.ImgMarker=ImgMarker;
-
-})(nanomaps);
+exports.ImgMarker=ImgMarker;
 
