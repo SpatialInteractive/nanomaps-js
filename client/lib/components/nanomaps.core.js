@@ -3,290 +3,156 @@ nanomaps.core.js
 Core map display library.
 */
 
-///// Some standard utilities
-function createFunction() {
-	return function() { }
-}
-
-// Use a native Object.create if found.  Otherwise, simulate one
-function ObjectCreate(proto) {
-	if (Object.create) return Object.create(proto);
-	var ctor;
-	if (proto) {
-		ctor=createFunction();
-		ctor.prototype=proto;
-		return new ctor();
-	}
-	return {};
-}
-
 /**
- * Takes a constructor written according to the following pattern and
- * updates its prototype chain to inherit from the given superCtor's
- * prototype.
- * <pre>
- * function BaseClass() {
- * }
- * BaseClass.prototype={
- *   // base class properties
- * };
- *
- * function DerivedClass() {
- *   BaseClass.call(this);
- * }
- * DerivedClass.prototype={
- *   // derived properties
- * };
- * inherits(DerivedClass, BaseClass)
- * </pre>
+ * The entire viewable state of the map is represented by the
+ * following vital parameters:
+ * <ul>
+ * <li>prj - Map projection
+ * <li>res - resolution (projected units/pixel)
+ * <li>x - origin of the upper left corner of the map
+ * <li>y - origin of the upper left corner of the map
+ * <li>w - width of the map area
+ * <li>h - height of the map area
+ * </ul>
  * 
- * Note that the original DerivedClass.prototype is discarded as part of this
- * operation, being used solely to initialize the newly created inherited
- * prototype.
- * @public
- */
-function inherits(ctor, superCtor) {
-	var newProto=ObjectCreate(superCtor.prototype);
-	ObjectCopy(ctor.prototype, newProto);
-	ctor.prototype=newProto;
-}
-
-/**
- * Copy all own properties from src to dest (creating if needed)
- * @return dest
- */
-function ObjectCopy(src, dest) {
-	dest=dest||{};
-	if (src) {
-		for (var k in src) {
-			if (src.hasOwnProperty(k))
-				dest[k]=src[k];
-		}
-	}
-	return dest;
-}
-
-exports.ObjectCreate=ObjectCreate;
-exports.ObjectCopy=ObjectCopy;
-exports.inherits=inherits;
-
-/**
- * EventEmitter base class.  Based on Node.js EventEmitter.
- * @class
- * @name nanomaps.EventEmitter
- */
-function EventEmitter() {
-}
-
-var EventEmitterMethods=EventEmitter.prototype={};
-
-/**
- * If called without a name, returns the object of event lists.
- * If called with a name, returns the event list for the given
- * name.  Always allocates objects as necessary.
- *
- * @private
- * @methodOf nanomaps.EventEmitter
- * @name _evt
- */
-EventEmitterMethods._evt=EventEmitterMethods.listeners=function(name) {
-	var hash=this.__evt, list;
-	if (!hash) {
-		this.__evt=hash={};
-	}
-	list=hash[name];
-	if (!list) list=hash[name]=[];
-	return list;
-};
-
-/**
- * Add an event listener that will be invoked on every following occurence of the
- * named event.  The listener is invoked with <b>this</b> equal to the instance
- * that raised the event and arguments specific to the event type.
- * 
- * The method "on" is a synonym of addListener.
- * 
- * @public
- * @methodOf nanomaps.EventEmitter.prototype
- * @name addListener
- * @param {string} event Event name to add listener to
- * @param {function} listener Callback to be invoked on event
- */
-EventEmitterMethods.addListener=EventEmitterMethods.on=function(event, listener) {
-	this._evt(event).push(listener);
-};
-
-/**
- * Add an event listener that will be invoked on the very next occurence of the
- * named event.  The listener is invoked with <b>this</b> equal to the instance
- * that raised the event and arguments specific to the event type.
- *
- * @public
- * @methodOf nanomaps.EventEmitter.prototype
- * @name once
- * @param {string} event Event name to add listener to
- * @param {function} listener Callback to be invoked on event
- */
-EventEmitterMethods.once=function(event, listener) {
-	this._evt(event+'$once').push(listener);
-};
-
-/**
- * Remove a previously added listener.  Does nothing if the given listener
- * is not found.
- 
- * @public
- * @methodOf nanomaps.EventEmitter.prototype
- * @name removeListener
- * @param {string} event Event name to add listener to
- * @param {function} listener Previously added callback to remove
- */
-EventEmitterMethods.removeListener=function(event, listener) {
-	removeFromList(this._evt(event));
-	removeFromList(this._evt(event+'$once'));
-	
-	function removeFromList(list) {
-		for (var i=list.length-1; i>=0; i--) {
-			if (list[i]===listener)
-				list.splice(i, 1);
-		}
-	}
-};
-
-/**
- * Remove all listeners for a given event.
- *
- * @public
- * @methodOf nanomaps.EventEmitter.prototype
- * @name removeAllListeners
- * @param {string} event Event name to add listener to
- */
-EventEmitterMethods.removeAllListeners=function(event) {
-	this._evt(event).length=0;
-	this._evt(event+'$once').length=0;
-};
-
-/**
- * Invokes a given event by name, triggering all registered persistent listeners
- * and once only listeners.  All arguments after the first are taken to be the
- * arguments to the event listeners.  Once only listeners are invoked first
- * followed by persistent listeners.  Otherwise, listeners are invoked in the
- * order added.
+ * Representing this as a value object aids when dealing
+ * with transitions, animations, etc where we want to interpolate
+ * between two or more MapState instances.
  * <p>
- * If a method exists on the instance named 'on' + event, then that method
- * will be invoked as an event listener prior to any others.
+ * The MapSurface holds the "master" MapState in its mapState
+ * property.  This property can be read but should only be modified
+ * through appropriate API calls.
  *
- * <p><i>TODO: Make listener add/remove durable from within a callback</i>
- *
- * @public
- * @methodOf nanomaps.EventEmitter.prototype
- * @name emit
- * @param {string} event Event name to add listener to
- * @param ... Arguments to registred listeners 
+ * @constructor
+ * @name nanomaps.MapState
  */
-EventEmitterMethods.emit=function(event /*, arg1..argn */) {
-	var i, list, eventArgs=Array.prototype.slice.call(arguments, 1),
-		handler=this['on' + event];
+function MapState() {
+	this.prj=null;
+	this.res=1;
+	this.x=0;
+	this.y=0;
+	this.w=0;
+	this.h=0;
+}
+MapState.prototype={
+	/// -- Getters
+	getZoom: function() {
+		return this.prj.toLevel(this.res);
+	},
 	
-	// Emit on this object
-	if (typeof handler==='function') {
-		handler.apply(this, eventArgs);
-	}
+	/**
+	 * Return the x-coordinate in display space of the given viewport
+	 * coordinates.  Note this function takes (x,y) as it is forward
+	 * designed to be able to represent orientation.
+	 * <p>
+	 * This value will be resolution pre-divided
+	 */
+	getDspX: function(x,y) {
+		return this.x+x;
+	},
+	/**
+	 * Return the y-coordinate in display space of the given viewport
+	 * coordinates.  Note this function takes (x,y) as it is forward
+	 * designed to be able to represent orientation.
+	 * <p>
+	 * This value will be resolution pre-divided
+	 */
+	getDspY: function(x,y) {
+		return this.y+y;
+	},
 	
-	// Emit once events
-	list=this._evt(event+'$once');
-	for (i=0; i<list.length; i++) {
-		list[i].apply(this, eventArgs);
-	}
-	list.length=0;	// Zero the once only array
-
-	// Emit standard events
-	list==this._evt(event);
-	for (i=0; i<list.length; i++) {
-		list[i].apply(this, eventArgs);
+	/**
+	 * Get projected x-coordinate of the given viewport coordinates.
+	 * Note that these coordinates will have resolution multiplied out
+	 * and will have axis inversion relative to display coordinates
+	 * if the proejction defines it.
+	 */
+	getPrjX: function(x,y) {
+		var prj=this.prj,
+			displayX=this.getDspX(x,y) * this.res;
+		if (prj.XINVERTED) {
+			displayX=prj.PRJ_EXTENT.maxx - displayX;
+		}
+		return displayX;
+	},
+	
+	/**
+	 * Get projected y-coordinate of the given viewport coordinates.
+	 * Note that these coordinates will have resolution divided out
+	 * and will have axis inversion relative to display coordinates
+	 * if the proejction defines it.
+	 */
+	getPrjY: function(x,y) {
+		var prj=this.prj,
+			displayY=this.getDspY(x,y) * this.res;
+		if (prj.YINVERTED) {
+			displayY=prj.PRJ_EXTENT.maxy - displayY;
+		}
+		return displayY;
+	},
+	
+	/**
+	 * Return global x coordinate corresponding to viewport coordinate (x,y).
+	 */
+	getGlbX: function(x,y) {
+		return this.prj.invX(this.getPrjX(x,y));
+	},
+	
+	/**
+	 * Return global y coordinate corresponding to viewport coordinate (x,y).
+	 */
+	getGlbY: function(x,y) {
+		return this.prj.invY(this.getPrjY(x,y));
+	},
+	
+	/// -- calculations
+	prjToDspX: function(prjX) {
+		var prj=this.prj;
+		if (prj.XINVERTED) {
+			prjX=prj.PRJ_EXTENT.maxx - prjX;
+		}
+		return prjX / this.res;
+	},
+	
+	prjToDspY: function(prjY) {
+		var prj=this.prj;
+		if (prj.YINVERTED) {
+			prjY=prj.PRJ_EXTENT.maxy - prjY;
+		}
+		return prjY / this.res;
+	},
+	
+	/// -- Setters
+	setRes: function(res, x, y) {
+		if (res!==this.res) {
+			var prjX=this.getPrjX(x,y), prjY=this.getPrjY(x,y);
+			this.res=res;
+			this.setPrjXY(prjX, prjY, x, y);
+		}
+	},
+	
+	setZoom: function(level, x, y) {
+		this.setRes(this.prj.fromLevel(level), x, y);
+	},
+	
+	setDspXY: function(dspX, dspY, x, y) {
+		this.x=dspX-x;
+		this.y=dspY-y;
+	},
+	
+	setPrjXY: function(prjX, prjY, x, y) {
+		this.setDspXY(
+			this.prjToDspX(prjX),
+			this.prjToDspY(prjY),
+			x, y);
+	},
+	
+	setGlbXY: function(glbX, glbY, x, y) {
+		var prj=this.prj;
+		this.setPrjXY(prj.fwdX(glbX), prj.fwdY(glbY), x, y);
 	}
 };
 
-/**
- * Overrides the given methodName on this instance applying the given
- * advice ("before" or "after").  The given target method is invoked
- * for the advice.
- * 
- * <p>Invoking this method supports the arbitrary augmentation of a class's
- * methods with before or after advice.  The original method is replaced with
- * a stub that invokes a list of other methods before and after the original
- * target.  If the original method doesn't exist, the stub will still be
- * defined.
- * <p>It is safe to use this method on prototypes or instances as it will only
- * modify the outermost prototype (target of the call).
- *
- * @example MapSurface.prototype.advise('initialize', 'after', 
- *		function() { alert('Initialized'); });
- * @example myMap.advise('onzoom', 'after', 
- *		function() { alert('zoomed'); });
- * @public
- * @methodOf nanomaps.EventEmitter.prototype
- * @name advise
- * @param {string} methodName Name of the method to override
- * @param {string} advice Advice to apply ("before" or "after")
- * @param {function} target Function which is the target of advice
- */
-EventEmitterMethods.advise=function(methodName, advice, target) {
-	var originalMethod=this[methodName],
-		advisorStub, adviceList;
-		
-	if (!originalMethod || !originalMethod.__stub__ || !this.hasOwnProperty(methodName))
-		advisorStub=this[methodName]=getAdvisorStub(originalMethod);
-	else
-		advisorStub=originalMethod;
-	
-	adviceList=advisorStub[advice];
-	if (adviceList) adviceList.push(target);
-};
-
-/**
- * @private
- */
-function getAdvisorStub(method) {
-	var stub=function() {
-		var i, thisFunction=arguments.callee,
-			list, retValue;
-		
-		// Apply before advice
-		list=thisFunction.before;
-		for (i=0; i<list.length; i++) {
-			list[i].apply(this, arguments);
-		}
-		
-		// Invoke original method
-		if (method) retValue=method.apply(this, arguments);
-		
-		// Invoke after method
-		list=thisFunction.after;
-		for (i=0; i<list.length; i++) {
-			list[i].apply(this, arguments);
-		}
-	};
-	stub.__stub__=true;
-	stub.before=[];
-	stub.after=[];
-	return stub;
-}
-
-/**
- * Creates and returns a listener function that can be used with Element.addEventListener
- * and routes the event to the target instance, calling its emit method with
- * the given eventName.
- * The instance event will be emitted with two arguments: event, element
- * This method only supports W3C DOM.  IE is not supported.
- *
- * @private
- */
-function createDomEventDispatcher(target, eventName) {
-	return function(event) {
-		target.emit(eventName, event||window.event, this);
-	};
-}
 
 /**
  * Initialize an existing DOM element as a map.  All internal map structures
@@ -316,7 +182,8 @@ function MapSurface(elt, options) {
 	if (!options) options={};
 	var document=options.document||elt.ownerDocument||window.document,
 		width=options.width, height=options.height, attr,
-		viewportElt, glassElt, managedElt, center, projection;
+		mapState,
+		viewportElt, glassElt, managedElt, projection;
 		
 	// Local functions
 	function createElement(name) {
@@ -335,12 +202,6 @@ function MapSurface(elt, options) {
 	elt.style.overflow='hidden';
 	if (!isPositioned(elt))
 		elt.style.position='relative';	// Make positioned
-	
-	/* Disable z-index stuff until we can determine actual z-index from css
-	attr=elt.style.zIndex;
-	if (attr==='' || attr==='auto')
-		elt.style.zIndex='inherit';	// Establish a new stacking context
-	*/
 	
 	function createOverlay() {
 		var overlay=createElement('div');
@@ -365,7 +226,7 @@ function MapSurface(elt, options) {
 	viewportElt.className='viewport';
 	elt.insertBefore(viewportElt, elt.firstChild);
 	
-	// create manage
+	// create managed
 	managedElt=createElement('div');
 	managedElt.className='managed';
 	managedElt.style.position='absolute';
@@ -382,6 +243,12 @@ function MapSurface(elt, options) {
 		parent: elt
 	};
 	
+	
+	// Initial mapState
+	this.mapState=mapState=new MapState();
+	mapState.prj=options.projection||new Projections.WebMercator();
+	mapState.res=options.resolution||mapState.prj.DEFAULT_RESOLUTION;
+
 	// Fixed size or autosize
 	if (typeof width!=='number' || typeof height!=='number') {
 		this.setSize();
@@ -392,19 +259,6 @@ function MapSurface(elt, options) {
 		this.setSize(width, height);
 	}
 	
-	// Initialize transform
-	projection=options.projection||new Projections.WebMercator();
-	center=options.center||projection.DEFAULT_CENTER;
-	this.transform=new MapTransform();
-	this.transform.init(
-		projection,
-		options.resolution||projection.DEFAULT_RESOLUTION,
-		[center.lng, center.lat]
-		);
-	
-	// Setup initial state by setting center
-	this.setCenter(center);
-	
 	// Initialization hook
 	this.initialize(options);
 	
@@ -412,6 +266,117 @@ function MapSurface(elt, options) {
 	this.collect();
 }
 var MapSurfaceMethods=MapSurface.prototype=new EventEmitter();
+
+/**
+ * If x is defined, return it cast as a number.  Otherwise, return width/2
+ */
+function optionalX(map, x) {
+	return (x===undefined||x===null) ? map.mapState.w/2 : Number(x);
+}
+
+/**
+ * If y is defined, return it cast as a number.  Otherwise, return height/2
+ */
+function optionalY(map, y) {
+	return (y===undefined||y===null) ? map.mapState.h/2 : Number(y);
+}
+
+/**
+ * Clamp the given zoom level to the valid range
+ */
+function clampZoom(map, level) {
+	var prj=map.mapState.prj;
+	level=Number(level);
+	
+	// Not much to do here - but letting an NaN in is like inviting
+	// a vampire into your house
+	if (isNaN(level)) level=prj.MAX_LEVEL;
+	
+	if (level<prj.MIN_LEVEL) level=prj.MIN_LEVEL;
+	else if (level>prj.MAX_LEVEL) level=prj.MAX_LEVEL;
+	return level;
+}
+
+/**
+ * Get the current zoom level
+ * @public
+ * @methodOf nanomaps.MapSurface.prototype
+ * @name getZoom
+ * @return the current zoom level as a floating point number
+ */
+MapSurfaceMethods.getZoom=function() {
+	return this.mapState.getZoom();
+};
+
+/**
+ * Set the map zoom level, optionally preserving the display position
+ * of the given viewport coordinates.
+ * @public
+ * @methodOf nanomaps.MapSurface.prototype
+ * @name getZoom
+ * @param level {number} Floating point zoom level (clamped to valid range)
+ * @param x {number||undefined} x viewport coordinate to preserve (default=center)
+ * @param y {number||undefined} y viewport coordinate to preserve (default=center)
+ * @return the current zoom level as a floating point number
+ */
+MapSurfaceMethods.setZoom=function(level, x, y) {
+	var mapState=this.mapState,
+		origRes=mapState.res;
+
+	level=clampZoom(this, level);
+	this.mapState.setZoom(level, optionalX(this,x), optionalY(this,y));
+	
+	if (mapState.res!==origRes) {
+		this._invalidate(true);
+	}
+};
+
+/**
+ * Gets the global location as a Coordinate object at the given
+ * viewport coordinates.  If coordinates are ommitted/undefined,
+ * then the center is assumed.
+ */
+MapSurfaceMethods.getLocation=function(x,y) {
+	var mapState=this.mapState;
+	x=optionalX(this,x);
+	y=optionalY(this,y);
+	return Coordinate.xy(
+		mapState.getGlbX(x,y),
+		mapState.getGlbY(y,y)
+	);
+};
+
+/**
+ * Set the map to the given global coordinates at the given
+ * viewport coordinates (default to map center).
+ * The first argument must either be a Coordinate object
+ * or something that is coercible from Coordinate.from(...).
+ * Examples: Coordinate.latLng(39,-104), {lat:39,lng:-104}.
+ * @public
+ * @methodOf nanomaps.MapSurface.prototype
+ * @name setLocation
+ * @param globalCoord {Coordinate coercible}
+ * @param x viewport coordinate to set location relative to
+ * @param y viewport coordinate to set location relative to
+ */
+MapSurfaceMethods.setLocation=function(globalCoord, x, y) {
+	globalCoord=Coordinate.from(globalCoord);
+	this.mapState.setGlbXY(globalCoord._x, globalCoord._y, optionalX(this,x), optionalY(this,y));
+	this._invalidate(false);
+};
+
+MapSurfaceMethods._invalidate=function(full) {
+	// Update the offset of the managed container
+	var managed=this.elements.managed,
+		mapState=this.mapState;
+	
+	managed.style.left=(-mapState.x) + 'px';
+	managed.style.top=(-mapState.y) + 'px';
+	
+	if (full) this._notifyReset();
+	else this._notifyPosition();
+};
+
 /**
  * Iterate over each child element of the global layer, invoking
  * callback.  The this reference is preserved as this instance in
@@ -641,7 +606,8 @@ MapSurfaceMethods.update=function(element) {
  * @param {integer} height
  */
 MapSurfaceMethods.setSize=function(width, height) {
-	var elt=this.elements.parent, center=this._center;
+	var elt=this.elements.parent, center=this.getLocation(),
+		mapState=this.mapState;
 	if (arguments.length<2) {
 		elt.style.width='';
 		elt.style.height='';
@@ -651,219 +617,11 @@ MapSurfaceMethods.setSize=function(width, height) {
 	
 	elt.style.width=width+'px';
 	elt.style.height=height+'px';
-	this.width=width;
-	this.height=height;
 	
-	// center will be undefined at init-time setSize
-	if (center) this.setCenter(center);
-};
-
-/**
- * Set the map center to the given global coordinates as specified by the
- * object with properties "lat" and "lng".
- *
- * @public
- * @methodOf nanomaps.MapSurface.prototype
- * @name setCenter
- * @param {LatLng object} centerLatLng
- */
-MapSurfaceMethods.setCenter=function(centerLatLng) {
-	this._updateCenter(centerLatLng);	
-	this._notifyPosition();
-};
-
-/**
- * Internal method - update the center but don't notify layers of a
- * position change.
- * @private
- * @methodOf nanomaps.MapSurface.prototype
- * @name _updateCenter
- * @param {LatLng object} centerLatLng
- */
-MapSurfaceMethods._updateCenter=function(centerLatLng) {
-	// Update the offset of the managed container
-	var managed=this.elements.managed, transform=this.transform,
-		lat=centerLatLng.lat||0, lng=centerLatLng.lng||0,
-		xy;
-	this._center={lat:lat,lng:lng};
-	xy=transform.toSurface(lng, lat);
-	xy[0]-=this.width/2;
-	xy[1]-=this.height/2;
+	mapState.w=width;
+	mapState.h=height;
 	
-	managed.style.left=(-xy[0]) + 'px';
-	managed.style.top=(-xy[1]) + 'px';
-};
-
-/**
- * Return a reference to the current center object, having fields "lat"
- * and "lng".
- *
- * @public
- * @methodOf nanomaps.MapSurface.prototype
- * @name getCenter
- * @return {LatLng object}
- */
-MapSurfaceMethods.getCenter=function() {
-	return this._center;
-};
-
-/**
- * Get the current resolution in projection units per pixel (most commonly
- * meters/pixel).
- *
- * @public
- * @methodOf nanomaps.MapSurface.prototype
- * @name getResolution
- * @return {Number}
- */
-MapSurfaceMethods.getResolution=function() {
-	return this.transform.res;
-};
-
-/**
- * Change the map resolution, optionaly preserving the global coordinates
- * under an arbitrary location on the map viewport.  If preserveXY is not
- * given, then the coordinates at the center are preserved.
- *
- * @public
- * @methodOf nanomaps.MapSurface.prototype
- * @name setResolution
- * @param {Number} resolution
- * @param {XY object} [preserveXY] Object with "x" and "y" properties specifying
- * 		a point on the viewport measured from the upper-left
- */
-MapSurfaceMethods.setResolution=function(resolution, preserveXY) {
-	var center=this._center, deltaX, deltaY, centerLngLat;
-	
-	//if (preserveXY) console.log('setResolution(' + resolution + ', preserveX=' + preserveXY.x + ', preserveY=' + preserveXY.y + ')');
-	if (preserveXY) {
-		// re-interpret the center such that the point at the given
-		// offset in the viewport stays at the given point
-		//console.log('original center: lat=' + center.lat + ', lng=' + center.lng);
-		center=this.toLatLng(preserveXY.x, preserveXY.y);
-		//console.log('revised center: lat=' + center.lat + ', lng=' + center.lng);
-		deltaX=this.width/2-preserveXY.x;
-		deltaY=this.height/2-preserveXY.y;
-		// deltaX and deltaY = offset from center to recenter at
-	}
-	
-	this.transform=this.transform.rescale(resolution, [center.lng, center.lat]);
-	
-	if (preserveXY) {
-		// Reset the center based on the offset
-		// Can't use this.toLatLng here because we are not yet in a consistent
-		// state (_updateCenter has not been called) and toLatLng uses this to
-		// do viewport relative coordinates.  Take advantage of the fact that
-		// we know the zero pixel point to be the lat/lng under the original
-		// prserveXY coordinates to avoid the need for viewport biasing.
-		//console.log('Biasing center by (' + deltaX + ',' + deltaY + ')px');
-		centerLngLat=this.transform.fromSurface(deltaX, deltaY);
-		if (centerLngLat) {
-			center.lng=centerLngLat[0];
-			center.lat=centerLngLat[1];
-		}
-	}
-	
-	this._updateCenter(center);
-	this._notifyReset();
-};
-
-/**
- * Change the map resolution by specifying a projection dependent level, 
- * optionaly preserving the global coordinates
- * under an arbitrary location on the map viewport.  If preserveXY is not
- * given, then the coordinates at the center are preserved.
- * <p>
- * The mapping between level and resolution is done by the projection.  For the
- * default WebMercator projection, the level is a positive number representing
- * the power of two decimation factor.  It can take any floating point value
- * (not just integers) and is interpolated using 2^x exponentiation or a base
- * 2 logarithm.
- * 
- * @public
- * @methodOf nanomaps.MapSurface.prototype
- * @name setLevel
- * @param {Number} level Floating point level between the projections minimum and
- * 		maximum zoom level (if out of these bounds, it is clamped to min/max
- *		values)
- * @param {XY object} [preserveXY] Object with "x" and "y" properties specifying
- * 		a point on the viewport measured from the upper-left
- */
-MapSurfaceMethods.setLevel=function(level, preserveXY) {
-	var prj=this.transform.prj, minLevel=prj.MIN_LEVEL, maxLevel=prj.MAX_LEVEL;
-	
-	if (!level) return;
-	if (level>maxLevel) level=maxLevel;
-	else if (level<minLevel) level=minLevel;
-	
-	this.setResolution(prj.fromLevel(level), preserveXY);
-};
-
-/**
- * Get the current level that represents the map's resolution.  This is a
- * calculated value based on the projection, but it is usually a real number,
- * not necessarily an integer.
- *
- * @public
- * @methodOf nanomaps.MapSurface.prototype
- * @name getLevel
- * @return {Number}
- */
-MapSurfaceMethods.getLevel=function() {
-	var transform=this.transform;
-	return transform.prj.toLevel(transform.res);
-};
-
-/**
- * Given x,y coordinates relative to the visible area of the viewport,
- * return the corresponding lat/lng.
- *
- * @public
- * @methodOf nanomaps.MapSurface.prototype
- * @name toLatLng
- * @param {Number} x coordinate measured from the left of the viewport
- * @param {Number} y coordinate measured from the top of the viewport
- * @return {LatLng object}
- */
-MapSurfaceMethods.toLatLng=function(x, y) {
-	var transform=this.transform, managed=this.elements.managed, lngLat;
-	
-	//console.log('toLatLng(' + x + ',' + y + ')');
-	//console.log('global left=' + global.style.left + ', top=' + global.style.top);
-	
-	x-=parseInt(managed.style.left);
-	y-=parseInt(managed.style.top);
-	
-	//console.log('zpx rel xy=(' + x + ',' + y + ')');
-	
-	lngLat=transform.fromSurface(x, y);
-	if (!lngLat) return null;
-	return {lng: lngLat[0], lat: lngLat[1]};
-};
-
-/**
- * Translate a viewport coordinate relative to the visible area to the
- * projected pixel coordinates relative to the managed layer coordinate system.  
- * Note that this assumes an axis inversion
- * on the y-axis (ie. Increasing "y" parameters will produce decreasing "y"
- * results).  This method is used for a number of internal calculations but
- * is unlikely to be of use to end-callers.
- *
- * @public
- * @methodOf nanomaps.MapSurface.prototype
- * @name toGlobalPixels
- * @param {Number} x coordinate measured from the left of the viewport
- * @param {Number} y coordinate measured from the top of the viewport
- * @return {XY object}
- */
-MapSurfaceMethods.toGlobalPixels=function(x, y) {
-	var transform=this.transform, managed=this.elements.managed;
-	x-=parseInt(managed.style.left);
-	y-=parseInt(managed.style.top);
-	return {
-		x: x + transform.zpx[0],
-		y: transform.zpx[1] - y
-	};
+	this.setLocation(center);
 };
 
 /**
@@ -879,9 +637,8 @@ MapSurfaceMethods.toGlobalPixels=function(x, y) {
  * the center
  */
 MapSurfaceMethods.moveBy=function(eastingPx, northingPx) {
-	var latLng=this.toLatLng(this.width/2 + eastingPx, this.height/2 - northingPx);
-	//console.log('moveto: lat=' + latLng.lat + ', lng=' + latLng.lng + ' for deltax=' + eastingPx + ', deltay=' + northingPx);
-	if (latLng) this.setCenter(latLng);
+	var location=this.getLocation(eastingPx, - northingPx);
+	this.setLocation(location, 0, 0);
 };
 
 
@@ -929,237 +686,8 @@ var DEFAULT_MAP_DELEGATE={
 	}
 };
 
-/**
- * Construct a new MapTransform with the given parameters.  Implementations
- * will typically call init(...) next.  Note that this class typically represents
- * longitude and latitude as ordered arrays as [longitude, latitude], corresponding
- * to x and y.
- * 
- * @class
- * @name nanomaps.MapTransform
- * @public
- */
-function MapTransform() {
-}
-MapTransform.prototype=
-/**
- * @lends nanomaps.MapTransform.prototype
- */
-{
-	/**
-	 * @public
-	 * @param {Projection object} projection map projection
-	 * @param {Number} resolution the resolution that the transform describes
-	 * @param {Array[lng,lat]} Longitude/Latitude corresponding to the viewport
-	 * zero pixel coordinate
-	 */
-	init: function(projection, resolution, zeroLngLat) {
-		// The sequence number is used to detect if objects are
-		// aligned properly against the current transform
-		this.prj=projection;
-		this.res=resolution;
-		this.zll=zeroLngLat;
-		
-		// Calculate corresponding unaligned pixel coordinates associated
-		// with zeroLatLng
-		this.zpx=this.toPixels(zeroLngLat[0], zeroLngLat[1]);
-	},
-	
-	/**
-	 * Return a new MapTransform at a new scale and zeroLatLng
-	 * @public
-	 * @param {Number} resolution new resolution
-	 * @param {Array[lng,lat]} zeroLngLat new zero point
-	 */
-	rescale: function(resolution, zeroLngLat) {
-		var transform=new MapTransform();
-		transform.init(this.prj, resolution, zeroLngLat);
-		return transform;
-	},
-	
-	/**
-	 * Convert the given longitude/latitude to returned [x, y] coordinates.
-	 * Returns null if the lng/lat is out of bounds.
-	 * NOTE: the order of the parameters is longitude, latitude, corresponding
-	 * with x and y.
-	 * In order to align to the viewport, the return value should be subtracted
-	 * from this.zeroPx (see toViewport).
-	 * @public
-	 * @param {Number} lng longitude
-	 * @param {Number} lat latitude
-	 * @return {Array[x,y]} Global projected pixels of the given lng/lat
-	 */
-	toPixels: function(lng, lat) {
-		var xy=this.prj.forward(lng, lat), resolution=this.res;
-		if (!xy) return null;
-		xy[0]/=resolution;
-		xy[1]/=resolution;
-		
-		return xy;
-	},
-	
-	/**
-	 * Return surface coordinates of the given lat/lng (offset relative to
-	 * the zero point)
-	 * @public
-	 * @param {Number} lng longitude
-	 * @param {Number} lat latitude
-	 * @return {Array[x,y]} Surface pixels of the given lng/lat
-	 */
-	toSurface: function(lng, lat) {
-		var xy=this.toPixels(lng, lat);
-		if (!xy) return null;
-		xy[0]-=this.zpx[0];
-		xy[1]=this.zpx[1] - xy[1]; // Note Y axis inversion
-		return xy;
-	},
-	
-	/**
-	 * Convert from global pixel coordinates to lng/lat.
-	 * @public
-	 * @param {Number} x
-	 * @param {Number} y
-	 * @return {Array[lng,lat]} Lng/lat corresponding to the global pixels
-	 
-	 */
-	fromPixels: function(x, y) {
-		var resolution=this.res;
-		return this.prj.inverse(x * resolution, y * resolution);
-	},
-	
-	/**
-	 * Convert from surface coordinates to [lng, lat] offset from the zero point.
-	 * @public
-	 * @param {Number} x
-	 * @param {Number} y
-	 * @return {Array[lng,lat]} Lng/lat corresponding to the suface pixels
-	 */
-	fromSurface: function(x, y) {
-		return this.fromPixels(x+this.zpx[0], this.zpx[1] - y);	// Note Y axis inversion
-	}
-};
-
-/**
- * @namespace Projections
- * @name nanomaps.Projections
- */
-var Projections={
-	/**
-	 * Standard "Web Mercator" projection as used by Google, Microsoft, OSM, et al.
-	 * Instantiate as new WebMercator(options). 
-	 * @class
-	 * @name nanomaps.Projections.WebMercator
-	 * @param {Number} [options.MIN_LEVEL=1]
-	 * @param {Number} [options.MAX_LEVEL=18]
-	 */
-	WebMercator: function(options) {
-		if (!options) options={};
-		/**
-		 * Default center for this projection
-		 * @public
-		 * @name DEFAULT_CENTER
-		 * @memberOf nanomaps.Projections.WebMercator#
-		 */
-		this.DEFAULT_CENTER={lat:39.7406, lng:-104.985441};
-		/**
-		 * Default resolution for this projection
-		 * @public
-		 * @name DEFAULT_RESOLUTION
-		 * @memberOf nanomaps.Projections.WebMercator#
-		 */
-		this.DEFAULT_RESOLUTION=611.4962;
-	
-		var EARTH_RADIUS=6378137.0,
-			DEG_TO_RAD=.0174532925199432958,
-			RAD_TO_DEG=57.29577951308232,
-			FOURTHPI=0.78539816339744833,
-			HALFPI=1.5707963267948966,
-			HIGHEST_RES=78271.5170;
-		
-		/**
-		 * Minimum valid level
-		 * @public
-		 * @name MIN_LEVEL
-		 * @memberOf nanomaps.Projections.WebMercator#
-		 */
-		this.MIN_LEVEL=options.MIN_LEVEL||1;
-		/**
-		 * Maximum valid level
-		 * @public
-		 * @name MAX_LEVEL
-		 * @memberOf nanomaps.Projections.WebMercator#
-		 */
-		this.MAX_LEVEL=options.MAX_LEVEL||18;
-		
-		/**
-		 * Convert from global to projected units 
-		 * @public
-		 * @name forward
-		 * @methodOf nanomaps.Projections.WebMercator#
-		 * @param {Number} x
-		 * @param {Number} y
-		 * @return {Array[x,y]}
-		 */
-		this.forward=function(x, y) {
-			return [
-				x*DEG_TO_RAD * EARTH_RADIUS, 
-				Math.log(Math.tan(FOURTHPI + 0.5 * DEG_TO_RAD * y)) * EARTH_RADIUS 
-			];
-		};
-		
-		/**
-		 * Convert from projected to global units 
-		 * @public
-		 * @name inverse
-		 * @methodOf nanomaps.Projections.WebMercator#
-		 * @param {Number} x
-		 * @param {Number} y
-		 * @return {Array[x,y]}
-		 */
-		this.inverse=function(x, y) {
-			return [
-				RAD_TO_DEG * x / EARTH_RADIUS,
-				RAD_TO_DEG * (HALFPI - 2. * Math.atan(Math.exp(-y/EARTH_RADIUS)))
-			];
-		};
-		
-		/**
-		 * Return the resolution (m/px) for the given zoom index given a standard
-		 * power of two zoom breakdown.
-		 * @public
-		 * @name fromLevel
-		 * @methodOf nanomaps.Projections.WebMercator#
-		 * @param {Number} level
-		 * @return {Number} resolution
-		 */
-		this.fromLevel=function(level) {
-			return HIGHEST_RES/Math.pow(2, level-1);
-		};
-		
-		/**
-		 * Return the level for the given resolution on the standard power of
-		 * two scale.
-		 * @public
-		 * @name toLevel
-		 * @methodOf nanomaps.Projections.WebMercator#
-		 * @param {Number} resolution
-		 * @return {Number} level
-		 */
-		this.toLevel=function(resolution) {
-			return Math.log(HIGHEST_RES/resolution) / Math.log(2) + 1;
-		};
-		
-		// release memory from closure
-		options=null;
-	}
-};
-
-
 
 // Exports
-exports.EventEmitter=EventEmitter;
 exports.MapSurface=MapSurface;
-exports.Projections=Projections;
-exports.MapTransform=MapTransform;
 
 

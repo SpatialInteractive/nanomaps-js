@@ -20,11 +20,14 @@ function initialize() {
 	/** Don't attach tile layer yet - we do that after we acquire an initial location **/
 	try {
 		//navigator.geolocation.watchPosition(handleGeoLocation, handleGeoLocationError);
+		/*
 		navigator.geolocation.getCurrentPosition(
 			handleGeoLocation,
 			handleGeoLocationError,
 			{maximumAge:Infinity, timeout: 2000}
 		);
+		*/
+		throw "No geoloc";
 		// Set fallback timeout to get the map showing on timeout
 		setTimeout(function() {
 			showMap();
@@ -38,10 +41,10 @@ function initialize() {
 
 function setupControls() {
 	$('#zoomControl .zoomIn').click(function() {
-		map.setLevel(map.getLevel()+1);
+		map.setZoom(map.getZoom()+1);
 	});
 	$('#zoomControl .zoomOut').click(function() {
-		map.setLevel(map.getLevel()-1);
+		map.setZoom(map.getZoom()-1);
 	});
 }
 
@@ -64,8 +67,8 @@ function showMap(initialPosition, initialLevel) {
 		lat: 47.604317, 
 		lng: -122.329773
 	};
-	if (initialLevel) map.setLevel(initialLevel);
-	map.setCenter(initialPosition);
+	if (initialLevel) map.setZoom(initialLevel);
+	map.setLocation(initialPosition);
 	
 	// Show tiles
 	map.attach(tileLayer);
@@ -84,6 +87,6 @@ function handleGeoLocationError(error) {
 
 
 $(window).load(initialize);
-$(window).resize(resize);
+//$(window).resize(resize);
 })(window);
 

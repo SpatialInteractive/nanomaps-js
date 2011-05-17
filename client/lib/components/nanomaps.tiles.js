@@ -1,248 +1,11 @@
 /**
  * nanomaps.tiles.js
- * Manage a tile layer using canvas elements to handle rendering.
- * This module is a nanomaps "overlay" module in that it does not define
- * its own namespace, but rather adds to the nanomaps namespace.  See also
- * nanomaps.itiles.js which replaces various bits of this implementation
- * with a traditional "image mosaic" rendering if the browser does not
- * support canvas.
- */
-(function(nanomaps) {
-
-function tileXYToQuadkey(tileX, tileY, level) {
-	var i, mask, value, ret='';
-	for (i=level; i>0; i--) {
-		value=48;
-		mask=1<<(i-1);
-		if ((tileX&mask)!==0) value++;
-		if ((tileY&mask)!==0) value+=2;
-		ret+=String.fromCharCode(value);
-	}
-	return ret;
-}
-	
-// -- Tile Layer
-function makeVisibleOnLoad() {
-	this.style.visibility='';
-}
-
-function TileCache() {
-	var contents={},
-		marked=[];
-	
-	function disposeTileDesc(tileDesc) {
-		if (tileDesc.img&&tileDesc.img.parentNode) 
-			// Detach
-			tileDesc.img.parentNode.removeChild(tileDesc.img);
-	}
-		
-	this.mark=function() {
-		marked.length=0;
-	};
-	
-	this.free=function() {
-		var newContents={},
-			key, i, tileDesc;
-			
-		// Add all marked to the new dictionary
-		for (i=0; i<marked.length; i++) {
-			tileDesc=marked[i];
-			key=tileDesc.key;
-			newContents[key]=tileDesc;
-			delete contents[key];
-		}
-		
-		// Any existing in contents are to be discarded
-		for (i in contents) {
-			tileDesc=contents[i];
-			disposeTileDesc(tileDesc);
-		}
-		
-		// Swap
-		contents=newContents;
-		marked.length=0;
-	};
-	
-	this.use=function(tileDesc) {
-		var key=tileDesc.key,
-			existing=contents[key];
-		if (existing) {
-			disposeTileDesc(tileDesc);
-			tileDesc=existing;
-		}
-		contents[key]=tileDesc;
-		if (marked) marked.push(tileDesc);
-		return tileDesc;
-	};
-	
-	this.take=function(tileDesc) {
-		var key=tileDesc.key,
-			existing=contents[key];
-		if (existing) {
-			delete contents[key];
-			return existing;
-		}
-		return tileDesc;
-	};
-	
-	this.each=function(callback) {
-		var i, tileDesc;
-		for (i in contents) {
-			tileDesc=contents[i];
-			if (tileDesc && typeof tileDesc==='object')
-				callback(tileDesc);
-		}
-	};
-	
-	this.clear=function() {
-		contents={};
-		marked.length=0;
-	};
-	
-	this.moveFrom=function(otherCache) {
-		otherCache.each(function(tileDesc) {
-			var key=tileDesc.key;
-			if (contents[key]) {
-				// Already exists.  Delete
-				disposeTileDesc(tileDesc);
-			} else
-				contents[tileDesc.key]=tileDesc;
-		});
-		otherCache.clear();
-	};
-}
-
-/**
- * Construct a standard TileLayer that can be attached to a MapSurface.  If a
- * TileSelector is not passed in the options, then a default is constructed and
- * options are passed to it.  See the options accepted by the TileSelector
- * constructor for additional parameters.
- *
- * @example 
- * var map=new nanomaps.MapSurface(someElement);
- * map.attach(new nanomaps.TileLayer({ 
- *    tileSrc: "http://otile${modulo:1,2,3}.mqcdn.com/tiles/1.0.0/osm/${level}/${tileX}/${tileY}.png" })); 
- *
- * @class
- * @name nanomaps.TileLayer
- * @param {TileSelector} [options.selector] describes the source and geometry of the
- * tiles
- * @param {integer} [options.buffer=64] The number of pixels to actively buffer on
- * all sides of the map
- */
-function TileLayer(options) {
-	this.options=options=options||{};
-	this.sel=options.selector||new TileSelector(options);
-	this.fgCache=new TileCache();
-	this.bgCache=new TileCache();
-}
-TileLayer.prototype={
-	/**
-	 * Returns a new element ready to be added to the MapSurface.  This method
-	 * fulfills the contract for MapSurface.attach.
-	 * @public
-	 * @methodOf nanomaps.TileLayer.prototype
-	 * @name createElement
-	 * @param {MapSurface} map
-	 * @return {HTMLElement}
-	 */
-	createElement: function(map) {
-		var element=document.createElement('div');
-		element.style.position='absolute';
-		element.style.left='0px';
-		element.style.top='0px';
-		element.mapDelegate=this;
-		return element;
-	},
-	
-	/**
-	 * @private
-	 */
-	placeTile: function(map, element, tileDesc, moveToFront) {
-		var img=tileDesc.img,
-			transform=map.transform,
-			zpx=transform.zpx,
-			scaleFactor=tileDesc.res / transform.res;
-			
-		if (img&&img._error) {
-			// Zero it out
-			if (img.parentElement) img.parentElement.removeChild(img);
-			tileDesc.img=null;
-			img=null;
-		}
-		
-		// If no valid img, instantiate it
-		if (!img) {
-			img=map.createElement('img');
-			img.style.visibility='hidden';
-			img.onload=makeVisibleOnLoad;
-			img.style.position='absolute';
-			img.src=this.sel.resolveSrc(tileDesc);
-			tileDesc.img=img;
-		}
-		
-		// Set position and size
-		img.width=Math.ceil(tileDesc.size*scaleFactor);
-		img.height=Math.ceil(tileDesc.size*scaleFactor);
-		img.style.left=Math.round(tileDesc.x*scaleFactor - zpx[0]) + 'px';
-		img.style.top=Math.round(zpx[1] - tileDesc.y*scaleFactor) + 'px';	// y-axis inversion
-		if (moveToFront || img.parentNode!==element) element.appendChild(img);
-	},
-	
-	/**
-	 * @private
-	 */
-	onreset: function(map, element) {
-		var self=this,
-			transform=map.transform,
-			buffer=self.options.buffer||64,
-			ulXY=map.toGlobalPixels(-buffer,-buffer),
-			width=map.width+buffer,
-			height=map.height+buffer,
-			curResolution=self.curResolution,
-			displayResolution=transform.res,
-			tileList=self.sel.select(transform.prj, displayResolution, ulXY.x, ulXY.y, width, height, true),
-			fgCache=self.fgCache,
-			bgCache=self.bgCache,
-			refreshBackground=false,
-			i,
-			tileDesc;
-			
-		if (curResolution&&curResolution!==displayResolution) {
-			// We have a scale change.  Snapshot the current tile
-			// cache as the background cache and start on a new one
-			bgCache.mark();
-			bgCache.free();
-			bgCache.moveFrom(fgCache);
-			refreshBackground=true;
-		}
-
-		fgCache.mark();
-		for (i=0; i<tileList.length; i++) {
-			tileDesc=fgCache.use(bgCache.take(tileList[i]));
-			self.placeTile(map, element, tileDesc, true);
-		}
-		fgCache.free();
-
-		// Record so that the next time through we can tell whether
-		// this is a simple change
-		this.curResolution=displayResolution;
-		
-		if (refreshBackground) {
-			bgCache.each(function(tileDesc) {
-				self.placeTile(map, element, tileDesc);
-			});
-		}
-		
-	},
-	
-	/**
-	 * @private
-	 */
-	onposition: function(map, element) {
-		this.onreset(map, element);
-	}
-};
+ * Provide an "image mosaic" tile layer that can be attach()'d to
+ * a MapSurface.  The original version of this module served as the
+ * basis for the android version, where further inspiration was had
+ * and was then ported back to this version.
+ * See the net.rcode.nanomaps.tile package.
+**/
 
 /**
  * Class representing a tile selector for the layout of OSM, MS, Google, et al.
@@ -270,28 +33,34 @@ TileLayer.prototype={
  * </ul>
  *
  * @class
- * @name nanomaps.TileSelector
+ * @name nanomaps.CartesianTileSelector
  * @param {integer} [options.tileSize=256]
  * @param {string} [options.tileSrc='']
  */
-function TileSelector(options) {
+function CartesianTileSelector(options) {
 	options=options||{};
 	// set defaults
 	this.tileSize=options.tileSize||256;
 	this.srcSpec=options.tileSrc||'';
 }
-TileSelector.prototype={
-	/**
-	 * Gets the origin in physical units [x, y] for the tile coordinate space
-	 * @private
-	 */
-	origin: function(projection) {
-		var ret=this._origin;
-		if (!ret) {
-			ret=projection.forward(-180, 85.05112878);
-			this._origin=ret;
-		}
-		return ret;
+CartesianTileSelector.prototype={
+	destroyTile: function(tile) {
+		// TODO
+	},
+	
+	destroyDrawable: function(tile, drawable) {
+		// TODO
+	},
+	
+	loadTile: function(tile, sourceTileSet, loadNew) {
+		var src=this.resolveSrc(tile.tileKey);
+		console.log('Load tile ' + tile.tileKey.level + '@' + tile.tileKey.tileX + ',' + tile.tileKey.tileY);
+
+		setTimeout(function() {
+			var imgElt=document.createElement('img');
+			imgElt.src=src;
+			tile.update(imgElt);
+		}, 2000);
 	},
 	
 	/**
@@ -299,119 +68,469 @@ TileSelector.prototype={
 	 * @public
 	 * @name resolveSrc
 	 * @methodOf nanomaps.TileSelector.prototype
-	 * @param {TileDesc} tileDesc tile description returned from select
+	 * @param {TileKey} TileKey returned from select
 	 */
-	resolveSrc: function(tileDesc) {
+	resolveSrc: function(tileKey) {
 		return this.srcSpec.replace(/\$\{([A-Za-z]+)(\:([^\}]*))?\}/g, function(s, name, ignore, args) {
 			if (name==='quadkey') {
-				return tileXYToQuadkey(tileDesc.tileX, tileDesc.tileY, tileDesc.level);
+				return tileXYToQuadkey(tileKey.tileX, tileKey.tileY, tileKey.level);
 			} else if (name==='modulo') {
 				// get the args and modulo it by the tileDesc.tileX
 				args=args.split(/\,/);
-				return args[tileDesc.tileX%args.length];
+				return args[tileKey.tileX%args.length];
 			} else {
-				return tileDesc[name];
+				return tileKey[name];
 			}
 		});
 	},
 	
 	/**
 	 * Select all tiles that intersect the given bounding box at the
-	 * given resolution.  Return an array of TileDesc elements, where
-	 * each TileDesc has the following attributes:
-	 * <ul>
-	 *   <li>key: an opaque string that uniquely identifies this tile within
-	 *     this instance where multiple requests for the same physical tile
-	 *     have the same key
-	 *   <li>res: the native resolution of the tile
-	 *	 <li>level: the native zoom level
-	 *   <li>x, y: origin at native resolution,
-	 *	 <li>size: tile size (width/height) at native resolution
-	 *   <li>tileX, tileY: the tile x and y
-	 * </ul>
+	 * given resolution.  Return an array of TileKey elements.  The coordinates
+	 * define a bounding box in projected units (resolution invariant).
+	 *
 	 * @public
 	 * @name select
-	 * @methodOf nanomaps.TileSelector.prototype
+	 * @methodOf nanomaps.CartesianTileSelector.prototype
 	 * @param {Projection} projection map projection
 	 * @param {Number} resolution resolution at which tiles will be rendered
-	 * @param {Number} x Global pixel coordinate relative to projection and resolution
-	 * of the upper left corner of the region to select
-	 * @param {Number} y Global pixel coordinate relative to projection and resolution
-	 * of the upper left corner of the region to select
-	 * @param {Number} width Pixel width of region to select
-	 * @param {Number} height Pixel height of the region to select
-	 * @param {Boolean} sort If true, then returns the tiles sorted by most visually impactful
+	 * @param {Number} x1
+	 * @param {Number} y1
+	 * @param {Number} x2
+	 * @param {Number} y2
 	 * @return {Array[TileDesc]}
 	 */
-	select: function(projection, resolution, x, y, width, height, sort) {
-		var tileStartX, tileStartY,
-			tileEndX, tileEndY,
-			tileMidX, tileMidY,
-			i, j, tileDesc,
+	select: function(projection, resolution, x1, y1, x2, y2) {
+		// - Projection setup
+		var tileSize=this.tileSize,
+			projectedBounds=projection.PRJ_EXTENT,
+			xinversion=projection.XINVERTED,
+			yinversion=projection.YINVERTED,
 			nativeLevel=Math.round(projection.toLevel(resolution)),
 			nativeResolution=projection.fromLevel(nativeLevel),
-			unscaledOrigin=this.origin(projection),
-			tileSize=this.tileSize,
-			nativeOriginX=unscaledOrigin[0]/nativeResolution,
-			nativeOriginY=unscaledOrigin[1]/nativeResolution,
-			nativeScaleFactor=resolution / nativeResolution,
-			retList=[];
-
-		// Scale x,y,width,height to our nativeResolution
-		x=x*nativeScaleFactor;
-		y=y*nativeScaleFactor;
-		width=width*nativeScaleFactor;
-		height=height*nativeScaleFactor;
+			nativeOriginX,
+			nativeOriginY;
+			
+		x1/=nativeResolution;
+		y1/=nativeResolution;
+		x2/=nativeResolution;
+		y2/=nativeResolution;
 		
-		// Find the grid of tiles that intersect
-		tileStartX=Math.floor( (x - nativeOriginX) / tileSize );
-		tileStartY=Math.floor( (nativeOriginY - y) / tileSize );		// y-axis inversion
-		tileEndX=Math.floor( ((x+width) - nativeOriginX ) / tileSize );
-		tileEndY=Math.floor( (nativeOriginY - (y-height)) / tileSize );	// y-axis inversion
-		//debugger;
-		// Loop and report each one
-		for (j=tileStartY; j<=tileEndY; j++) {
-			for (i=tileStartX; i<=tileEndX; i++) {
-				tileDesc={
-					key: nativeLevel + ':' + i + ':' + j,
-					res: nativeResolution,
-					level: nativeLevel,
-					tileX: i,
-					tileY: j,
-					size: tileSize,
-					x: nativeOriginX + i*tileSize,
-					y: nativeOriginY - j*tileSize	// y-axis inversion
-				};
+		// Axis inversion madness - gotta love it
+		if (yinversion) {
+			// Common path
+			nativeOriginY=projectedBounds.maxy / nativeResolution;
+			y1=nativeOriginY - y1;
+			y2=nativeOriginY - y2;
+		} else {
+			nativeOriginY=projectedBounds.miny / nativeResolution;
+			y1=y1 - nativeOriginY;
+			y2=y2 - nativeOriginY;
+		}
+		
+		if (xinversion) {
+			nativeOriginX=projectedBounds.maxx / nativeResolution;
+			x1=nativeOriginX - x1;
+			x2=nativeOriginX - x2;
+		} else {
+			// Common path
+			nativeOriginX=projectedBounds.minx / nativeResolution;
+			x1=x1 - nativeOriginX;
+			x2=x2 - nativeOriginX;
+		}
+		
+		// - Iteration
+		var startX=Math.floor(Math.min(x1,x2)/tileSize),
+			startY=Math.floor(Math.min(y1,y2)/tileSize),
+			endX=Math.floor(Math.max(x1,x2)/tileSize),
+			endY=Math.floor(Math.max(y2,y2)/tileSize),
+			i, j,
+			projectedX, projectedY,
+			ret=[];
+	
+		for (j=startY; j<=endY; j++) {
+			if (yinversion) {
+				// Common path
+				projectedY=nativeOriginY - j*tileSize;
+			} else {
+				projectedY=nativeOriginY + j*tileSize;
+			}
 				
-				retList.push(tileDesc);
+			for (i=startX; i<=endX; i++) {
+				if (xinversion) {
+					projectedX=nativeOriginX - i*tileSize;
+				} else {
+					// Common path
+					projectedX=nativeOriginX + i*tileSize;
+				}
+				
+				ret.push(new CartesianTileKey(
+					nativeLevel,
+					i,
+					j,
+					nativeResolution,
+					projectedX,
+					projectedY,
+					tileSize
+				));
 			}
 		}
 		
-		// Sort by proximity to center tile
-		if (sort) {
-			tileMidX=(tileStartX+tileEndX)/2;
-			tileMidY=(tileStartY+tileEndY)/2;
-			retList.sort(function(a, b) {
-				var xa=Math.abs(a.tileX-tileMidX),
-					ya=Math.abs(a.tileY-tileMidY),
-					weighta=xa*xa+ya*ya,
-					xb=Math.abs(b.tileX-tileMidX),
-					yb=Math.abs(b.tileY-tileMidY),
-					weightb=xb*xb+yb*yb;
-				return weighta-weightb;
-			});
-		}
-		
-		return retList;
+		return ret;
 	}
 };
 
 
+/**
+ * Construct a standard TileLayer that can be attached to a MapSurface.  If a
+ * TileSelector is not passed in the options, then a default is constructed and
+ * options are passed to it.  See the options accepted by the TileSelector
+ * constructor for additional parameters.
+ *
+ * @example 
+ * var map=new nanomaps.MapSurface(someElement);
+ * map.attach(new nanomaps.TileLayer({ 
+ *    tileSrc: "http://otile${modulo:1,2,3}.mqcdn.com/tiles/1.0.0/osm/${level}/${tileX}/${tileY}.png" })); 
+ *
+ * @class
+ * @name nanomaps.TileLayer
+ * @param {TileSelector} [options.selector] describes the source and geometry of the
+ * tiles
+ * @param {integer} [options.buffer=64] The number of pixels to actively buffer on
+ * all sides of the map
+ */
+function TileLayer(options) {
+	if (!options) options={};
+	this.options=options;
+	this.sel=new CartesianTileSelector(options);
+	
+	// TileSets
+	this.current=new TileSet();
+	this.old=new TileSet();
+}
+TileLayer.prototype={
+	unmanaged: true,
+	
+	/**
+	 * Returns a new element ready to be added to the MapSurface.  This method
+	 * fulfills the contract for MapSurface.attach.
+	 * @public
+	 * @methodOf nanomaps.TileLayer.prototype
+	 * @name createElement
+	 * @param {MapSurface} map
+	 * @return {HTMLElement}
+	 */
+	createElement: function(map) {
+		var element=document.createElement('div');
+		element.style.position='absolute';
+		element.style.left='0px';
+		element.style.top='0px';
+		element.mapDelegate=this;
+		return element;
+	},
+	
+	/**
+	 * @private
+	 */
+	onposition: function(map, element) {
+		this.onreset(map, element);
+	},
+	
+	/**
+	 * TODO: Port transition parts back in later
+	 * @private
+	 */
+	onreset: function(map, element) {
+		var currentTileSet=this.current,
+			oldTileSet=this.old,
+			mapState=map.mapState,
+			right=mapState.w-1,
+			bottom=mapState.h-1,
+			updatedKeys,
+			i,
+			key,
+			tile,
+			newTiles=[];
+			
+		currentTileSet.resetMarks();
+		
+		// Select tiles that intersect our display area
+		updatedKeys=this.sel.select(mapState.prj,
+			mapState.res,
+			mapState.getPrjX(0,0),
+			mapState.getPrjY(0,0),
+			mapState.getPrjX(right,bottom),
+			mapState.getPrjY(right,bottom));
+
+		// Match them up against what we are already displaying
+		for (i=0; i<updatedKeys.length; i++) {
+			key=updatedKeys[i];
+			tile=currentTileSet.get(key);
+			if (!tile) {
+				// The tile we are looking for isn't on the screen
+				tile=new Tile(this.sel, key);
+				currentTileSet.add(tile);
+				newTiles.push(tile);
+			}
+			tile.mark=true;
+			
+			setTileBounds(mapState, tile);
+		}
+		
+		// If we are generating previews, then we need to sweep
+		// no longer used tiles into the oldTileSet and update their
+		// display metrics so that the new tiles can use them for
+		// previews
+		if (newTiles.length>0) {
+			currentTileSet.sweep(oldTileSet, function(tile) {
+				setTileBounds(mapState, tile);
+			});
+		}
+		
+		// newTileRecords now contains all records that have been newly allocated.
+		// We initialize them here in this ass-backwards way because we want to sort
+		// them by proximity to the center but don't have the display information until
+		// after we've iterated over all of them.  Think of this as the "initialize new
+		// tiles" loop
+		// sortTiles(newTiles);
+		for (i=0; i<newTiles.length; i++) {
+			tile=newTiles[i];
+			this.sel.loadTile(tile, oldTileSet, true);
+			tile.attach(element);
+		}
+		
+		currentTileSet.sweep();
+		oldTileSet.clear();
+	}
+	
+};
+
+/**
+ * Given a MapState and TileKey, fill in a Rect with the pixel coordinates
+ * of the tile for the current state.
+ * This assumes rectangular display.  For rotation, this will all need to
+ * be reworked.
+ * @param mapState
+ * @param tile
+ */
+function setTileBounds(mapState, tile) {
+	var size=tile.sel.tileSize,
+		tileKey=tile.tileKey,
+		scaledSize=Math.round(size * tileKey.res / mapState.res),
+		left=mapState.prjToDspX(tileKey.scaledX * tileKey.res) - mapState.x,
+		top=mapState.prjToDspY(tileKey.scaledY * tileKey.res) - mapState.y;
+		
+	tile.setBounds(left, top, scaledSize, scaledSize);
+}
+
+/**
+ * Uniquely identified a tile from a given TileSelector and contains
+ * discreet vital fields needed to make rendering decisions about a tile.
+ * Upon construction, the id field is computed as a string from the
+ * tuple (level,tileX,tileY) and can be used as an object key.
+ * <p>
+ * The fields level,tileX,tileY uniquely identitfy the tile.  The
+ * fields res, scaledX, scaledY, size are used to make rendering
+ * decisions.
+ * <p>
+ * The choice of using scaledX,scaledY instead of raw units was not
+ * necessarily a good one.  It potentially saves one multiple/divide
+ * on render, but introduces complexity.  It is retained in this port
+ * for consistency.
+ */
+function CartesianTileKey(level, tileX, tileY, res, scaledX, scaledY, size) {
+	this.id=tileX+','+tileY+'@'+level;
+	this.level=level;
+	this.tileX=tileX;
+	this.tileY=tileY;
+	this.res=res;
+	this.scaledX=scaledX;
+	this.scaledY=scaledY;
+	this.size=size;
+}
+
+/**
+ * A renderable tile, identified by tileKey.  In the JavaScript/HTML port,
+ * the "drawable" is always an HTML element (in android, it is a Drawable).
+ * Note that it is not necessarily an img.  It may be a composite such as
+ * a canvas or a div in cases where a preview is generated from multiple
+ * bits of source material.
+ */
+function Tile(sel, tileKey) {
+	this.sel=sel;
+	this.tileKey=tileKey;
+	this.drawable=null;
+	this.parent=null;
+	this.left=null;
+	this.top=null;
+	this.width=null;
+	this.height=null;
+	this.mark=false;
+}
+Tile.prototype={
+	_commitBounds: function(drawable) {
+		drawable.style.position='absolute';
+		drawable.style.left=this.left+'px';
+		drawable.style.top=this.top+'px';
+		drawable.style.width=this.width+'px';
+		drawable.style.height=this.height+'px';
+	},
+	
+	/**
+	 * Sets a new drawable.  If the tile is rendered, then
+	 * it will be directly updated in the display hierarchy.
+	 */
+	update: function(drawable) {
+		var orig=this.drawable;
+		this.drawable=drawable;
+		// If we're not rendered, just set it
+		if (this.parent) {
+			// Otherwise, do some gyrations
+			this._commitBounds(drawable);
+			if (orig) {
+				this.parent.replaceChild(drawable, orig);
+			} else {
+				this.parent.appendChild(drawable);
+			}
+		}
+		
+		// Get rid of old
+		if (orig) {
+			this.sel.destroyDrawable(tile, orig);
+		}
+	},
+	
+	setBounds: function(left, top, width, height) {
+		var drawable=this.drawable;
+		this.left=left;
+		this.top=top;
+		this.width=width;
+		this.height=height;
+		if (drawable) this._commitBounds(drawable);
+	},
+	
+	/**
+	 * Attach the tile to the display
+	 */
+	attach: function(parent) {
+		var drawable=this.drawable;
+		
+		if (this.parent && parent!==this.parent) {
+			// Reparent (doesn't happen but being complete)
+			this.detach();
+		}
+		this.parent=parent;
+		
+		if (drawable) {
+			this._commitBounds(drawable);
+			if (!drawable.parentNode) parent.appendChild(drawable);
+		}
+	},
+	
+	/**
+	 * Remove a tile from the view
+	 */
+	detach: function() {
+		var drawable=this.drawable;
+		this.parent=null;
+		if (drawable&&drawable.parentNode) {
+			drawable.parentNode.removeChild(drawable);
+		}
+	},
+	
+	dispose: function() {
+		this.detach();
+		if (this.drawable) {
+			this.sel.destroyDrawable(this, this.drawable);
+			this.drawable=null;
+		}
+		this.sel.destroyTile(this);
+	}
+};
+
+
+/**
+ * Maintains a set of Tile instances that are locked in some way.
+ * The rendering process typically consists of visiting tiles in a set,
+ * marking as it goes and then sweeping unmarked tiles.
+ */
+function TileSet() {
+	/**
+	 * Content object keyed by TileKey.id with values of Tile
+	 */
+	this._c={};
+}
+TileSet.prototype={
+	each: function(callback) {
+		var c=this._c, k;
+		for (k in c) {
+			if (c.hasOwnProperty(k)) {
+				callback(c[k]);
+			}
+		}
+	},
+	
+	/**
+	 * Reset all marks on contained tiles to false
+	 */
+	resetMarks: function() {
+		this.each(function(tile) {
+			tile.mark=false;
+		});
+	},
+	
+	get: function(tileKey) {
+		return this._c[tileKey.id];
+	},
+	
+	add: function(tile) {
+		this._c[tile.tileKey.id]=tile;
+	},
+	
+	/**
+	 * Sweep unmarked tiles into the targetTileSet,
+	 * optionally invoking tileCallback(tile) for each
+	 * tile transferred
+	 */
+	sweep: function(targetTileSet, tileCallback) {
+		var c=this._c, ary=[], k, tile;
+		for (k in c) {
+			if (c.hasOwnProperty(k)) {
+				tile=c[k];
+				if (!tile.mark) {
+					if (targetTileSet) {
+						targetTileSet.add(tile);
+					} else {
+						tile.dispose();
+					}
+					if (tileCallback) tileCallback(tile);
+					ary.push(k);
+				}
+			}
+		}
+		
+		for (k=0; k<ary.length; k++) {
+			delete c[ary[k]];
+		}
+	},
+	
+	/**
+	 * Dispose of all tiles and clear
+	 */
+	clear: function() {
+		var c=this._c, ary=[], k, tile;
+		for (k in c) {
+			if (c.hasOwnProperty(k)) {
+				tile=c[k];
+				tile.dispose();
+			}
+		}
+		this._c={};
+	}
+};
 
 // Exports
-nanomaps.TileSelector=TileSelector;
+nanomaps.CartesianTileSelector=CartesianTileSelector;
 //nanomaps.CanvasTileLayer=CanvasTileLayer;
 nanomaps.TileLayer=TileLayer;
-
-})(nanomaps);
 
