@@ -384,9 +384,9 @@ function sortTiles(tilesAry, x, y) {
 function setTileBounds(mapState, tile) {
 	var size=tile.sel.tileSize,
 		tileKey=tile.tileKey,
-		scaledSize=Math.round(size * tileKey.res / mapState.res),
-		left=Math.round(mapState.prjToDspX(tileKey.scaledX * tileKey.res) - mapState.x),
-		top=Math.round(mapState.prjToDspY(tileKey.scaledY * tileKey.res) - mapState.y);
+		scaledSize=Math.ceil(size * tileKey.res / mapState.res),
+		left=Math.floor(mapState.prjToDspX(tileKey.scaledX * tileKey.res) - mapState.x),
+		top=Math.floor(mapState.prjToDspY(tileKey.scaledY * tileKey.res) - mapState.y);
 		
 	tile.setBounds(left, top, scaledSize, scaledSize);
 }
