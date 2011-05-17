@@ -290,5 +290,12 @@ function createDomEventDispatcher(target, eventName) {
 	};
 }
 
+/**
+ * Return current time millis
+ */
+function now() {
+	return new Date().getTime();
+}
+
 exports.EventEmitter=EventEmitter;
 

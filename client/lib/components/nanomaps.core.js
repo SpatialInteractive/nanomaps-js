@@ -465,11 +465,16 @@ MapSurfaceMethods.initialize=function(options) {
  */
 MapSurfaceMethods.eventToContainer=function(event, elementName) {
 	var relativeTo=this.elements[elementName||'viewport'], start=relativeTo,
-		coords={x: event.clientX, y: event.clientY};
+		coords={x: event.clientX, y: event.clientY}, eltZoom;
 	
 	do {
+		eltZoom=parseInt(getComputedStyle(start, 'zoom'))||1;
+		
 		coords.x-=start.offsetLeft;
 		coords.y-=start.offsetTop;
+		
+		coords.x/=eltZoom;
+		coords.y/=eltZoom;
 	} while (start=start.offsetParent);
 	
 	// Add window.page?Offset
@@ -641,6 +646,28 @@ MapSurfaceMethods.moveBy=function(eastingPx, northingPx) {
 	this.setLocation(location, 0, 0);
 };
 
+/**
+ * Returns a Coordinate object for the xy (left/top) position
+ * on the managed surface given global coordinates.  This is a
+ * low-level function for use by map attachments that need to
+ * manage their position on the managed attachment div.
+ * @public
+ * @methodOf nanomaps.MapSurface.prototype
+ * @name globalToXY
+ * @param {Coordinate} object coercible to global coordinate
+ * @return {Coordinate} xy value for placement on the managed div
+ */
+MapSurfaceMethods.globalToXY=function(globalCoord) {
+	var mapState=this.mapState,
+		prj=mapState.prj,
+		x, y;
+	globalCoord=Coordinate.from(globalCoord);
+	
+	x=mapState.prjToDspX(prj.fwdX(globalCoord._x));
+	y=mapState.prjToDspY(prj.fwdY(globalCoord._y));
+	
+	return (isNaN(x) || isNaN(y)) ? null: new Coordinate(x,y);
+};
 
 /**
  * @private
@@ -664,17 +691,17 @@ function extractDefaultPosition(element) {
  */
 var DEFAULT_MAP_DELEGATE={
 	onreset: function(map, element) {
-		var geo=extractDefaultPosition(element), xy;
+		var geo=extractDefaultPosition(element), xy, x, y;
 		if (geo) {
 			// Calculate position
-			xy=map.transform.toSurface(geo.longitude, geo.latitude);
+			xy=map.globalToXY(geo);
 			if (xy) {
-				xy[0]+=Number(geo.xoffset||0);
-				xy[1]+=Number(geo.yoffset||0);
+				x=xy.x()+Number(geo.xoffset||0);
+				y=xy.y()+Number(geo.yoffset||0);
 				
 				// set position
-				element.style.left=(xy[0])+'px';
-				element.style.top=(xy[1])+'px';
+				element.style.left=(x)+'px';
+				element.style.top=(y)+'px';
 				element.style.display='block';
 				return;
 			}

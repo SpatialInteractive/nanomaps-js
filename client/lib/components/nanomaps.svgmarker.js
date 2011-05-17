@@ -91,7 +91,7 @@ EllipseMarker.prototype={
 			latitude=settings.latitude,
 			canvasWidth, canvasHeight,
 			centerX, centerY,
-			xy;
+			xy, x, y;
 		
 		// Either calculate rx/ry independently (true ellipse)
 		// or just take the radius and fake it to create circles
@@ -118,12 +118,12 @@ EllipseMarker.prototype={
 		
 		//alert('rx=' + rx);
 		
-		xy=map.transform.toSurface(longitude, latitude);
+		xy=map.globalToXY(settings);
 		if (xy) {
-			xy[0]-=centerX;
-			xy[1]-=centerY;
-			canvas.style.left=xy[0]+'px';
-			canvas.style.top=xy[1]+'px';
+			x=xy.x()-centerX;
+			y=xy.y()-centerY;
+			canvas.style.left=x+'px';
+			canvas.style.top=y+'px';
 			canvas.style.width=canvasWidth+'px';
 			canvas.style.height=canvasHeight+'px';
 			canvas.style.display='block';
@@ -145,7 +145,7 @@ function oddCeil(n) {
  * TODO: This method is not mathematically sound.
  */
 function translateX(map, distance, unit) {
-	var res=map.transform.res;
+	var res=map.mapState.res;
 	switch (unit) {
 	case 'px': return distance;
 	case 'm':
@@ -159,7 +159,7 @@ function translateX(map, distance, unit) {
  * TODO: This method is not mathematically sound.
  */
 function translateY(map, distance, unit) {
-	var res=map.transform.res;
+	var res=map.mapState.res;
 	switch (unit) {
 	case 'px': return distance;
 	case 'm':

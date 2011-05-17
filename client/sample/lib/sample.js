@@ -3,7 +3,18 @@
 var nanomaps=global.nanomaps;
 
 /** Locals **/
-var map, tileLayer, mapShowing;
+var map, 
+	tileLayer, 
+	mapShowing,
+	geoLocationWatchId,
+	locationMarker=new nanomaps.ImgMarker({
+			src: 'orb_blue.png'
+		}),
+	locationElt,
+	locationUncertaintyMarker=new nanomaps.EllipseMarker({
+			className: 'errorHalo',
+			unit: 'm'
+		});;
 
 /** Global scope **/
 function initialize() {
@@ -19,15 +30,12 @@ function initialize() {
 	
 	/** Don't attach tile layer yet - we do that after we acquire an initial location **/
 	try {
-		//navigator.geolocation.watchPosition(handleGeoLocation, handleGeoLocationError);
-		/*
 		navigator.geolocation.getCurrentPosition(
 			handleGeoLocation,
 			handleGeoLocationError,
 			{maximumAge:Infinity, timeout: 2000}
 		);
-		*/
-		throw "No geoloc";
+		//throw "No geoloc";
 		// Set fallback timeout to get the map showing on timeout
 		setTimeout(function() {
 			showMap();
@@ -78,6 +86,25 @@ function showMap(initialPosition, initialLevel) {
 function handleGeoLocation(position) {
 	var latLng={lat: position.coords.latitude, lng: position.coords.longitude };
 	showMap(latLng, 13);
+
+	// Make sure halo is below the marker
+	locationUncertaintyMarker.settings.latitude=latLng.lat;
+	locationUncertaintyMarker.settings.longitude=latLng.lng;
+	locationUncertaintyMarker.settings.radius=position.coords.accuracy;
+	map.update(locationUncertaintyMarker);
+	
+	
+	if (!locationElt) {
+		locationElt=map.attach(locationMarker);
+	}
+
+	locationElt.geo.latitude=latLng.lat;
+	locationElt.geo.longitude=latLng.lng;
+	map.update(locationElt);
+	
+	if (!geoLocationWatchId) {
+		geoLocationWatchId=navigator.geolocation.watchPosition(handleGeoLocation, handleGeoLocationError);
+	}
 }
 
 function handleGeoLocationError(error) {

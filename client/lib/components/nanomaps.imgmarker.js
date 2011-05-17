@@ -93,8 +93,10 @@ ImgMarker.prototype={
 		classSuffix=settings.classSuffix || hrefToClassSuffix(fgSrc);
 		
 		outerElt.className='nmim nmim-' + classSuffix + ' ' + settings.extraClasses;
-		outerElt.setAttribute('latitude', settings.latitude||0);
-		outerElt.setAttribute('longitude', settings.longitude||0);
+		outerElt.geo={
+			latitude: settings.latitude||NaN,
+			longitude: settings.longitude||NaN
+		};
 		outerElt.appendChild(fgElt);
 		
 		fgElt.className='nmim-fg';

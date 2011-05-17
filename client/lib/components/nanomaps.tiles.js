@@ -42,25 +42,79 @@ function CartesianTileSelector(options) {
 	// set defaults
 	this.tileSize=options.tileSize||256;
 	this.srcSpec=options.tileSrc||'';
+	
+	// Pending tile records, keyed by tile.tileKey.id:
+	// {
+	//		tile: the owning tile
+	//		src: image source
+	// 		img: DOM image element
+	//		loaded: true|false
+	//		time: utc millis on load, load ms on finish
+	// }
+	this.pending={};
 }
 CartesianTileSelector.prototype={
+	_sched: function(pended) {
+		var self=this, 
+			id=pended.tile.tileKey.id,
+			img=pended.img;
+		img.onload=function() {
+			pended.loaded=true;
+			finish();
+			
+			if (pended.tile) {
+				pended.tile.update(img);
+			}
+		};
+		img.onerror=function() {
+			finish();
+		};
+		
+		function finish() {
+			pended.time=now()-pended.time;
+			delete self.pending[id];
+			//console.log('Tile loaded(' + pended.loaded + ') in ' + pended.time + 'ms: ' + pended.src); 
+		}
+		
+		// And away we go
+		self.pending[id]=pended;
+		img.src=pended.src;
+	},
+	
+	loadTile: function(tile, sourceTileSet, loadNew) {
+		//console.log('Load tile ' + tile.tileKey.level + '@' + tile.tileKey.tileX + ',' + tile.tileKey.tileY);
+		var pended={
+			tile: tile,
+			src: this.resolveSrc(tile.tileKey),
+			img: document.createElement('img'),
+			loaded: false,
+			time: now()
+		};
+		
+		this._sched(pended);
+		
+		if (!pended.loaded) {
+			// In webkit, if the img was in the cache, its onload
+			// will fire immediately, so in this case we can save a
+			// little work by not generating the preview (and also
+			// avoid overwriting the real image)
+			tile.generatePreview(sourceTileSet);
+		}
+	},
+
 	destroyTile: function(tile) {
-		// TODO
+		var id=tile.tileKey.id;
+		var pended=this.pending[id];
+		if (pended) {
+			delete this.pending[id];
+			// This is rumoured to cancel loading the
+			// image in some browsers
+			pended.img.src='';
+		}
 	},
 	
 	destroyDrawable: function(tile, drawable) {
 		// TODO
-	},
-	
-	loadTile: function(tile, sourceTileSet, loadNew) {
-		var src=this.resolveSrc(tile.tileKey);
-		console.log('Load tile ' + tile.tileKey.level + '@' + tile.tileKey.tileX + ',' + tile.tileKey.tileY);
-
-		setTimeout(function() {
-			var imgElt=document.createElement('img');
-			imgElt.src=src;
-			tile.update(imgElt);
-		}, 2000);
 	},
 	
 	/**
@@ -292,7 +346,7 @@ TileLayer.prototype={
 		// them by proximity to the center but don't have the display information until
 		// after we've iterated over all of them.  Think of this as the "initialize new
 		// tiles" loop
-		// sortTiles(newTiles);
+		sortTiles(newTiles, mapState.w/2, mapState.h/2);
 		for (i=0; i<newTiles.length; i++) {
 			tile=newTiles[i];
 			this.sel.loadTile(tile, oldTileSet, true);
@@ -300,10 +354,23 @@ TileLayer.prototype={
 		}
 		
 		currentTileSet.sweep();
-		oldTileSet.clear();
+		oldTileSet.sweep();
 	}
 	
 };
+
+/**
+ * Sort tiles based on their center coordinate's proximity to
+ * some reference coordinate.  The idea is that we are trying to
+ * load tiles near the center before tiles on the edges.
+ */
+function sortTiles(tilesAry, x, y) {
+	tilesAry.sort(function(tile1, tile2) {
+		var score1=Math.abs(tile1.left+tile1.width/2 - x) + Math.abs(tile1.top+tile1.height/2 - y),
+			score2=Math.abs(tile2.left+tile2.width/2 - x) + Math.abs(tile2.top+tile2.height/2 - y);
+		return score1 - score2;
+	});
+}
 
 /**
  * Given a MapState and TileKey, fill in a Rect with the pixel coordinates
@@ -369,9 +436,11 @@ function Tile(sel, tileKey) {
 }
 Tile.prototype={
 	_commitBounds: function(drawable) {
+		/*
 		if (this.width!==this.tileKey.size || this.height!==this.tileKey.size) {
 			console.log('TileSize round error: (' + this.left + ',' + this.top + ') -> (' + this.width + ',' + this.height + ')');
 		}
+		*/
 		
 		drawable.style.position='absolute';
 		drawable.style.left=this.left+'px';
@@ -400,7 +469,7 @@ Tile.prototype={
 		
 		// Get rid of old
 		if (orig) {
-			this.sel.destroyDrawable(tile, orig);
+			this.sel.destroyDrawable(this, orig);
 		}
 	},
 	
@@ -449,9 +518,115 @@ Tile.prototype={
 			this.drawable=null;
 		}
 		this.sel.destroyTile(this);
+	},
+	
+	/**
+	 * Generate a preview Drawable for this tile from material in the
+	 * source TileSet.  This assumes that this tile's bounds are updated
+	 * to current display bounds and all tiles in the tileSet are also
+	 * updated.  If a preview could be generated it's drawable will be
+	 * set
+	 */
+	generatePreview: function(tileSet) {
+		var self=this,
+			preview=null;
+		
+		tileSet.intersect(self, function(srcTile) {
+			// Make sure the tile doesn't dispose on final sweep
+			srcTile.detach();
+			
+			if (!preview) {
+				try {
+					preview=new TileCompositor(self);
+				} catch (e) {
+					// Will throw an exception if the browser
+					// doesn't support canvas.  Oh well.
+					// Uncomment to see reall error.
+				}
+			}
+			
+			if (preview) preview.add(srcTile);
+		});
+		
+		if (preview) {
+			self.update(preview.drawable);
+		}
 	}
 };
 
+function TileCompositor(tile) {
+	var canvas=document.createElement('canvas'),
+		ctx;
+	canvas.width=tile.width;
+	canvas.height=tile.height;
+	ctx=canvas.getContext('2d');
+	
+	// Uncomment to see the drawn boxes
+	//ctx.fillStyle='rgb(200,0,0)';
+	//ctx.fillRect(2,2,canvas.width-2,canvas.height-2);
+	
+	// - exports
+	this.drawable=canvas;
+	this.add=function(blitTile) {
+		var dx=blitTile.left-tile.left, dy=blitTile.top-tile.top,
+			sx=0, sy=0,
+			sw, sh,
+			overflow,
+			w=blitTile.width,
+			h=blitTile.height,
+			blitScaleX=blitTile.tileKey.size / blitTile.width, 
+			blitScaleY=blitTile.tileKey.size / blitTile.height;
+		
+		if (dx<0) {
+			// Clip left
+			sx=-dx;
+			dx=0;
+			w-=sx;
+		}
+		if (dy<0) {
+			// Clip top
+			sy=-dy;
+			dy=0;
+			h-=sy;
+		}
+		
+		// Clip right
+		overflow=dx+w-tile.width;
+		if (overflow>=0) {
+			w-=overflow;
+		}
+		
+		// Clip bottom
+		overflow=dy+h-tile.height;
+		if (overflow>=0) {
+			h-=overflow;
+		}
+		
+		// Source coordinates have been figured according to the current display
+		// but the drawImage call works on original image dimensions.
+		// Therefore, scale the source coordinates
+		sx*=blitScaleX;
+		sy*=blitScaleY;
+		sw=w*blitScaleX;
+		sh=h*blitScaleY;
+		
+		//console.log('drawImage(' + sx + ',' + sy + ',' + sw + ',' + sh + ',' + dx + ',' + dy + ',' + w + ',' + h + ')');
+		try {
+			ctx.drawImage(blitTile.drawable,
+				sx, sy,
+				sw, sh,
+				dx, dy,
+				w, h);
+		} catch (e) {
+			// There are boundary conditions due to rounding where
+			// some coordinates may be out of bounds.  These will be
+			// for tiles just outside of the bounds and we're just
+			// going to let the system catch it and not lose any
+			// sleep about it
+			//console.log('Exception in call to drawImage(' + sx + ',' + sy + ',' + sw + ',' + sh + ',' + dx + ',' + dy + ',' + w + ',' + h + ')');
+		}
+	};
+}
 
 /**
  * Maintains a set of Tile instances that are locked in some way.
@@ -530,11 +705,35 @@ TileSet.prototype={
 			}
 		}
 		this._c={};
+	},
+	
+	/**
+	 * Select all tiles whose bounds intersect the bounds of the
+	 * given tile and have a drawable.
+	 */
+	intersect: function(srcTile, callback) {
+		var c=this._c, k, tile,
+			minx=srcTile.left, miny=srcTile.top,
+			maxx=minx+srcTile.width, maxy=miny+srcTile.height;
+		for (k in c) {
+			if (c.hasOwnProperty(k)) {
+				tile=c[k];
+				if (tile.drawable && !(
+						tile.left>=maxx ||
+						(tile.left+tile.width)<minx ||
+						tile.top>=maxy ||
+						(tile.top+tile.height)<miny
+					))
+				{
+					// Intersects
+					callback(tile);
+				}
+			}			
+		}
 	}
 };
 
 // Exports
 nanomaps.CartesianTileSelector=CartesianTileSelector;
-//nanomaps.CanvasTileLayer=CanvasTileLayer;
 nanomaps.TileLayer=TileLayer;
 

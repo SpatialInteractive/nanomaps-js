@@ -57,6 +57,13 @@ body {
 	height: 40px;
 }
 
+svg.errorHalo ellipse {
+	fill-opacity: 0.3;
+	stroke-opacity: 0.7;
+	fill: #03a;
+	stroke: #00f;
+}
+
 /* Map copyright */
 #mapcopy {
 	z-index: 50;
