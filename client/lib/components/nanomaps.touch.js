@@ -115,7 +115,7 @@ MapSurfaceMethods._handleTouch=function(event) {
 		// If not in gesture state, find and stash the center point
 		if (touchState.s!=='gesture') {
 			touchState.c=calculateCenter(touchState);
-			touchState.z=map.getLevel();
+			touchState.z=map.getZoom();
 		}
 
 		// Upgrade to a gesture state (prevents moving)
@@ -126,7 +126,7 @@ MapSurfaceMethods._handleTouch=function(event) {
 		//console.log('Scale OrigLevel=' + touchState.z + ', newLevel=' + newZoom + ' scale=' + event.scale);
 		//if (touchState.tkey) clearTimeout(touchState.tkey);
 		//touchState.tkey=setTimeout(function() {
-			self.setLevel(newZoom, touchState.c);
+			self.setZoom(newZoom, touchState.c.x, touchState.c.y);
 			//touchState.tkey=null;
 		//}, 0);
 	
