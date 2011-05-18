@@ -3,9 +3,19 @@ Nanomaps
 Nanomaps is a small JavaScript library for displaying no-frills slippy maps
 on click and touch devices.
 
-Demo: http://stellaeof.github.com/nanomaps/demo/demo.html
+Release 0.2.0
+-------------
+Links:
 
-Api Docs: http://stellaeof.github.com/nanomaps/apidocs
+* Demo (prod): http://www.rcode.net/nanomaps/nanomaps-js-0.2.0/prod/
+* Demo (debug): http://www.rcode.net/nanomaps/nanomaps-js-0.2.0/debug/
+* Api Docs: http://www.rcode.net/nanomaps/nanomaps-js-0.2.0/apidocs/
+* Download: http://www.rcode.net/nanomaps/nanomaps-js-0.2.0.tar.gz
+
+Combined javascript file is in either the prod (compressed) or debug (uncompressed)
+directory under lib/nanomaps.bundle.all.js
+
+See below for release notes.
 
 Niche
 -----
@@ -82,10 +92,36 @@ in the DOM.
 		var map=new nanomaps.MapSurface(document.getElementById("mymap"));
 		map.attach(new nanomaps.TileLayer({ 
 		   tileSrc: "http://otile${modulo:1,2,3}.mqcdn.com/tiles/1.0.0/osm/${level}/${tileX}/${tileY}.png" }));
-	</script>
-Status
-------
-This project is very young and I am developing it in tandem with a product I am
+	</script>	
+
+Change Log
+==========
+
+Release 0.2.0
+-------------
+This is a snapshot of recent refactorings and has received minimal testing.  Key updates:
+
+* Backported API structure and many concepts from nanomaps-droid (https://github.com/stellaeof/nanomaps-droid)
+* Rewrote much of tiling code so that transitions across native zoom levels retain previews
+* Added concept of indexed layers and surfaces instead of one flat bucket for attachments
+* Started new demo page
+
+Upcoming changes:
+
+* I'm still not happy with the api abstraction for markers.  The ImgMarker uses a factory pattern which I like whereas
+the SvgMarker/EllipseMarker use a single instance per attachment.  I like bits of both but they are both awkward to
+program.  I'm going to noodle on it and try some different styles before proceeding to build out more marker types.
+* Touch state gets out of sync on my android phone after a few zooms.  More work needs to be done here.
+* Support panning and zooming simultaneously in multi-touch
+* Animated transitions
+* Experiment with a scaled event layer for intercepting touch events.  iPhone on the retina display *seems*
+to deliver approximately twice the granularity of touch events if the target div is at native resolution vs scale
+which allows much smoother scrolling
+
+Release 0.1.0
+-------------
+
+* This project is very young and I am developing it in tandem with a product I am
 building out.  It works on "modern browsers" out of the box and I expect a minor
 effort to support IE7 and 8.  Due to a design decision in the way that z-indexing
 is handled, the project will never support the broken z-index model of IE7 and
@@ -93,12 +129,12 @@ below.  Most simple maps will not have a problem with this as the natural stacki
 order is probably what is desired anyway, but fine stacking control will not be
 available in this ancient browser.
 
-Touch devices are also targeted for full support but only the iPhone is supported/tested
+* Touch devices are also targeted for full support but only the iPhone is supported/tested
 at present.
 
 License
 =======
-Copyright (c) 2010 Stella Laurenzo, http://stella.laurenzo.org
+Copyright (c) 2011 Stella Laurenzo, http://stella.laurenzo.org
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
