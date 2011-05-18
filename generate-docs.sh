@@ -1,7 +1,11 @@
 #!/bin/bash
 cd $(dirname $0)
 td=$(pwd)
-out=$td/build/apidocs
+out="$1"
+if [ -z "$out" ]; then
+	out=$td/build/apidocs
+fi
+echo "Writing docs to $out"
 
 SRC_DIR=client/lib/components
 SRC_FILES="
