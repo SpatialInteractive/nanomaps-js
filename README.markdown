@@ -94,6 +94,11 @@ in the DOM.
 		   tileSrc: "http://otile${modulo:1,2,3}.mqcdn.com/tiles/1.0.0/osm/${level}/${tileX}/${tileY}.png" }));
 	</script>	
 
+Roadmap
+=======
+My company is targeting release of two products in the next 60 days which will have components that make use of both
+nanomaps (JavaScript) and nanomaps-droid.  Expect relative completion of each along that same timeline.
+	
 Change Log
 ==========
 
