@@ -13,6 +13,7 @@ global.nanomaps=exports;
 ##include('components/nanomaps.dom.js')
 ##include('components/nanomaps.geometry.js')
 ##include('components/nanomaps.projections.js')
+##include('components/nanomaps.animation.js')
 ##include('components/nanomaps.core.js')
 ##include('components/nanomaps.tiles.js')
 ##include('components/nanomaps.desktop.js')
