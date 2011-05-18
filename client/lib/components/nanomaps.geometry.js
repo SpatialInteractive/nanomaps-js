@@ -61,6 +61,11 @@ function Coordinate(x,y) {
  * latitude,longitude.  This is here just to make sure
  * I get it right instead of relying on my memory that
  * lat=y and lng=x.
+ * @public
+ * @methodOf nanomaps.Coordinate
+ * @param lat {Number}
+ * @param lng {Number}
+ * @return {Coordinate}
  */
 Coordinate.latLng=function(lat, lng) {
 	return new Coordinate(lng, lat);
@@ -68,6 +73,11 @@ Coordinate.latLng=function(lat, lng) {
 
 /**
  * Factory method for constructing a coordinate from (x,y)
+ * @public
+ * @methodOf nanomaps.Coordinate
+ * @param x {Number}
+ * @param y {Number}
+ * @return {Coordinate}
  */
 Coordinate.xy=function(x,y) {
 	return new Coordinate(x,y);
@@ -93,6 +103,10 @@ Coordinate.xy=function(x,y) {
  * 
  * Alternatively, if object is an array, then it is
  * taken to be [x, y]
+ * @public
+ * @methodOf nanomaps.Coordinate
+ * @param object {Object}
+ * @return {Coordinate}
  */
 Coordinate.from=function(object) {
 	if (object instanceof Coordinate) {
@@ -107,15 +121,31 @@ Coordinate.from=function(object) {
 };
 
 Coordinate.prototype={
+	/**
+	 * @public
+	 * @memberOf nanomaps.Coordinate.prototype
+	 */
 	x: function() {
 		return this._x;
 	},
+	/**
+	 * @public
+	 * @memberOf nanomaps.Coordinate.prototype
+	 */
 	y: function() {
 		return this._y;
 	},
+	/**
+	 * @public
+	 * @memberOf nanomaps.Coordinate.prototype
+	 */
 	lat: function() {
 		return this._y;
 	},
+	/**
+	 * @public
+	 * @memberOf nanomaps.Coordinate.prototype
+	 */
 	lng: function() {
 		return this._x;
 	}
@@ -139,9 +169,25 @@ exports.Coordinate=Coordinate;
  * @param maxy {number}
  */
 function Bounds(minx,miny,maxx,maxy) {
+	/**
+	 * @public
+	 * @memberOf nanomaps.Bounds.prototype
+	 */
 	this.minx=minx;
+	/**
+	 * @public
+	 * @memberOf nanomaps.Bounds.prototype
+	 */
 	this.miny=miny;
+	/**
+	 * @public
+	 * @memberOf nanomaps.Bounds.prototype
+	 */
 	this.maxx=maxx;
+	/**
+	 * @public
+	 * @memberOf nanomaps.Bounds.prototype
+	 */
 	this.maxy=maxy;
 }
 

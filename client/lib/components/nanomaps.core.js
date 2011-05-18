@@ -22,6 +22,11 @@ Core map display library.
  * The MapSurface holds the "master" MapState in its mapState
  * property.  This property can be read but should only be modified
  * through appropriate API calls.
+ * <p>
+ * Note that the MapState is a quasi-internal object.  It is used directly
+ * by code integrating into nanomaps, but users generally will not/should not
+ * encounter it.  It's methods are terse and no validity checks are done
+ * on arguments.  That is left to higher level code.
  *
  * @constructor
  * @name nanomaps.MapState
@@ -36,6 +41,11 @@ function MapState() {
 }
 MapState.prototype={
 	/// -- Getters
+	/**
+	 * @public
+	 * @name getZoom
+	 * @methodOf nanomaps.MapState.prototype
+	 */
 	getZoom: function() {
 		return this.prj.toLevel(this.res);
 	},
@@ -46,6 +56,9 @@ MapState.prototype={
 	 * designed to be able to represent orientation.
 	 * <p>
 	 * This value will be resolution pre-divided
+	 * @public
+	 * @name getDspX
+	 * @methodOf nanomaps.MapState.prototype
 	 */
 	getDspX: function(x,y) {
 		return this.x+x;
@@ -56,6 +69,9 @@ MapState.prototype={
 	 * designed to be able to represent orientation.
 	 * <p>
 	 * This value will be resolution pre-divided
+	 * @public
+	 * @name getDspY
+	 * @methodOf nanomaps.MapState.prototype
 	 */
 	getDspY: function(x,y) {
 		return this.y+y;
@@ -66,6 +82,9 @@ MapState.prototype={
 	 * Note that these coordinates will have resolution multiplied out
 	 * and will have axis inversion relative to display coordinates
 	 * if the proejction defines it.
+	 * @public
+	 * @name getPrjX
+	 * @methodOf nanomaps.MapState.prototype
 	 */
 	getPrjX: function(x,y) {
 		var prj=this.prj,
@@ -81,6 +100,9 @@ MapState.prototype={
 	 * Note that these coordinates will have resolution divided out
 	 * and will have axis inversion relative to display coordinates
 	 * if the proejction defines it.
+	 * @public
+	 * @name getPrjY
+	 * @methodOf nanomaps.MapState.prototype
 	 */
 	getPrjY: function(x,y) {
 		var prj=this.prj,
@@ -93,6 +115,9 @@ MapState.prototype={
 	
 	/**
 	 * Return global x coordinate corresponding to viewport coordinate (x,y).
+	 * @public
+	 * @name getGlbX
+	 * @methodOf nanomaps.MapState.prototype
 	 */
 	getGlbX: function(x,y) {
 		return this.prj.invX(this.getPrjX(x,y));
@@ -100,12 +125,20 @@ MapState.prototype={
 	
 	/**
 	 * Return global y coordinate corresponding to viewport coordinate (x,y).
+	 * @public
+	 * @name getGlbY
+	 * @methodOf nanomaps.MapState.prototype
 	 */
 	getGlbY: function(x,y) {
 		return this.prj.invY(this.getPrjY(x,y));
 	},
 	
 	/// -- calculations
+	/**
+	 * @public
+	 * @name prjToDspX
+	 * @methodOf nanomaps.MapState.prototype
+	 */
 	prjToDspX: function(prjX) {
 		var prj=this.prj;
 		if (prj.XINVERTED) {
@@ -114,6 +147,11 @@ MapState.prototype={
 		return prjX / this.res;
 	},
 	
+	/**
+	 * @public
+	 * @name prjToDspY
+	 * @methodOf nanomaps.MapState.prototype
+	 */
 	prjToDspY: function(prjY) {
 		var prj=this.prj;
 		if (prj.YINVERTED) {
@@ -123,6 +161,11 @@ MapState.prototype={
 	},
 	
 	/// -- Setters
+	/**
+	 * @public
+	 * @name setRes
+	 * @methodOf nanomaps.MapState.prototype
+	 */
 	setRes: function(res, x, y) {
 		if (res!==this.res) {
 			var prjX=this.getPrjX(x,y), prjY=this.getPrjY(x,y);
@@ -131,15 +174,31 @@ MapState.prototype={
 		}
 	},
 	
+	
+	/**
+	 * @public
+	 * @name setZoom
+	 * @methodOf nanomaps.MapState.prototype
+	 */
 	setZoom: function(level, x, y) {
 		this.setRes(this.prj.fromLevel(level), x, y);
 	},
 	
+	/**
+	 * @public
+	 * @name setDspXY
+	 * @methodOf nanomaps.MapState.prototype
+	 */
 	setDspXY: function(dspX, dspY, x, y) {
 		this.x=dspX-x;
 		this.y=dspY-y;
 	},
 	
+	/**
+	 * @public
+	 * @name setPrjXY
+	 * @methodOf nanomaps.MapState.prototype
+	 */
 	setPrjXY: function(prjX, prjY, x, y) {
 		this.setDspXY(
 			this.prjToDspX(prjX),
@@ -147,6 +206,11 @@ MapState.prototype={
 			x, y);
 	},
 	
+	/**
+	 * @public
+	 * @name setGlbXY
+	 * @methodOf nanomaps.MapState.prototype
+	 */
 	setGlbXY: function(glbX, glbY, x, y) {
 		var prj=this.prj;
 		this.setPrjXY(prj.fwdX(glbX), prj.fwdY(glbY), x, y);
@@ -381,6 +445,11 @@ MapSurfaceMethods.layer=function(index) {
  * <p>
  * This method returns the managed surface div associated with a layer.  Most map objects
  * end up in the managed div.
+ * @public
+ * @methodOf nanomaps.MapSurface.prototype
+ * @name layer
+ * @param index The layer name or ordinal value of the desired layer
+ * @return surface div corresponding to index
  */
 MapSurfaceMethods.surface=function(index) {
 	var ordinal=layerIndexToOrdinal(index),
@@ -448,6 +517,12 @@ MapSurfaceMethods.setZoom=function(level, x, y) {
  * Gets the global location as a Coordinate object at the given
  * viewport coordinates.  If coordinates are ommitted/undefined,
  * then the center is assumed.
+ * @public
+ * @name getLocation
+ * @methodOf nanomaps.MapSurface.prototype
+ * @param x {Number|undefined} viewport x coordinate
+ * @param y {Number|undefined} viewport y coordinate
+ * @return {nanomaps.Coordinate}
  */
 MapSurfaceMethods.getLocation=function(x,y) {
 	var mapState=this.mapState;

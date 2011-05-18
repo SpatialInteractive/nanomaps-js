@@ -3,8 +3,19 @@ cd $(dirname $0)
 td=$(pwd)
 out=$td/build/apidocs
 
-SRC_FILES="client/lib/nanomaps.core.js client/lib/nanomaps.tiles.js 
-			client/lib/nanomaps.desktop.js client/lib/nanomaps.touch.js"
+SRC_DIR=client/lib/components
+SRC_FILES="
+	$SRC_DIR/nanomaps.util.js
+	$SRC_DIR/nanomaps.dom.js
+	$SRC_DIR/nanomaps.geometry.js
+	$SRC_DIR/nanomaps.projections.js
+	$SRC_DIR/nanomaps.core.js 
+	$SRC_DIR/nanomaps.tiles.js
+	$SRC_DIR/nanomaps.desktop.js 
+	$SRC_DIR/nanomaps.touch.js
+	$SRC_DIR/nanomaps.imgmarker.js
+	$SRC_DIR/nanomaps.svgmarker.js
+	"
 
 if [ -z "$JSDOC_DIR" ]; then
 	JSDOC_DIR=$td/jsdoc-toolkit
