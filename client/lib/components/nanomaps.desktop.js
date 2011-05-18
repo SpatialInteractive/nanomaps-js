@@ -40,8 +40,8 @@ function updateMouseState(map, action, event) {
 				//console.log('double click');
 				mouseState.ccount=0;
 				
-				deltaY=Math.ceil(map.getLevel()+0.1);
-				map.setLevel(deltaY, coords);
+				deltaY=Math.ceil(map.getZoom()+0.1);
+				map.setZoom(deltaY, coords.x, coords.y);
 			} else {
 				mouseState.clickTimer=setTimeout(function() {
 					mouseState.clickTimer=null;
@@ -100,13 +100,13 @@ MapSurfaceMethods.ondom_mousewheel=function(event) {
 	event.preventDefault();
 	
 	// Handle scroll (TODO - this needs to zoom around the mouse point)
-	var delta, factor=10, level=Math.round(this.getLevel()*factor)/factor,
+	var delta, factor=10, level=Math.round(this.getZoom()*factor)/factor,
 		coords=this.eventToContainer(event);
 	if (event.wheelDelta) delta=event.wheelDelta/120;	// IE
 	else if (event.delta) delta=-event.delta/3;
 	else delta=-event.detail/3;
 	
-	this.setLevel(level+delta/10.0, coords);
+	this.setZoom(level+delta/10.0, coords.x, coords.y);
 };
 
 // Attach to initialization
