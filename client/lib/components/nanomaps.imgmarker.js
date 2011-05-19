@@ -98,7 +98,9 @@ ImgMarker.prototype={
 		outerElt.appendChild(fgElt);
 		
 		fgElt.className='nmim-fg';
-		fgElt.setAttribute('src', fgSrc);
+		if (fgSrc) {
+			fgElt.setAttribute('src', fgSrc);
+		}
 		
 		return outerElt;
 	}
