@@ -41,8 +41,8 @@ body {
 /* Zoom controls */
 #zoomControl {
 	position: absolute;
-	top: 72px;
-	right: 5px;
+	top: 36px;
+	left: 5px;
 }
 
 #zoomControl .zoomIn {

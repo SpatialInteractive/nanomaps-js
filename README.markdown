@@ -115,6 +115,7 @@ MapState at the beginning of an animation, increasing the chances that no percei
 time elapses
 * Added zoomIn() / zoomOut() methods to work with integral zoom levels instead of floating point
 * Added simple geocoding to demo
+* Still has some touch issues on Android webkit.  Also geolocation not working and geocoding failing.
 
 Release 0.2.0
 -------------

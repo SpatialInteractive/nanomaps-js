@@ -108,6 +108,7 @@ function runQuery(q) {
 			// Move map
 			map.begin();
 			map.setLocation({lat: lat, lng: lng});
+			map.setZoom(10);
 			map.commit({
 				duration: 2.0
 			});
