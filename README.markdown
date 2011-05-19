@@ -3,7 +3,7 @@ Nanomaps
 Nanomaps is a small JavaScript library for displaying no-frills slippy maps
 on click and touch devices.
 
-Release 0.2.0
+Release 0.2.1
 -------------
 Links:
 
