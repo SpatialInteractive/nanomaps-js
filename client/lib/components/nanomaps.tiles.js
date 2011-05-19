@@ -73,7 +73,7 @@ CartesianTileSelector.prototype={
 		function finish() {
 			pended.time=now()-pended.time;
 			delete self.pending[id];
-			//console.log('Tile loaded(' + pended.loaded + ') in ' + pended.time + 'ms: ' + pended.src); 
+			//console.log('Tile loaded(' + pended.tile.tileKey.id + ') in ' + pended.time + 'ms: ' + pended.src); 
 		}
 		
 		// And away we go
@@ -81,31 +81,24 @@ CartesianTileSelector.prototype={
 		img.src=pended.src;
 	},
 	
-	loadTile: function(tile, sourceTileSet, loadNew) {
-		//console.log('Load tile ' + tile.tileKey.level + '@' + tile.tileKey.tileX + ',' + tile.tileKey.tileY);
+	loadTile: function(tile) {
 		var pended={
 			tile: tile,
-			src: this.resolveSrc(tile.tileKey),
+			src: this.resolveSrc(tile.tileKey),// + '?' + now(),
 			img: document.createElement('img'),
 			loaded: false,
 			time: now()
 		};
 		
+		//console.log('Load tile ' + tile.tileKey.level + '@' + tile.tileKey.tileX + ',' + tile.tileKey.tileY);
 		this._sched(pended);
-		
-		if (!pended.loaded) {
-			// In webkit, if the img was in the cache, its onload
-			// will fire immediately, so in this case we can save a
-			// little work by not generating the preview (and also
-			// avoid overwriting the real image)
-			tile.generatePreview(sourceTileSet);
-		}
 	},
 
 	destroyTile: function(tile) {
 		var id=tile.tileKey.id;
 		var pended=this.pending[id];
-		if (pended) {
+		if (pended && pended.tile===tile) {
+			//console.log('Destroy tile ' + id);
 			delete this.pending[id];
 			// This is rumoured to cancel loading the
 			// image in some browsers
@@ -114,7 +107,7 @@ CartesianTileSelector.prototype={
 	},
 	
 	destroyDrawable: function(tile, drawable) {
-		// TODO
+		// TODO Not sure we need to do anything here
 	},
 	
 	/**
@@ -259,8 +252,10 @@ function TileLayer(options) {
 	this.sel=new CartesianTileSelector(options);
 	
 	// TileSets
+	this.lockedState=null;
 	this.current=new TileSet();
 	this.old=new TileSet();
+	this.transition=new TileSet();
 }
 TileLayer.prototype={
 	unmanaged: true,
@@ -292,13 +287,14 @@ TileLayer.prototype={
 	},
 	
 	/**
-	 * TODO: Port transition parts back in later
+	 * Populates the transition TileSet with tiles for the given mapState.
+	 * A lot of this code is semi-duplicated in onreset but with minor twists
+	 * and I've not been able to condense them into one without breaking things.
 	 * @private
 	 */
-	onreset: function(map, element) {
-		var currentTileSet=this.current,
-			oldTileSet=this.old,
-			mapState=map.mapState,
+	loadPendingTiles: function(mapState) {
+		var transitionTileSet=this.transition,
+			currentTileSet=this.current,
 			right=mapState.w-1,
 			bottom=mapState.h-1,
 			updatedKeys,
@@ -306,7 +302,79 @@ TileLayer.prototype={
 			key,
 			tile,
 			newTiles=[];
+		
+		//console.log('Loading pending tiles for target state ' + mapState.res);
+		
+		transitionTileSet.clear();
+		// Select tiles that intersect our display area
+		updatedKeys=this.sel.select(mapState.prj,
+			mapState.res,
+			mapState.getPrjX(0,0),
+			mapState.getPrjY(0,0),
+			mapState.getPrjX(right,bottom),
+			mapState.getPrjY(right,bottom));
+		
+		// Match them up against what we are already displaying
+		for (i=0; i<updatedKeys.length; i++) {
+			key=updatedKeys[i];
+			tile=currentTileSet.move(key, transitionTileSet);
+			if (!tile) {
+				// We only create a new transitional tile if the tile isn't
+				// on the current display
+				tile=new Tile(this.sel, key);
+				transitionTileSet.add(tile);
+				newTiles.push(tile);
+				setTileBounds(mapState, tile);
+			}
+		}
+		
+		// Sort and load
+		sortTiles(newTiles, mapState.w/2, mapState.h/2);
+		for (i=0; i<newTiles.length; i++) {
+			tile=newTiles[i];
+			// Load the tiles but don't generate previews because
+			// no other tilesets are referenced to the same display.
+			// We'll need to generate previews when we actually go
+			// to use them later
+			tile.loading=true;
+			this.sel.loadTile(tile, null, true);
+		}
+	},
+	
+	/**
+	 * TODO: Port transition parts back in later
+	 * @private
+	 */
+	onreset: function(map, element) {
+		var currentTileSet=this.current,
+			transitionTileSet=this.transition,
+			oldTileSet=this.old,
+			mapState=map.mapState,
+			lockedState=this.lockedState,
+			right=mapState.w-1,
+			bottom=mapState.h-1,
+			updatedKeys,
+			i,
+			key,
+			tile,
+			newTiles=[];
+		
+		if (lockedState!==mapState.finalState) {
+			// Handle transition and detransition
+			lockedState=this.lockedState=mapState.finalState;
+
+			// Dump pending tiles into current for consideration in the main loop
+			//console.log('Transitional end state changed: Sweeping tiles to current');
+			//transitionTileSet.sweep(currentTileSet);
+			//console.log('Tiles swept to current');
 			
+			if (lockedState) {
+				// Load tiles for a new final state
+				this.loadPendingTiles(lockedState);
+			}
+		}
+		
+		//console.log('TileLayer.onreset(transition locked=' + (!!lockedState) + ')');
 		currentTileSet.resetMarks();
 		
 		// Select tiles that intersect our display area
@@ -320,16 +388,31 @@ TileLayer.prototype={
 		// Match them up against what we are already displaying
 		for (i=0; i<updatedKeys.length; i++) {
 			key=updatedKeys[i];
-			tile=currentTileSet.get(key);
+			tile=currentTileSet.get(key) || transitionTileSet.move(key, currentTileSet);
+
+			// If we're not in a transitional state.
+			// If the tile is marked temporary, then disregard it
+			// because we don't want half rendered crap anymore.
+			// Just the good stuff for us from here on out.
+			if (!lockedState && tile && tile.temporary) tile=null;
+
+			// Still no tile?  Create one.
 			if (!tile) {
-				// The tile we are looking for isn't on the screen
 				tile=new Tile(this.sel, key);
+				if (lockedState) tile.temporary=true;
 				currentTileSet.add(tile);
-				newTiles.push(tile);
 			}
 			tile.mark=true;
 			
 			setTileBounds(mapState, tile);
+
+			// After a transition we may be dealing with a child that
+			// was loaded without ever being attached.  Fix that now.
+			if (!tile.parent) {
+				// Not yet added to display.  Put it in the list
+				// to be fixed up as a new tile
+				newTiles.push(tile);
+			}
 		}
 		
 		// If we are generating previews, then we need to sweep
@@ -350,12 +433,23 @@ TileLayer.prototype={
 		sortTiles(newTiles, mapState.w/2, mapState.h/2);
 		for (i=0; i<newTiles.length; i++) {
 			tile=newTiles[i];
-			this.sel.loadTile(tile, oldTileSet, true);
+			
+			// Order is important here.  The tile may have a drawable
+			// set within the call to loadTile, in which case don't do
+			// the work to generate a preview
+			if (!tile.loading && !tile.temporary) {
+				tile.loading=true;
+				this.sel.loadTile(tile);
+			}
+			if (!tile.drawable) {
+				tile.generatePreview(oldTileSet);
+			}
 			tile.attach(element);
 		}
 		
 		currentTileSet.sweep();
 		oldTileSet.sweep();
+		if (!lockedState) transitionTileSet.clear();
 	}
 	
 };
@@ -434,6 +528,8 @@ function Tile(sel, tileKey) {
 	this.width=null;
 	this.height=null;
 	this.mark=false;
+	this.temporary=false;
+	this.loading=false;
 }
 Tile.prototype={
 	_commitBounds: function(drawable) {
@@ -457,6 +553,8 @@ Tile.prototype={
 	update: function(drawable) {
 		var orig=this.drawable;
 		this.drawable=drawable;
+		drawable.setAttribute('tileid', this.tileKey.id);
+		
 		// If we're not rendered, just set it
 		if (this.parent) {
 			// Otherwise, do some gyrations
@@ -533,9 +631,6 @@ Tile.prototype={
 			preview=null;
 		
 		tileSet.intersect(self, function(srcTile) {
-			// Make sure the tile doesn't dispose on final sweep
-			srcTile.detach();
-			
 			if (!preview) {
 				try {
 					preview=new TileCompositor(self);
@@ -664,7 +759,22 @@ TileSet.prototype={
 	},
 	
 	add: function(tile) {
-		this._c[tile.tileKey.id]=tile;
+		var id=tile.tileKey.id, c=this._c;
+		var existing=c[id];
+		if (existing) {
+			existing.dispose();
+		}
+		c[id]=tile;
+	},
+	
+	move: function(tileKey, destTileSet) {
+		var id=tileKey.id, c=this._c,
+			existing=c[id];
+		if (existing) {
+			delete c[id];
+			destTileSet.add(existing);
+		}
+		return existing;
 	},
 	
 	/**

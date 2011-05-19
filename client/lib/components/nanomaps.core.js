@@ -42,6 +42,18 @@ function MapState(other) {
 		this.w=0;
 		this.h=0;
 	}
+	
+	/**
+	 * If this state represents a transitional state on the way to
+	 * some final state, then that final state will be set here.
+	 * This is intended to be used by components that either may just
+	 * take a swag during transitions or may wish to preload resources
+	 * based on final states instead of intermediate.
+	 * @public
+	 * @name finalState {MapState}
+	 * @memberOf nanomaps.MapState#
+	 */
+	this.finalState=null;
 }
 MapState.prototype={
 	/**
@@ -332,7 +344,7 @@ function MapSurface(elt, options) {
 	 * MapState object currently being displayed.  This does not
 	 * contain uncommitted changes.
 	 * @public
-	 * @memberOf nanomaps.MapSurface.prototype
+	 * @memberOf nanomaps.MapSurface#
 	 * @name mapState
 	 */
 	this.mapState=mapState=new MapState();
@@ -426,15 +438,16 @@ function makeMapStateFramer(map, initialMapState, finalMapState) {
 	finalMapState=new MapState(finalMapState);
 	updateMapState=new MapState(initialMapState);
 	
-	console.log('Animation framer: resStride=' + resStride + ', xStride=' + xStride + ', yStride=' + yStride + ', wStride=' + wStride + ', hStride=' + hStride);
+	//console.log('Animation framer: resStride=' + resStride + ', xStride=' + xStride + ', yStride=' + yStride + ', wStride=' + wStride + ', hStride=' + hStride);
 	
 	return function(n, xy, isFinal) {
 		var pct=xy[0], changeLevel;
 		if (isFinal) {
 			updateMapState=finalMapState;
 			map._pendAnim=null;
+			map.mapState.finalState=null;
 		} else {
-			console.log('Anim frame ' + pct);
+			//console.log('Anim frame ' + pct);
 			updateMapState.res=initialMapState.res + pct * resStride;
 			updateMapState.setPrjXY(xInitial + pct * xStride, yInitial + pct * yStride, 0, 0);
 			updateMapState.w=initialMapState.w + pct * wStride;
@@ -518,6 +531,7 @@ MapSurfaceMethods.commit=function(animate) {
 		if (this._pendAnim) {
 			this._pendAnim.interrupt();
 			this._pendAnim=null;
+			mapState.finalState=null;
 		}
 		
 		if (!animate) {
@@ -527,6 +541,7 @@ MapSurfaceMethods.commit=function(animate) {
 		} else {
 			// Start an animation
 			if (typeof animate==='object') animOptions=animate;
+			mapState.finalState=new MapState(pendMapState);
 			this._pendAnim=new Animation(makeMapStateFramer(map, mapState, pendMapState), animOptions);
 			this._pendAnim.start();
 		}
