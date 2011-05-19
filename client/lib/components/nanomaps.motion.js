@@ -46,6 +46,8 @@ function MotionEvent(type) {
 }
 	
 function MotionController(map) {
+	
+	// ---- Click Handling
 	/**
 	 * If a click is in progress, this will be an object
 	 * {
@@ -164,10 +166,39 @@ function MotionController(map) {
 		stopEvent(event);
 		
 		var coords=map.eventToContainer(event),
-			deltaX, deltaY,
 			me;
 		
 		switch (event.type) {
+		case 'mousemove':
+			if (clickState.s===STATE_DOWN || clickState.s===STATE_DRAG) {
+				clickState.s=STATE_DRAG;
+				me=new MotionEvent('drag');
+				me.button=clickState.b;
+				me.x=coords.x;
+				me.y=coords.y;
+				
+				if (!clickState.cl) clickState.cl=clickState.cs;
+				/**
+				 * For drag, change in x from the last anchor position.
+				 * @public
+				 * @name deltaX
+				 * @memberOf nanomaps.MotionEvent#
+				 */
+				me.deltaX=clickState.cl.x - coords.x;
+
+				/**
+				 * For drag, change in y from the last anchor position.
+				 * @public
+				 * @name deltaY
+				 * @memberOf nanomaps.MotionEvent#
+				 */
+				me.deltaY=clickState.cl.y - coords.y;
+				clickState.cl=coords;
+				
+				map.dispatchMotionEvent(me);
+			}
+			break;
+
 		case 'mousedown':
 			if (clickState && clickState.s===STATE_CLICK_PEND) {
 				if ((now()-clickState.t)>DOUBLE_CLICK_MS) {
@@ -199,35 +230,6 @@ function MotionController(map) {
 			}
 			break;
 			
-		case 'mousemove':
-			if (clickState.s===STATE_DOWN || clickState.s===STATE_DRAG) {
-				clickState.s=STATE_DRAG;
-				me=new MotionEvent('drag');
-				me.button=clickState.b;
-				me.x=coords.x;
-				me.y=coords.y;
-				
-				if (!clickState.cl) clickState.cl=clickState.cs;
-				/**
-				 * For drag, change in x from the last anchor position.
-				 * @public
-				 * @name deltaX
-				 * @memberOf nanomaps.MotionEvent#
-				 */
-				me.deltaX=clickState.cl.x - coords.x;
-
-				/**
-				 * For drag, change in y from the last anchor position.
-				 * @public
-				 * @name deltaY
-				 * @memberOf nanomaps.MotionEvent#
-				 */
-				me.deltaY=clickState.cl.y - coords.y;
-				clickState.cl=coords;
-				
-				map.dispatchMotionEvent(me);
-			}
-			break;
 		}
 	}
 	
@@ -269,6 +271,116 @@ function MotionController(map) {
 		map.dispatchMotionEvent(me);
 	}
 	
+	// -- Touch handling
+	var touchState;
+	
+	function touchTranslate(eventTouches) {
+		var touches=[];
+		if (eventTouches) { 
+			for (i=0; i<eventTouches.length; i++) {
+				touch=eventTouches[i];
+				touches.push(map.eventToContainer(touch));
+			}
+		}
+		return touches;
+	}
+	
+	function touchMoveSingle(currentXY, prevXY) {
+		//console.log('touchMoveSingle (' + prevXY.x + ',' + prevXY.y + ') -> (' + currentXY.x + ',' + currentXY.y + ')');
+		var me=new MotionEvent('drag');
+		me.button=0;
+		
+		me.x=currentXY.x;
+		me.y=currentXY.y;
+		me.deltaX=prevXY.x - currentXY.x;
+		me.deltaY=prevXY.y - currentXY.y;
+		
+		map.dispatchMotionEvent(me);
+	}
+	
+	function touchMoveMulti(currentXY1, currentXY2, prevXY1, prevXY2) {
+		//console.log('touchMoveMulti [(' + prevXY1.x + ',' + prevXY1.y + '),(' + prevXY2.x + ',' + prevXY2.y + ')] -> [(' + currentXY1.x + ',' + currentXY1.y + '),(' + currentXY2.x + ',' + currentXY2.y + ')]');
+		
+		var me=new MotionEvent('pinch'),
+			ccX=(currentXY1.x+currentXY2.x)/2,
+			ccY=(currentXY1.y+currentXY2.y)/2,
+			pcX=(prevXY1.x+prevXY2.x)/2,
+			pcY=(prevXY1.y+prevXY2.y)/2,
+			cdx=currentXY1.x-currentXY2.x,
+			cdy=currentXY1.y-currentXY2.y,
+			pdx=prevXY1.x-prevXY2.x,
+			pdy=prevXY1.y-prevXY2.y,
+			cmag=Math.sqrt(cdx*cdx+cdy*cdy),
+			pmag=Math.sqrt(pdx*pdx+pdy*pdy);
+		
+		me.button=0;
+		me.x=ccX;
+		me.y=ccY;
+		me.deltaX=pcX-ccX;
+		me.deltaY=pcY-ccY;
+		me.deltaZoom=Math.log(cmag/pmag) * 1.5;
+		
+		console.log('pinch: deltaXY=(' + me.deltaX + ',' + me.deltaY + '), deltaZoom=' + me.deltaZoom);
+		map.dispatchMotionEvent(me);
+	}
+	
+	function touchHandleEvent(event) {
+		var type=event.type,
+			currentTouches;
+			
+		stopEvent(event);
+		
+		// Extract current touches and translate to local coordinates
+		currentTouches=touchTranslate(event.touches);
+		
+		//console.log('ontouch: ' + event.type + ', touches=' + currentTouches.length);
+		
+		// Handle touch start
+		if (type==='touchstart') {
+			if (!touchState) {
+				touchState={
+					s: STATE_DOWN,
+					t: currentTouches
+				};
+			} else {
+				touchState.t=currentTouches;
+			}
+			return;
+		} 
+		
+		// Don't do anything else if not in a touch state
+		if (!touchState) return;
+		
+		switch (event.type) {
+		case 'touchmove':
+			if (currentTouches.length===1) {
+				// Just dragging based on movement
+				touchMoveSingle(currentTouches[0], touchState.t[0]);
+			} else if (currentTouches.length>1) {
+				touchMoveMulti(
+					currentTouches[0],
+					currentTouches[1],
+					touchState.t[0],
+					touchState.t[1]
+				);
+			}
+			
+			touchState.t=currentTouches;
+			break;
+		case 'touchend':
+			if (currentTouches.length===0) {
+				// All done here
+				touchState=null;
+			} else {
+				touchState.t=currentTouches;
+			}
+			break;
+		case 'touchcancel':
+			touchState=null;
+			break;
+		}
+	}
+	
 	/**
 	 * Listen to all motion related events on
 	 * the map.
@@ -278,7 +390,16 @@ function MotionController(map) {
 	this.listen=function(enableClick, enableTouch, enableWheel) {
 		var elements=map.elements,
 			target=elements.event,
-			parent=elements.parent;
+			parent=elements.parent,
+			touchEvents=[
+				'touchstart',
+				'touchend',
+				'touchmove',
+				'touchcancel'
+				//'gesturechange',
+				//'gestureend'
+			],
+			i;
 		
 		if (enableClick) {
 			// Just listen for mousedown to start with
@@ -296,8 +417,10 @@ function MotionController(map) {
 			addEventListener(target, 'mousewheel', wheelHandleEvent);
 		}
 		
-		if (enableTouch) {
-			
+		if (enableTouch && target.addEventListener) {
+			for (i=0; i<touchEvents.length; i++) {
+				target.addEventListener(touchEvents[i], touchHandleEvent, true);
+			}
 		}
 	};
 }
@@ -356,9 +479,15 @@ MapSurfaceMethods.dispatchMotionEvent=function(motionEvent) {
 MapSurfaceMethods.handleMotionEvent=function(motionEvent) {
 	if (motionEvent.handled) return;
 	
-	var type=motionEvent.type;
-	if (type==='drag') {
+	var type=motionEvent.type, deltaZoom;
+	if (type==='drag' || type==='pinch') {
+		map.begin();
 		map.moveBy(motionEvent.deltaX, -motionEvent.deltaY);
+		deltaZoom=Number(motionEvent.deltaZoom);
+		if (!isNaN(deltaZoom)) {
+			map.setZoom(map.getZoom() + deltaZoom, motionEvent.x, motionEvent.y);
+		}
+		map.commit();
 	} else if (type==='scroll') {
 		this.setZoom(this.getZoom()+motionEvent.deltaZoom, 
 			motionEvent.x, motionEvent.y);
