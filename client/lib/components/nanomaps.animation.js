@@ -40,7 +40,7 @@ function MakeBezierCurve(x1, y1, x2, y2) {
 }
 
 var ANIMATION_DEFAULT_OPTIONS={
-	curve: MakeBezierCurve(0.25, 0.25, 0.33, 0.33),
+	curve: MakeBezierCurve(0.25, 0.25, 0.25, 0.25),
 	duration: 0.5,
 	rate: 20
 };

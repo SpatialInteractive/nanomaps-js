@@ -484,10 +484,22 @@ MapSurfaceMethods.rollback=function() {
 };
 
 /**
- *
+ * Commit a pending transaction, optionally animating between the current display
+ * state and changes introduced in the transaction.  Passing any true value as the
+ * animate parameter will enable animation.  If passing a non-null object, then it
+ * will be taken as animation parameters and will be passed through unchanged to the
+ * Animation() constructor.  The following animation options are settable:
+ * <ul>
+ * <li>curve: An animation curve function such as one produced by MakeBezierCurve(x1,y1,x2,y2).
+ * Defaults to a bezier curve with a pronounced tail acceleration
+ * <li>duration: Duration in seconds.  Default to 0.5.
+ * <li>rate: Frame rate in frames/s.  Default=20 but may be automatically adjusted based on platform 
+ * or previous preformance.
+ * </ul>
  * @public
  * @methodOf nanomaps.MapSurface.prototype
  * @name commit
+ * @param animate {boolean|Object} false to disable animation, true or animation options to animate
  * @return true if this call to commit finished the transaction.  false if this commit
  * did nothing
  */
