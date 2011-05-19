@@ -102,7 +102,7 @@ CartesianTileSelector.prototype={
 			delete this.pending[id];
 			// This is rumoured to cancel loading the
 			// image in some browsers
-			pended.img.src='';
+			pended.img.src='data:image/png,';
 		}
 	},
 	
