@@ -116,6 +116,7 @@ time elapses
 * Added zoomIn() / zoomOut() methods to work with integral zoom levels instead of floating point
 * Added simple geocoding to demo
 * Still has some touch issues on Android webkit.  Also geolocation not working and geocoding failing.
+* Size is 9.31KB over the wire
 
 Release 0.2.0
 -------------
