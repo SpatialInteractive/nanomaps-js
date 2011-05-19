@@ -46,14 +46,28 @@ function initialize() {
 	}
 	
 	setupControls();
+	
+	// -- Temp
+	$('#btnStartAnimation').click(function() {
+		var an=new nanomaps.Animation(function(frameNumber, xy, isFinal) {
+			console.log('Frame: ' + frameNumber + ' (' + xy[0] + ',' + xy[1] + '), final=' + isFinal);
+		}, {
+			duration: 2.0,
+		});
+		an.start();
+	});
 }
 
 function setupControls() {
 	$('#zoomControl .zoomIn').click(function() {
-		map.setZoom(map.getZoom()+1);
+		map.begin();
+		map.zoomIn();
+		map.commit(true);
 	});
 	$('#zoomControl .zoomOut').click(function() {
-		map.setZoom(map.getZoom()-1);
+		map.begin();
+		map.zoomOut();
+		map.commit(true);
 	});
 }
 

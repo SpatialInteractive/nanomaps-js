@@ -31,15 +31,57 @@ Core map display library.
  * @constructor
  * @name nanomaps.MapState
  */
-function MapState() {
-	this.prj=null;
-	this.res=1;
-	this.x=0;
-	this.y=0;
-	this.w=0;
-	this.h=0;
+function MapState(other) {
+	if (other) {
+		other.copy(this);
+	} else {
+		this.prj=null;
+		this.res=1;
+		this.x=0;
+		this.y=0;
+		this.w=0;
+		this.h=0;
+	}
 }
 MapState.prototype={
+	/**
+	 * Detect the level of change between this mapState and a comparison
+	 * mapState.
+	 * @public
+	 * @name compare
+	 * @methodOf nanomaps.MapState.prototype
+	 * @param other {MapState}
+	 * @return {Number} 0 if no change, 1 if position change, 2 if full change
+	 */
+	compare: function(other) {
+		var ret=0;
+		if (this.x!==other.x || this.y!==other.y || this.w!==other.w || this.h!==other.h) {
+			ret=1;
+		}
+		
+		if (this.prj!==other.prj || this.res!==other.res) {
+			ret=2;
+		}
+		
+		return ret;
+	},
+	
+	/**
+	 * Copy parameters from this mapState to dest
+	 * @public
+	 * @name copy
+	 * @methodOf nanomaps.MapState.prototype
+	 * @param dest {MapState}
+	 */
+	copy: function(dest) {
+		dest.x=this.x;
+		dest.y=this.y;
+		dest.w=this.w;
+		dest.h=this.h;
+		dest.prj=this.prj;
+		dest.res=this.res;
+	},
+	
 	/// -- Getters
 	/**
 	 * @public
@@ -174,7 +216,6 @@ MapState.prototype={
 		}
 	},
 	
-	
 	/**
 	 * @public
 	 * @name setZoom
@@ -286,11 +327,23 @@ function MapSurface(elt, options) {
 	eventLayer.style.height='100%';
 	this.elements.event=eventLayer;
 	
-	// Initial mapState
+	// Display mapState
+	/**
+	 * MapState object currently being displayed.  This does not
+	 * contain uncommitted changes.
+	 * @public
+	 * @memberOf nanomaps.MapSurface.prototype
+	 * @name mapState
+	 */
 	this.mapState=mapState=new MapState();
 	mapState.prj=options.projection||new Projections.WebMercator();
 	mapState.res=options.resolution||mapState.prj.DEFAULT_RESOLUTION;
 
+	// Pending mapState
+	this._pendMapState=new MapState(mapState);
+	this._pendLock=0;
+	this._pendAnim=null;
+	
 	// Fixed size or autosize
 	if (typeof width!=='number' || typeof height!=='number') {
 		this.setSize();
@@ -358,6 +411,130 @@ function layerIndexToOrdinal(index) {
 	}
 	return ordinal;
 }
+
+function makeMapStateFramer(map, initialMapState, finalMapState) {
+	// Copy mapStates (the references we are given are "live")
+	// and record strides
+	var resStride=finalMapState.res - initialMapState.res,
+		xInitial=initialMapState.getPrjX(0,0),
+		yInitial=initialMapState.getPrjY(0,0),
+		xStride=finalMapState.getPrjX(0,0) - xInitial,
+		yStride=finalMapState.getPrjY(0,0) - yInitial,
+		wStride=finalMapState.w - initialMapState.w,
+		hStride=finalMapState.h - initialMapState.h;
+	initialMapState=new MapState(initialMapState);
+	finalMapState=new MapState(finalMapState);
+	updateMapState=new MapState(initialMapState);
+	
+	console.log('Animation framer: resStride=' + resStride + ', xStride=' + xStride + ', yStride=' + yStride + ', wStride=' + wStride + ', hStride=' + hStride);
+	
+	return function(n, xy, isFinal) {
+		var pct=xy[0], changeLevel;
+		if (isFinal) {
+			updateMapState=finalMapState;
+			map._pendAnim=null;
+		} else {
+			console.log('Anim frame ' + pct);
+			updateMapState.res=initialMapState.res + pct * resStride;
+			updateMapState.setPrjXY(xInitial + pct * xStride, yInitial + pct * yStride, 0, 0);
+			updateMapState.w=initialMapState.w + pct * wStride;
+			updateMapState.h=initialMapState.h + pct * hStride;
+		}
+		
+		changeLevel=updateMapState.compare(map.mapState);
+		if (changeLevel>0) {
+			updateMapState.copy(map.mapState);
+			map._invalidate(changeLevel>1);
+		}
+	};
+}
+
+/**
+ * Begin a series of mapState changes including changes to position, size,
+ * resolution and projection.  Calling this method increments an internal
+ * lock count.  If the lock count is zero (default), then all changes to
+ * map state take effect immediately.  If it is >0 (as is the case after a
+ * call to begin), then the changes are "batched" up until a later call
+ * to commit or rollback.
+ *
+ * @public
+ * @methodOf nanomaps.MapSurface.prototype
+ * @name begin
+ * @return true if this starts a new transaction and false if it just incremented
+ * the lock count on an already started transaction
+ */
+MapSurfaceMethods.begin=function() {
+	return this._pendLock++ === 0;
+};
+
+/**
+ * Rolls back all pending map state changes made since the first begin().  Note that
+ * nested rollbacks (ie. savepoints in SQL parlance) are not supported.  Rollback 
+ * resets the entire transaction.  Future calls to commit will have no effect since
+ * the transaction lock will be zero.
+ *
+ * @public
+ * @methodOf nanomaps.MapSurface.prototype
+ * @name rollback
+ */
+MapSurfaceMethods.rollback=function() {
+	// Copy back from the display mapState
+	this.mapState.copy(this._pendMapState);
+	this._pendLock=0;
+};
+
+/**
+ *
+ * @public
+ * @methodOf nanomaps.MapSurface.prototype
+ * @name commit
+ * @return true if this call to commit finished the transaction.  false if this commit
+ * did nothing
+ */
+MapSurfaceMethods.commit=function(animate) {
+	if (this._pendLock<=0 || --this._pendLock>0) return false;
+	
+	// Let's do it
+	var pendMapState=this._pendMapState,
+		mapState=this.mapState,
+		animOptions;
+		
+	var changeLevel=pendMapState.compare(mapState);
+	if (changeLevel>0) {
+		// Something changed
+		// Interrupt any pending animation
+		if (this._pendAnim) {
+			this._pendAnim.interrupt();
+			this._pendAnim=null;
+		}
+		
+		if (!animate) {
+			// Directly update
+			pendMapState.copy(mapState);
+			this._invalidate(changeLevel>1);
+		} else {
+			// Start an animation
+			if (typeof animate==='object') animOptions=animate;
+			this._pendAnim=new Animation(makeMapStateFramer(map, mapState, pendMapState), animOptions);
+			this._pendAnim.start();
+		}
+	}
+	
+	return true;
+};
+
+/**
+ * Forcefully commits the current transaction regardless of
+ * the number of outstanding begins.
+ *
+ * @public
+ * @methodOf nanomaps.MapSurface.prototype
+ * @name commit
+ */
+MapSurfaceMethods.forceCommit=function() {
+	this._pendLock=1;
+	this.commit();
+};
 
 /**
  * All map objects exist within a layer.  Layers are ordered by an ordinal index
@@ -487,7 +664,7 @@ MapSurfaceMethods.surface=function(index) {
  * @return the current zoom level as a floating point number
  */
 MapSurfaceMethods.getZoom=function() {
-	return this.mapState.getZoom();
+	return this._pendMapState.getZoom();
 };
 
 /**
@@ -497,21 +674,45 @@ MapSurfaceMethods.getZoom=function() {
  * @methodOf nanomaps.MapSurface.prototype
  * @name getZoom
  * @param level {number} Floating point zoom level (clamped to valid range)
- * @param x {number||undefined} x viewport coordinate to preserve (default=center)
- * @param y {number||undefined} y viewport coordinate to preserve (default=center)
+ * @param x {Number||undefined} x viewport coordinate to preserve (default=center)
+ * @param y {Number||undefined} y viewport coordinate to preserve (default=center)
  * @return the current zoom level as a floating point number
  */
 MapSurfaceMethods.setZoom=function(level, x, y) {
-	var mapState=this.mapState,
+	var mapState=this._pendMapState,
 		origRes=mapState.res;
 
+	this.begin();
 	level=clampZoom(this, level);
-	this.mapState.setZoom(level, optionalX(this,x), optionalY(this,y));
-	
-	if (mapState.res!==origRes) {
-		this._invalidate(true);
-	}
+	mapState.setZoom(level, optionalX(this,x), optionalY(this,y));
+	this.commit();
 };
+
+/**
+ * Zoom in by one zoom level, rounding to the nearest integral
+ * zoom level.
+ * @public
+ * @name zoomIn
+ * @methodOf nanomaps.MapSurface.prototype
+ * @param x {Number||undefined} x viewport coordinate to preserve (default=center)
+ * @param y {Number||undefined} y viewport coordinate to preserve (default=center)
+ */
+MapSurfaceMethods.zoomIn=function(x,y) {
+	this.setZoom(Math.round(this.getZoom()+1), x, y);
+},
+
+/**
+ * Zoom out by one zoom level, rounding to the nearest integral
+ * zoom level.
+ * @public
+ * @name zoomOut
+ * @methodOf nanomaps.MapSurface.prototype
+ * @param x {Number||undefined} x viewport coordinate to preserve (default=center)
+ * @param y {Number||undefined} y viewport coordinate to preserve (default=center)
+ */
+MapSurfaceMethods.zoomOut=function(x,y) {
+	this.setZoom(Math.round(this.getZoom()-1), x, y);
+},
 
 /**
  * Gets the global location as a Coordinate object at the given
@@ -525,7 +726,7 @@ MapSurfaceMethods.setZoom=function(level, x, y) {
  * @return {nanomaps.Coordinate}
  */
 MapSurfaceMethods.getLocation=function(x,y) {
-	var mapState=this.mapState;
+	var mapState=this._pendMapState;
 	x=optionalX(this,x);
 	y=optionalY(this,y);
 	return Coordinate.xy(
@@ -549,8 +750,9 @@ MapSurfaceMethods.getLocation=function(x,y) {
  */
 MapSurfaceMethods.setLocation=function(globalCoord, x, y) {
 	globalCoord=Coordinate.from(globalCoord);
-	this.mapState.setGlbXY(globalCoord._x, globalCoord._y, optionalX(this,x), optionalY(this,y));
-	this._invalidate(false);
+	this.begin();
+	this._pendMapState.setGlbXY(globalCoord._x, globalCoord._y, optionalX(this,x), optionalY(this,y));
+	this.commit();
 };
 
 /**
@@ -830,7 +1032,10 @@ MapSurfaceMethods.update=function(element) {
  */
 MapSurfaceMethods.setSize=function(width, height) {
 	var elt=this.elements.parent, center=this.getLocation(),
-		mapState=this.mapState;
+		mapState=this._pendMapState;
+		
+	this.begin();
+	
 	if (arguments.length<2) {
 		elt.style.width='';
 		elt.style.height='';
@@ -845,6 +1050,8 @@ MapSurfaceMethods.setSize=function(width, height) {
 	mapState.h=height;
 	
 	this.setLocation(center);
+	
+	this.commit();
 };
 
 /**
@@ -868,7 +1075,9 @@ MapSurfaceMethods.moveBy=function(eastingPx, northingPx) {
  * Returns a Coordinate object for the xy (left/top) position
  * on the managed surface given global coordinates.  This is a
  * low-level function for use by map attachments that need to
- * manage their position on the managed attachment div.
+ * manage their position on the managed attachment div.  Always
+ * operates on the display MapState, not any pending MapState
+ * within a transaction.
  * @public
  * @methodOf nanomaps.MapSurface.prototype
  * @name globalToXY

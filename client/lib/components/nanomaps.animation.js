@@ -41,8 +41,8 @@ function MakeBezierCurve(x1, y1, x2, y2) {
 
 var ANIMATION_DEFAULT_OPTIONS={
 	curve: MakeBezierCurve(0.25, 0.25, 0.33, 0.33),
-	duration: 2.0,
-	rate: 10
+	duration: 0.5,
+	rate: 20
 };
 
 /**
@@ -78,7 +78,6 @@ function Animation(framer, options) {
 	this._d=options.duration||ANIMATION_DEFAULT_OPTIONS.duration;
 	this._r=options.rate||ANIMATION_DEFAULT_OPTIONS.rate;
 	this._s=0;	// State=Not Started
-	
 }
 Animation.prototype={
 	/**
@@ -117,18 +116,29 @@ Animation.prototype={
 	
 	/**
 	 * If the animation is running or has not started, immediately
-	 * finishes it.
+	 * finishes it, jumping to the final state.
 	 * @public
 	 * @name finish
 	 * @methodOf nanomaps.Animation.prototype
 	 */
 	finish: function() {
+		this._last();
+	},
+	
+	/**
+	 * If the animation is running, cancel any further frames but
+	 * do not jump to the final state.  Use this if you are introducing
+	 * an additional animation that needs to visually pick up where this
+	 * one currently is and supercedes this animation's final result.
+	 * @public
+	 * @name interrupt
+	 * @methodOf nanomaps.Animation.prototype
+	 */
+	interrupt: function() {
 		var self=this, ii=self._ii;
 		if (self._s===2) return;	// Already finished
 		if (ii) clearInterval(ii);
 		self._s=2;
-		self._f(self._tn, [1,1], true);
-		self._f=null;
 	},
 	
 	/**
@@ -141,12 +151,21 @@ Animation.prototype={
 			xy;
 		if (t>=1.0 || t<0 || isNaN(t)) {
 			// Done
-			self.finish();
+			self._final();
 			return;
 		}
 		
 		xy=self._c(t);
 		self._f(++self._tn, xy, false);
+	},
+	
+	_final: function() {
+		var self=this, ii=self._ii;
+		if (self._s===2) return;	// Already finished
+		if (ii) clearInterval(ii);
+		self._s=2;
+		self._f(self._tn, [1,1], true);
+		self._f=null;
 	}
 };
 
