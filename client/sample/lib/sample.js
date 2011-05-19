@@ -10,6 +10,10 @@ var map,
 	locationMarker=new nanomaps.ImgMarker({
 			src: 'orb_blue.png'
 		}),
+	placeTemplate=new nanomaps.ImgMarker({
+			src: 'pin_pink.png'
+		}),
+	placeElt,
 	locationElt,
 	locationUncertaintyMarker=new nanomaps.EllipseMarker({
 			className: 'errorHalo',
@@ -46,16 +50,7 @@ function initialize() {
 	}
 	
 	setupControls();
-	
-	// -- Temp
-	$('#btnStartAnimation').click(function() {
-		var an=new nanomaps.Animation(function(frameNumber, xy, isFinal) {
-			console.log('Frame: ' + frameNumber + ' (' + xy[0] + ',' + xy[1] + '), final=' + isFinal);
-		}, {
-			duration: 2.0,
-		});
-		an.start();
-	});
+	setupQuery();
 }
 
 function setupControls() {
@@ -68,6 +63,55 @@ function setupControls() {
 		map.begin();
 		map.zoomOut();
 		map.commit(true);
+	});
+}
+
+function setupQuery() {
+	$('#btnQuery').click(function() {
+		var q=$('#txtQuery').val();
+		runQuery(q);
+	});
+}
+
+function runQuery(q) {
+	var params={
+		format: 'json',
+		q: q,
+		bounded: 0,
+		}, 
+		url='http://open.mapquestapi.com/nominatim/v1/search',
+		k, v, first=true;
+	
+	$.ajax({
+		url: url,
+		dataType: 'json',
+		jsonp: 'json_callback',
+		data: params,
+		success: function(result) {
+			if (result.length==0) {
+				alert('No results found.');
+				return;
+			}
+			var place=result[0],
+				lat=Number(place.lat),
+				lng=Number(place.lon);
+			if (placeElt) {
+				$(placeElt).remove();
+			}
+			
+			// Place marker
+			placeElt=map.attach(placeTemplate);
+			placeElt.geo.latitude=lat;
+			placeElt.geo.longitude=lng;
+			map.update(placeElt);
+			
+			// Move map
+			map.begin();
+			map.setLocation({lat: lat, lng: lng});
+			map.commit({
+				duration: 2.0
+			});
+		}
 	});
 }
 

@@ -15,7 +15,11 @@
 <body style="zoom: 1.0">
 	<div id="shell">
 		<div id="actionBar">
-			<a id="btnStartAnimation">Start Animation</a>
+			<form onsubmit="return false;">
+				<span>Query:</span>
+				<input id="txtQuery" size="25" value="" />
+				<input type="submit" id="btnQuery" value="Submit" />
+			</form>
 		</div>
 		<div id="mapContainer">
 			<!-- Main map surface -->

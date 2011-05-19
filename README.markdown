@@ -102,6 +102,20 @@ nanomaps (JavaScript) and nanomaps-droid.  Expect relative completion of each al
 Change Log
 ==========
 
+Release 0.2.1
+-------------
+Snapshot of current work.
+
+* Implemented begin()/commit()/rollback() for batching map interactions together with
+a single display update
+* Added animation support to commit() method so that batched map updates can be
+animated with arbitrary timings and curves
+* Reworked tiling to fully take advantage of animation.  Tiles are prefetched for the final
+MapState at the beginning of an animation, increasing the chances that no perceivable load
+time elapses
+* Added zoomIn() / zoomOut() methods to work with integral zoom levels instead of floating point
+* Added simple geocoding to demo
+
 Release 0.2.0
 -------------
 This is a snapshot of recent refactorings and has received minimal testing.  Key updates:
