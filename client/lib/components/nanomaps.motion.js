@@ -11,7 +11,10 @@
 var STATE_DOWN=0,
 	STATE_DRAG=1,
 	STATE_CLICK_PEND=2,
-	DOUBLE_CLICK_MS=280;
+	CLICK_DOUBLE_MS=280,
+	TOUCH_THRESHOLD=10,
+	TOUCH_LONGPRESS_MS=1000,
+	TOUCH_DOUBLE_MS=280;
 
 /**
  * MotionEvent instances are passed to handler functions
@@ -46,6 +49,9 @@ function MotionEvent(type) {
 }
 	
 function MotionController(map) {
+	function dispatch(motionEvent) {
+		map.dispatchMotionEvent(motionEvent);
+	}
 	
 	// ---- Click Handling
 	/**
@@ -89,7 +95,7 @@ function MotionController(map) {
 				clickDispatch();
 				clickCancel();
 			}
-		}, DOUBLE_CLICK_MS);
+		}, CLICK_DOUBLE_MS);
 	}
 	
 	function clickStopTimer() {
@@ -142,7 +148,7 @@ function MotionController(map) {
 		 */
 		me.y=clickState.cs.y;
 		
-		map.dispatchMotionEvent(me);
+		dispatch(me);
 	}
 	
 	function clickCancel() {
@@ -195,13 +201,13 @@ function MotionController(map) {
 				me.deltaY=clickState.cl.y - coords.y;
 				clickState.cl=coords;
 				
-				map.dispatchMotionEvent(me);
+				dispatch(me);
 			}
 			break;
 
 		case 'mousedown':
 			if (clickState && clickState.s===STATE_CLICK_PEND) {
-				if ((now()-clickState.t)>DOUBLE_CLICK_MS) {
+				if ((now()-clickState.t)>CLICK_DOUBLE_MS) {
 					// Not a valid followon click
 					// Dispatch current and reset
 					clickDispatch();
@@ -268,11 +274,43 @@ function MotionController(map) {
 		 */
 		me.deltaZoom=delta/factor;
 		
-		map.dispatchMotionEvent(me);
+		dispatch(me);
 	}
 	
 	// -- Touch handling
 	var touchState;
+	
+	function touchStartClickTimer() {
+		touchState.ti=setTimeout(function() {
+			touchState.ti=null;
+			touchDispatchTap();
+			touchCancel();
+		}, TOUCH_DOUBLE_MS);
+	}
+	
+	function touchStopTimer() {
+		if (touchState) {
+			if (touchState.ti) clearTimeout(touchState.ti);
+			touchState.ti=null;
+		}
+	}
+	
+	function touchCancel() {
+		touchStopTimer();
+		touchState=null;
+	}
+	
+	function touchDispatchTap() {
+		var me=new MotionEvent('click');
+		me.button=0;
+		me.count=touchState.cnt;
+		me.x=touchState.tapX;
+		me.y=touchState.tapY;
+		
+		//console.log('tap: count=' + me.count + ', xy=(' + me.x + ',' + me.y + ')');
+		dispatch(me);
+	}
+	
 	
 	function touchTranslate(eventTouches) {
 		var touches=[];
@@ -295,7 +333,7 @@ function MotionController(map) {
 		me.deltaX=prevXY.x - currentXY.x;
 		me.deltaY=prevXY.y - currentXY.y;
 		
-		map.dispatchMotionEvent(me);
+		dispatch(me);
 	}
 	
 	function touchMoveMulti(currentXY1, currentXY2, prevXY1, prevXY2) {
@@ -330,7 +368,7 @@ function MotionController(map) {
 		me.deltaZoom=Math.log(cmag/pmag) * 1.5;
 		
 		//console.log('pinch: deltaXY=(' + me.deltaX + ',' + me.deltaY + '), deltaZoom=' + me.deltaZoom);
-		map.dispatchMotionEvent(me);
+		dispatch(me);
 	}
 	
 	function touchHandleEvent(event) {
@@ -346,10 +384,33 @@ function MotionController(map) {
 		
 		// Handle touch start
 		if (type==='touchstart') {
+			// Handle followon tap
+			if (touchState && touchState.s===STATE_CLICK_PEND) {
+				if ((now()-touchState.te)>TOUCH_DOUBLE_MS) {
+					// Not a valid followon tap
+					// Dispatch current and reset
+					touchDispatch();
+					touchCancel();
+					
+					// Fall through to normal touch start
+				} else if (currentTouches.length===1) {
+					// Just let it resume the tap-tap sequence
+					touchState.s=STATE_DOWN;
+					touchState.t=currentTouches;
+					touchStopTimer();
+					return;
+				}
+			}
+			
+			// Normal touch initiation when a new finger is pressed
 			if (!touchState) {
 				touchState={
 					s: STATE_DOWN,
-					t: currentTouches
+					t: currentTouches,	// Touches array
+					te: 0,				// Last touch end time
+					ts: now(),			// Current touch start time
+					ti: null,			// Touch timer id
+					cnt: 0				// Number of consecutive touches
 				};
 			} else {
 				touchState.t=currentTouches;
@@ -363,29 +424,53 @@ function MotionController(map) {
 		switch (event.type) {
 		case 'touchmove':
 			if (currentTouches.length===1) {
-				// Just dragging based on movement
-				touchMoveSingle(currentTouches[0], touchState.t[0]);
+				if (touchState.s===STATE_DRAG ||
+					Math.abs(currentTouches[0].x-touchState.t[0].x)>TOUCH_THRESHOLD ||
+					Math.abs(currentTouches[0].y-touchState.t[0].y)>TOUCH_THRESHOLD)
+				{
+					// Single touch over touch threshold
+					if (touchState.s===STATE_CLICK_PEND) {
+						// Dispatch pending and reset
+						touchDispatch();
+						touchStopTimer();
+						touchState.cnt=0;
+					}
+					
+					touchState.s=STATE_DRAG;
+					touchMoveSingle(currentTouches[0], touchState.t[0]);
+					touchState.t=currentTouches;
+				}
 			} else if (currentTouches.length>1) {
+				touchState.s=STATE_DRAG;
 				touchMoveMulti(
 					currentTouches[0],
 					currentTouches[1],
 					touchState.t[0],
 					touchState.t[1]
 				);
+				touchState.t=currentTouches;
 			}
 			
-			touchState.t=currentTouches;
 			break;
 		case 'touchend':
 			if (currentTouches.length===0) {
 				// All done here
-				touchState=null;
+				if (touchState.s===STATE_DOWN) {
+					touchState.cnt++;
+					touchState.s=STATE_CLICK_PEND;
+					touchState.tapX=touchState.t[0].x;
+					touchState.tapY=touchState.t[0].y;
+					touchState.te=now();
+					touchStartClickTimer();
+				} else {
+					touchCancel();
+				}
 			} else {
 				touchState.t=currentTouches;
 			}
 			break;
 		case 'touchcancel':
-			touchState=null;
+			touchCancel();
 			break;
 		}
 	}
@@ -405,8 +490,6 @@ function MotionController(map) {
 				'touchend',
 				'touchmove',
 				'touchcancel'
-				//'gesturechange',
-				//'gestureend'
 			],
 			i;
 		
