@@ -62,6 +62,7 @@ function Coordinate(x,y) {
  * I get it right instead of relying on my memory that
  * lat=y and lng=x.
  * @public
+ * @name latLng
  * @methodOf nanomaps.Coordinate
  * @param lat {Number}
  * @param lng {Number}
@@ -74,6 +75,7 @@ Coordinate.latLng=function(lat, lng) {
 /**
  * Factory method for constructing a coordinate from (x,y)
  * @public
+ * @name xy
  * @methodOf nanomaps.Coordinate
  * @param x {Number}
  * @param y {Number}
@@ -104,6 +106,7 @@ Coordinate.xy=function(x,y) {
  * Alternatively, if object is an array, then it is
  * taken to be [x, y]
  * @public
+ * @name from
  * @methodOf nanomaps.Coordinate
  * @param object {Object}
  * @return {Coordinate}

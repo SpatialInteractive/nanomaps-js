@@ -18,6 +18,7 @@ var STATE_DOWN=0,
  * and summarize touch or click interactions that are subject
  * to default handling.
  *
+ * @public
  * @constructor
  * @name nanomaps.MotionEvent
  */
@@ -232,6 +233,9 @@ function MotionController(map) {
 	
 	/**
 	 * Handle mouse wheel events
+	 * This is still shaky.  I think we need an interval timer
+	 * and accumulator to straighten it out.  I also need a real
+	 * scroll wheel mouse.
 	 */
 	function wheelHandleEvent(event) {
 		stopEvent(event);
@@ -323,7 +327,8 @@ MapSurfaceMethods.advise('initialize', 'after', function(options) {
  * the 'motion' event on the map and then call handleMotionEvent
  * for default processing if the handled flag is false.
  * @public
- * @memberOf nanomaps.MapSurface.prototype
+ * @name dispatchMotionEvent
+ * @methodOf nanomaps.MapSurface.prototype
  * @param motionEvent {nanomaps.MotionEvent}
  */
 MapSurfaceMethods.dispatchMotionEvent=function(motionEvent) {
@@ -344,7 +349,8 @@ MapSurfaceMethods.dispatchMotionEvent=function(motionEvent) {
  * 	});
  * </pre>
  * @public
- * @memberOf nanomaps.MapSurface.prototype
+ * @name handleMotionEvent
+ * @methodOf nanomaps.MapSurface.prototype
  * @param motionEvent {nanomaps.MotionEvent}
  */
 MapSurfaceMethods.handleMotionEvent=function(motionEvent) {

@@ -15,8 +15,7 @@ SRC_FILES="
 	$SRC_DIR/nanomaps.projections.js
 	$SRC_DIR/nanomaps.core.js 
 	$SRC_DIR/nanomaps.tiles.js
-	$SRC_DIR/nanomaps.desktop.js 
-	$SRC_DIR/nanomaps.touch.js
+	$SRC_DIR/nanomaps.motion.js
 	$SRC_DIR/nanomaps.imgmarker.js
 	$SRC_DIR/nanomaps.svgmarker.js
 	"
