@@ -16,8 +16,7 @@ global.nanomaps=exports;
 ##include('components/nanomaps.animation.js')
 ##include('components/nanomaps.core.js')
 ##include('components/nanomaps.tiles.js')
-##include('components/nanomaps.desktop.js')
-##include('components/nanomaps.touch.js')
+##include('components/nanomaps.motion.js')
 ##include('components/nanomaps.imgmarker.js')
 ##include('components/nanomaps.svgmarker.js')
 })(window);

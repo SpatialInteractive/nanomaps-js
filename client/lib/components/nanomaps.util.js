@@ -276,21 +276,6 @@ function getAdvisorStub(method) {
 }
 
 /**
- * Creates and returns a listener function that can be used with Element.addEventListener
- * and routes the event to the target instance, calling its emit method with
- * the given eventName.
- * The instance event will be emitted with two arguments: event, element
- * This method only supports W3C DOM.  IE is not supported.
- *
- * @private
- */
-function createDomEventDispatcher(target, eventName) {
-	return function(event) {
-		target.emit(eventName, event||window.event, this);
-	};
-}
-
-/**
  * Return current time millis
  */
 function now() {

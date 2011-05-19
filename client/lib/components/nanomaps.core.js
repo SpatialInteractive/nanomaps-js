@@ -407,8 +407,8 @@ function clampZoom(map, level) {
 var LAYER_NAMES={
 	BACKGROUND: 0,
 	MAP: 10,
+	SHADOW: 50,
 	EVENT: 100,
-	SHADOW: 500,
 	OVERLAY: 1000,
 	FOREGROUND: 10000
 };
@@ -929,28 +929,6 @@ MapSurfaceMethods.eventToContainer=function(event, elementName) {
 	coords.y+=window.pageYOffset||0;
 	
 	return coords;
-};
-
-/**
- * Adds a DOM event listener to the given elementName (as found in the 
- * this.elements map) with the given event domEventName and eventName
- * to be raised on this instance.
- *
- * @public
- * @methodOf nanomaps.MapSurface.prototype
- * @name routeDomEvent
- * @deprecated
- *
- * @param domEventName DOM event name to listen
- * @param eventName Name of event to emit on this instance (defaults to "dom_${domEventName})
- * @param elementName Name of element in this.elements collection (defaults to
- * viewport)
- */
-MapSurfaceMethods.routeDomEvent=function(domEvent, thisEvent, elementName) {
-	var element=this.elements[elementName||'viewport'],
-		listener=createDomEventDispatcher(this, thisEvent||('dom_'+domEvent));
-	if (element.addEventListener) element.addEventListener(domEvent, listener, false);
-	else if (element.attachEvent) element.attachEvent('on' + domEvent, listener);
 };
 
 /**
