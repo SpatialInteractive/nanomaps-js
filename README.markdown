@@ -7,10 +7,10 @@ Release 0.2.0
 -------------
 Links:
 
-* Demo (prod): http://www.rcode.net/nanomaps/nanomaps-js-0.2.0/prod/
-* Demo (debug): http://www.rcode.net/nanomaps/nanomaps-js-0.2.0/debug/
-* Api Docs: http://www.rcode.net/nanomaps/nanomaps-js-0.2.0/apidocs/
-* Download: http://www.rcode.net/nanomaps/nanomaps-js-0.2.0.tar.gz
+* Demo (prod): http://www.rcode.net/nanomaps/nanomaps-js-0.2.1/prod/
+* Demo (debug): http://www.rcode.net/nanomaps/nanomaps-js-0.2.1/debug/
+* Api Docs: http://www.rcode.net/nanomaps/nanomaps-js-0.2.1/apidocs/
+* Download: http://www.rcode.net/nanomaps/nanomaps-js-0.2.1.tar.gz
 
 Combined javascript file is in either the prod (compressed) or debug (uncompressed)
 directory under lib/nanomaps.bundle.all.js
