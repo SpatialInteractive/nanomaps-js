@@ -318,9 +318,18 @@ function MotionController(map) {
 		me.y=ccY;
 		me.deltaX=pcX-ccX;
 		me.deltaY=pcY-ccY;
+		
+		/**
+		 * For pinch, this is the change in zoom level that should be
+		 * applied around the centroid (x,y) in addition to any movement
+		 * by (deltaX, deltaY)
+		 * @public
+		 * @name deltaZoom
+		 * @memberOf nanomaps.MotionEvent#
+		 */
 		me.deltaZoom=Math.log(cmag/pmag) * 1.5;
 		
-		console.log('pinch: deltaXY=(' + me.deltaX + ',' + me.deltaY + '), deltaZoom=' + me.deltaZoom);
+		//console.log('pinch: deltaXY=(' + me.deltaX + ',' + me.deltaY + '), deltaZoom=' + me.deltaZoom);
 		map.dispatchMotionEvent(me);
 	}
 	
