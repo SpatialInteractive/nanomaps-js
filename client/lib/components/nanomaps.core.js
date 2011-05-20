@@ -542,7 +542,7 @@ MapSurfaceMethods.commit=function(animate) {
 			// Start an animation
 			if (typeof animate==='object') animOptions=animate;
 			mapState.finalState=new MapState(pendMapState);
-			this._pendAnim=new Animation(makeMapStateFramer(map, mapState, pendMapState), animOptions);
+			this._pendAnim=new Animation(makeMapStateFramer(this, mapState, pendMapState), animOptions);
 			this._pendAnim.start();
 		}
 	}
