@@ -614,13 +614,13 @@ MapSurfaceMethods.handleMotionEvent=function(motionEvent) {
 	
 	var type=motionEvent.type, deltaZoom;
 	if (type==='drag' || type==='pinch') {
-		map.begin();
-		map.moveBy(motionEvent.deltaX, -motionEvent.deltaY);
+		this.begin();
+		this.moveBy(motionEvent.deltaX, -motionEvent.deltaY);
 		deltaZoom=Number(motionEvent.deltaZoom);
 		if (!isNaN(deltaZoom)) {
-			map.setZoom(map.getZoom() + deltaZoom, motionEvent.x, motionEvent.y);
+			this.setZoom(this.getZoom() + deltaZoom, motionEvent.x, motionEvent.y);
 		}
-		map.commit();
+		this.commit();
 		motionEvent.handled=true;
 	} else if (type==='scroll') {
 		this.setZoom(this.getZoom()+motionEvent.deltaZoom, 
