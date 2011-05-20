@@ -540,7 +540,8 @@ function MotionController(map) {
 			
 			// Also listen on the parent so that we get mousedowns
 			// that bubble up the hierarchy from inactive elements
-			addEventListener(parent, 'mousedown', clickHandleEvent);
+			// ** Actually not doing this as it completely breaks containment
+			//addEventListener(parent, 'mousedown', clickHandleEvent);
 		}
 		
 		if (enableWheel) {
