@@ -1,3 +1,6 @@
+##EJSON
+##include('debugpane.js')
+
 (function(global) {
 /** Imports **/
 var nanomaps=global.nanomaps;
@@ -25,7 +28,13 @@ var map,
 function initialize() {
 	var mapElt=$('#map').get(0);
 	map=new nanomaps.MapSurface(mapElt, {});
+	map.on('motion.longtap', function(motionEvent) {
+		var latLng=map.getLocation(motionEvent.x, motionEvent.y);
+		showDebugMessage('Long tap: ' + latLng.lat() + ',' + latLng.lng());
+		motionEvent.handled=true;
+	});
 	
+	//showDebugMessage('Loading map');
 	tileLayer=new nanomaps.TileLayer({
 		tileSrc: "http://otile${modulo:1,2,3}.mqcdn.com/tiles/1.0.0/osm/${level}/${tileX}/${tileY}.png"
 	});

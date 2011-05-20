@@ -13,7 +13,7 @@ var STATE_DOWN=0,
 	STATE_CLICK_PEND=2,
 	CLICK_DOUBLE_MS=280,
 	TOUCH_THRESHOLD=10,
-	TOUCH_LONGPRESS_MS=1000,
+	TOUCH_LONGTAP_MS=1000,
 	TOUCH_DOUBLE_MS=280;
 
 /**
@@ -47,9 +47,10 @@ function MotionEvent(type) {
 	 */
 	this.handled=false;
 }
-	
+
 function MotionController(map) {
 	function dispatch(motionEvent) {
+		//console.log('dispatch motion event: ' + motionEvent.type + ': ' + motionEvent.count);
 		map.dispatchMotionEvent(motionEvent);
 	}
 	
@@ -281,11 +282,30 @@ function MotionController(map) {
 	var touchState;
 	
 	function touchStartClickTimer() {
+		touchStopTimer();
 		touchState.ti=setTimeout(function() {
 			touchState.ti=null;
 			touchDispatchTap();
 			touchCancel();
 		}, TOUCH_DOUBLE_MS);
+	}
+	
+	function touchStartLongTapTimer() {
+		touchStopTimer();
+		touchState.ti=setTimeout(function() {
+			if (!touchState || touchState.s!==STATE_DOWN || touchState.t.length!==1) return;
+			// Dispatch a longtap event and consume this tap if handled
+			var me=new MotionEvent('longtap');
+			me.button=0;
+			me.x=touchState.t[0].x;
+			me.y=touchState.t[0].y;
+			me.count=1;
+			dispatch(me);
+			
+			if (me.handled) {
+				touchCancel();
+			}
+		}, TOUCH_LONGTAP_MS);
 	}
 	
 	function touchStopTimer() {
@@ -407,12 +427,15 @@ function MotionController(map) {
 				touchState={
 					s: STATE_DOWN,
 					t: currentTouches,	// Touches array
+					mt: false,			// True if multi-touch
 					te: 0,				// Last touch end time
 					ts: now(),			// Current touch start time
 					ti: null,			// Touch timer id
 					cnt: 0				// Number of consecutive touches
 				};
+				touchStartLongTapTimer();
 			} else {
+				if (currentTouches.length>1) touchState.mt=true;
 				touchState.t=currentTouches;
 			}
 			return;
@@ -428,11 +451,13 @@ function MotionController(map) {
 					Math.abs(currentTouches[0].x-touchState.t[0].x)>TOUCH_THRESHOLD ||
 					Math.abs(currentTouches[0].y-touchState.t[0].y)>TOUCH_THRESHOLD)
 				{
+					// Cancel any longtap in progress
+					touchStopTimer();
+					
 					// Single touch over touch threshold
 					if (touchState.s===STATE_CLICK_PEND) {
 						// Dispatch pending and reset
 						touchDispatch();
-						touchStopTimer();
 						touchState.cnt=0;
 					}
 					
@@ -453,7 +478,13 @@ function MotionController(map) {
 			
 			break;
 		case 'touchend':
-			if (currentTouches.length===0) {
+			// Note that ios calls touchend with 0 touches
+			// when done, but android calls it with its 1 touch
+			// still present (at least on single touch devices).
+			// This is a pita since we don't have a clear signal
+			// of completion.
+			// This may not work on android multi-touch.
+			if (!touchState.mt || currentTouches.length===0) {
 				// All done here
 				if (touchState.s===STATE_DOWN) {
 					touchState.cnt++;
@@ -547,7 +578,9 @@ MapSurfaceMethods.advise('initialize', 'after', function(options) {
  * @param motionEvent {nanomaps.MotionEvent}
  */
 MapSurfaceMethods.dispatchMotionEvent=function(motionEvent) {
-	this.emit('motion.' + motionEvent.type, motionEvent);
+	var eventName='motion.' + motionEvent.type;
+	//console.log('emit(' + eventName + ')');
+	this.emit(eventName, motionEvent);
 	if (!motionEvent.handled) {
 		this.handleMotionEvent(motionEvent);
 	}
@@ -580,14 +613,17 @@ MapSurfaceMethods.handleMotionEvent=function(motionEvent) {
 			map.setZoom(map.getZoom() + deltaZoom, motionEvent.x, motionEvent.y);
 		}
 		map.commit();
+		motionEvent.handled=true;
 	} else if (type==='scroll') {
 		this.setZoom(this.getZoom()+motionEvent.deltaZoom, 
 			motionEvent.x, motionEvent.y);
+		motionEvent.handled=true;
 	} else if (type==='click' && motionEvent.count===2) {
 		// Double-click to zoom
 		this.begin();
 		this.zoomIn(motionEvent.x, motionEvent.y);
 		this.commit(true);
+		motionEvent.handled=true;
 	}
 };
 

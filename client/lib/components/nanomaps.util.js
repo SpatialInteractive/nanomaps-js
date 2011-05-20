@@ -189,7 +189,7 @@ EventEmitterMethods.removeAllListeners=function(event) {
 EventEmitterMethods.emit=function(event /*, arg1..argn */) {
 	var i, list, eventArgs=Array.prototype.slice.call(arguments, 1),
 		handler=this['on' + event];
-	
+
 	// Emit on this object
 	if (typeof handler==='function') {
 		handler.apply(this, eventArgs);
@@ -203,7 +203,7 @@ EventEmitterMethods.emit=function(event /*, arg1..argn */) {
 	list.length=0;	// Zero the once only array
 
 	// Emit standard events
-	list==this._evt(event);
+	list=this._evt(event);
 	for (i=0; i<list.length; i++) {
 		list[i].apply(this, eventArgs);
 	}
