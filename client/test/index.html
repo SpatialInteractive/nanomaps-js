@@ -1,0 +1,34 @@
+##EJSON
+<!DOCTYPE html>
+<html>
+<head>
+<title>nanomaps test automation directory</title>
+</head>
+<body>
+##=
+var tests=[
+	{name: 'smoke', description: 'Broad spectrum test for smoke'}
+];
+##=
+<h1>Available tests</h1>
+<ul>
+##=
+for (var i=0; i<tests.length; i++) {
+	var test=tests[i];
+	write('<li><span class="testname">');
+	write('<a href="' + test.name + '_test.html">');
+	write(tests[i].name); 
+	write('</a>');
+	write('</span> - <span class="testdescription">');
+	write(tests[i].description);
+	write('</span>');
+	write(' <span class="testpage">[');
+	write('<a href="' + test.name + '.html">Page under test</a>');
+	write(']</span>');
+	write('</li>');
+}
+##=
+</ul>
+</body>
+</html>
+

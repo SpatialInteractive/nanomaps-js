@@ -47,7 +47,7 @@ function initialize() {
 	});
 	
 	/** Global exports **/
-	global.map=map;
+	//global.map=map;
 	
 	/** Don't attach tile layer yet - we do that after we acquire an initial location **/
 	try {
@@ -126,7 +126,7 @@ function runQuery(q) {
 			map.setLocation({lat: lat, lng: lng});
 			map.setZoom(10);
 			map.commit({
-				duration: 2.0
+				//duration: 2.0
 			});
 		}
 	});

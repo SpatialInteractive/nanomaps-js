@@ -1,0 +1,21 @@
+##EJSON
+##load('pageundertest.ejs')
+##startHead()
+<script>
+function initializePage() {
+	testMap=new nanomaps.MapSurface(testMapElement);
+	testMap.setLocation({
+		lat: 47.60551967716011, 
+		lng:-122.33306565199813
+	});
+	testMap.setZoom(10);
+	testMap.attach(new nanomaps.TileLayer({
+		tileSrc: TILESRC_MAP
+	}));
+}
+</script>
+
+##startBody()
+##writeMap()
+##endBody()
+
