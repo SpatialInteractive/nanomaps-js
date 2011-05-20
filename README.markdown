@@ -3,14 +3,14 @@ Nanomaps
 Nanomaps is a small JavaScript library for displaying no-frills slippy maps
 on click and touch devices.
 
-Release 0.2.1
+Release 0.2.2
 -------------
 Links:
 
-* Demo (prod): http://www.rcode.net/nanomaps/nanomaps-js-0.2.1/prod/
-* Demo (debug): http://www.rcode.net/nanomaps/nanomaps-js-0.2.1/debug/
-* Api Docs: http://www.rcode.net/nanomaps/nanomaps-js-0.2.1/apidocs/
-* Download: http://www.rcode.net/nanomaps/nanomaps-js-0.2.1.tar.gz
+* Demo (prod): http://www.rcode.net/nanomaps/nanomaps-js-0.2.2/prod/
+* Demo (debug): http://www.rcode.net/nanomaps/nanomaps-js-0.2.2/debug/
+* Api Docs: http://www.rcode.net/nanomaps/nanomaps-js-0.2.2/apidocs/
+* Download: http://www.rcode.net/nanomaps/nanomaps-js-0.2.2.tar.gz
 
 Combined javascript file is in either the prod (compressed) or debug (uncompressed)
 directory under lib/nanomaps.bundle.all.js
@@ -71,18 +71,9 @@ in the DOM.
 		#mapcopy a:visited {
 			color: #00f;
 		}
-		
-		.poi {
-			z-index: 100;
-			margin-left: -10px;
-			margin-top: -32px;
-			display: none;	/* make not displayed by default to avoid startup flicker */
-		}
 	</style>
 
 	<div id="mymap">
-		<img class="poi" src="images/red-pushpin.png" latitude="39.780533" longitude="-104.988896" />
-		
 		<span>Tiles Courtesy of <a href="http://open.mapquest.co.uk/" target="_blank">MapQuest</a> <img width="16" height="16" src="http://developer.mapquest.com/content/osm/mq_logo.png" border="0"></span>
 		<br />
 		<span>&copy; <a href="http://www.openstreetmap.org/">OpenStreetMap</a> and contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a></span>
@@ -101,6 +92,23 @@ nanomaps (JavaScript) and nanomaps-droid.  Expect relative completion of each al
 	
 Change Log
 ==========
+
+Release 0.2.2
+-------------
+Snapshot of current work.
+
+* Refactored click and touch event handling into single 'motion' module
+* Implemented user event handling with default fallbacks for all motion gestures by raising
+events on the map object (motion.click, motion.drag, motion.pinch, motion.longtap)
+* Tweaks to scroll wheel but this still needs some work
+* Default event handler for double click/tap (motion.click event with count==2) to zoom in to clicked location
+* Default event handler for drag to pan the map
+* Default event handler for pinch to perform drag and pan.  This extends the previous behavior which
+only allowed either panning or dragging at a single time.  Now in multi-touch mode, it behaves just like the native Maps.app
+on ios.
+* Touch support tested and confirmed working on ios and android single touch device (1.6)
+* Demo now displays overlay window with lat/lng in response to longtap and single click
+* Size is 9.9KB over the wire
 
 Release 0.2.1
 -------------

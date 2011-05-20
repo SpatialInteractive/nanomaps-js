@@ -31,7 +31,15 @@ function MotionEvent(type) {
 	 * will be available based on the type.
 	 * <ul>
 	 * <li>'click': A gesture to be interpreted as a click has
-	 * occurred.
+	 * occurred.  The count field indicates how many consecutive clicks
+	 * took place.
+	 * <li>'drag': A single step in a drag gesture.  deltaX and deltaY
+	 * describe magnitude of this change
+	 * <li>'pinch': Single step of a pinch gesture.  This is a combined move
+	 * and zoom and has fields deltaX, deltaY and deltaZoom
+	 * <li>'longtap': A press and hold gesture has been detected.  If it is
+	 * handled, it will stop default processing which will either allow
+	 * panning/pinching or interpetation as a normal click/multi-click.
 	 * </ul>
 	 * @name type
 	 * @memberOf nanomaps.MotionEvent#

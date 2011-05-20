@@ -33,6 +33,13 @@ function initialize() {
 		showDebugMessage('Long tap: ' + latLng.lat() + ',' + latLng.lng());
 		motionEvent.handled=true;
 	});
+	map.on('motion.click', function(motionEvent) {
+		if (motionEvent.count===1) {
+			var latLng=map.getLocation(motionEvent.x, motionEvent.y);
+			showDebugMessage('Single tap: ' + latLng.lat() + ',' + latLng.lng());
+			motionEvent.handled=true;
+		}
+	});
 	
 	//showDebugMessage('Loading map');
 	tileLayer=new nanomaps.TileLayer({
