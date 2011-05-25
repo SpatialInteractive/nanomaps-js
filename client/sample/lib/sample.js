@@ -7,7 +7,7 @@ var nanomaps=global.nanomaps;
 
 /** Locals **/
 var map, 
-	tileLayer, 
+	activeTileLayerElts=[],
 	mapShowing,
 	geoLocationWatchId,
 	locationMarker=new nanomaps.ImgMarker({
@@ -24,6 +24,32 @@ var map,
 		}),
 	locationUncertaintyElt;
 
+function setTileLayer(type) {
+	var tileLayer, i, elt;
+	
+	for (i=0; i<activeTileLayerElts.length; i++) {
+		elt=activeTileLayerElts[i];
+		elt.parentNode.removeChild(elt);
+	}
+	activeTileLayerElts.length=0;
+	
+	if (type==='street') {
+		tileLayer=new nanomaps.TileLayer({
+			tileSrc: "http://otile${modulo:1,2,3}.mqcdn.com/tiles/1.0.0/osm/${level}/${tileX}/${tileY}.png"
+		});
+		activeTileLayerElts.push(map.attach(tileLayer));
+	} else if (type==='aerial') {
+		tileLayer=new nanomaps.TileLayer({
+			tileSrc: "http://oatile${modulo:1,2,3}.mqcdn.com/naip/${level}/${tileX}/${tileY}.jpg"
+		});
+		activeTileLayerElts.push(map.attach(tileLayer));
+		tileLayer=new nanomaps.TileLayer({
+			tileSrc: "http://otile${modulo:1,2,3}.mqcdn.com/tiles/1.0.0/hyb/${level}/${tileX}/${tileY}.png"
+		});
+		activeTileLayerElts.push(map.attach(tileLayer));
+	}
+}
+	
 /** Global scope **/
 function initialize() {
 	var mapElt=$('#map').get(0);
@@ -42,10 +68,6 @@ function initialize() {
 	});
 	
 	//showDebugMessage('Loading map');
-	tileLayer=new nanomaps.TileLayer({
-		tileSrc: "http://otile${modulo:1,2,3}.mqcdn.com/tiles/1.0.0/osm/${level}/${tileX}/${tileY}.png"
-	});
-	
 	/** Global exports **/
 	//global.map=map;
 	
@@ -79,6 +101,13 @@ function setupControls() {
 		map.begin();
 		map.zoomOut();
 		map.commit(true);
+	});
+	
+	$('#btnStreet').click(function() {
+		setTileLayer('street');
+	});
+	$('#btnAerial').click(function() {
+		setTileLayer('aerial');
 	});
 }
 
@@ -153,9 +182,10 @@ function showMap(initialPosition, initialLevel) {
 	};
 	if (initialLevel) map.setZoom(initialLevel);
 	map.setLocation(initialPosition);
+	setTileLayer('street');
+	
 	
 	// Show tiles
-	map.attach(tileLayer);
 	mapShowing=true;
 }
 

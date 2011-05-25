@@ -26,6 +26,15 @@ body {
 	background-color: #efefef;
 }
 
+#actionBar form {
+	display: inline;
+}
+#actionBar .btn {
+	color: blue;
+	text-decoration: underline;
+	cursor: pointer;
+}
+
 #mapContainer {
 	position: absolute;
 	left: 0px;
