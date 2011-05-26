@@ -226,6 +226,6 @@ function handleGeoLocationError(error) {
 
 
 $(window).load(initialize);
-//$(window).resize(resize);
+$(window).resize(resize);
 })(window);
 

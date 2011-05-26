@@ -854,7 +854,7 @@ MapSurfaceMethods._each=function(includeSurfaces, callback) {
  */
 MapSurfaceMethods._notifyPosition=function() {
 	this._each(false, function(element) {
-		var peer=element.mapeer||DEFAULT_MAP_DELEGATE;
+		var peer=element.mapeer||DefaultAttachmentPeer;
 		if (isFunction(peer.maposition))
 			peer.maposition(this, element);
 	});
@@ -877,7 +877,7 @@ MapSurfaceMethods._notifyReset=function() {
  * @name _notifyResetSingle
  */
 MapSurfaceMethods._notifyResetSingle=function(element) {
-	var peer=element.mapeer||DEFAULT_MAP_DELEGATE;
+	var peer=element.mapeer||DefaultAttachmentDelegate;
 	if (isFunction(peer.mareset))
 		peer.mareset(this, element);
 };
@@ -1242,9 +1242,9 @@ function extractDefaultPosition(element) {
  * Defult delegate for positioned objects that don't supply their own.
  * @private
  */
-var DEFAULT_MAP_DELEGATE={
-	mapLayer: 'overlay',
-	onreset: function(map, element) {
+var DefaultAttachmentPeer={
+	defaultLayer: 'overlay',
+	mareset: function(map, element) {
 		var geo=extractDefaultPosition(element), xy, x, y;
 		if (geo) {
 			// Calculate position
@@ -1270,5 +1270,5 @@ var DEFAULT_MAP_DELEGATE={
 
 // Exports
 exports.MapSurface=MapSurface;
-
+exports.DefaultAttachmentPeer=DefaultAttachmentPeer;
 
