@@ -25,6 +25,8 @@ function hrefToClassSuffix(href) {
  */
 function ImgMarker(settings) {
 	this.settings=new SettingsConstructor(settings);
+	this.element=null;
+	this.children=null;
 }
 /**
  * Global settings inherited for each instance
@@ -43,14 +45,9 @@ ImgMarker.Settings={
 	baseUri: '',
 	
 	/**
-	 * Latitude to set at creation time
+	 * Location Coordinate
 	 */
-	latitude: 0,
-	
-	/**
-	 * Longitude to set at creation time
-	 */
-	longitude: 0,
+	location: null,
 	
 	/**
 	 * If set, then this is the primary css suffix.  If not set,
@@ -66,8 +63,44 @@ ImgMarker.Settings={
 
 ImgMarker.prototype={
 	/**
-	 * Fulfill the factory pattern for map attachments.
-	 * All img markers have the following structure:
+	 * By default ImgMarker instances are attached to the 'overlay' layer
+	 * @public
+	 * @name defaultLayer
+	 * @memberOf nanomaps.ImgMarker.prototype
+	 */
+	defaultLayer: 'overlay',
+
+	/**
+	 * Update the latitude/longitude settings.  If the marker is attached,
+	 * make the updates live on the map as well.
+	 * @methodOf nanomaps.ImgMarker.prototype
+	 * @name setLocation
+	 * @param coordinate {Coordinate}
+	 */
+	setLocation: function(coordinate) {
+		coordinate=Coordinate.from(coordinate);
+		var settings=this.settings,
+			element=this.element,
+			owner=this.owner;
+		settings.location=coordinate;
+		if (element) {
+			if (coordinate) {
+				element.geo={
+					latitude: coordinate.lat(),
+					longitude: coordinate.lng()
+				};
+			} else {
+				element.geo=null;
+			}
+			if (owner&&element.parentNode) {
+				owner.update(element);
+			}
+		}
+	},
+	
+	/**
+	 * (Attachment Api) Get the element that should be attached
+	 * to the map.
 	 * <pre>
 	 * <div class="nmim">
 	 *   <img src="{src url}" class="nmim-fg {src class}"/>
@@ -76,12 +109,39 @@ ImgMarker.prototype={
 	 * A background will only be specified if setup in the properties.  In addition,
 	 * the actual dom element returned will have its "geo" object set so that
 	 * the default map delegate can position it appropriately.
+	 * @public
+	 * @memberOf nanomaps.ImgMarker.prototype
 	 */
-	createElement: function(mapSurface) {
+	getElement: function(mapSurface) {
+		this.owner=mapSurface;
+		if (this.element) return this.element;
 		var d=mapSurface.elements.document,
-			settings=this.settings,
-			outerElt=d.createElement('div'),
-			fgElt=d.createElement('img'),
+			element=d.createElement('div'),
+			fgElt=d.createElement('img');
+		element.appendChild(fgElt);
+		
+		// Export
+		this.element=element;
+		this.children={
+			fg: fgElt
+		};
+		
+		// Apply config
+		this._config();
+		return element;
+	},
+	
+	/**
+	 * Apply the current configuration to the elements
+	 * @private
+	 * @name _config
+	 * @memberOf nanomaps.ImgMarker.prototype
+	 */
+	_config: function() {
+		var settings=this.settings,
+			location=settings.location,
+			element=this.element,
+			fgElt=this.children.fg,
 			fgSrc,
 			classSuffix;
 			
@@ -90,19 +150,18 @@ ImgMarker.prototype={
 		fgSrc=makeAbsolute(settings.baseUri||'', settings.src||'');
 		classSuffix=settings.classSuffix || hrefToClassSuffix(fgSrc);
 		
-		outerElt.className='nmim nmim-' + classSuffix + ' ' + settings.extraClasses;
-		outerElt.geo={
-			latitude: settings.latitude||NaN,
-			longitude: settings.longitude||NaN
-		};
-		outerElt.appendChild(fgElt);
-		
-		fgElt.className='nmim-fg';
-		if (fgSrc) {
-			fgElt.setAttribute('src', fgSrc);
+		element.className='nmim nmim-' + classSuffix + ' ' + settings.extraClasses;
+		if (location) {
+			element.geo={
+				latitude: location.lat()||NaN,
+				longitude: location.lng()||NaN
+			};
+		} else {
+			element.geo=null;
 		}
 		
-		return outerElt;
+		fgElt.className='nmim-fg';
+		fgElt.setAttribute('src', fgSrc||null);
 	}
 };
 

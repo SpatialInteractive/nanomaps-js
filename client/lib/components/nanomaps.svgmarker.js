@@ -39,17 +39,16 @@ function SvgMarker(settings) {
 	settings=this.settings=settings||{};
 	var canvas=createSvgElement('svg');
 	canvas.setAttribute('class', settings.className||'');
-	canvas.mapDelegate=this;	// Circular ref ok.  The only browsers who support svg have decent gc
+	canvas.mapeer=this;	// Circular ref ok.  The only browsers who support svg have decent gc
 	this.canvas=canvas;	
 }
 SvgMarker.prototype={
 	//// -- mapDelegate methods
 	unmanaged: false,
-	mapLayer: 'shadow',
+	defaultLayer: 'shadow',
 	
-	createElement: function(map) {
-		if (this.map) throw new Error('Attempt to add SvgMarker to map more than once');
-		this.map=map;
+	getElement: function(mapSurface) {
+		this.owner=mapSurface;
 		return this.canvas;
 	},
 	
@@ -57,7 +56,7 @@ SvgMarker.prototype={
 	 * Subclasses should override and must update the size/position
 	 * of the canvas and contained elements.
 	 */
-	onreset: function(map, canvas) {
+	mareset: function(map, canvas) {
 	},
 	
 	//// -- stub methods intended for subclassing
@@ -70,7 +69,9 @@ SvgMarker.prototype={
 	 * @public
 	 */
 	invalidate: function() {
-		if (this.map) this.onreset(this.map, this.canvas);
+		var owner=this.owner, canvas=this.canvas;
+		if (owner && canvas.parentNode) 
+			this.onreset(owner, canvas);
 	}
 };
 inherits(SvgMarker, EventEmitter);
@@ -82,7 +83,7 @@ function EllipseMarker(settings) {
 	this.ellipse=ellipse;
 }
 EllipseMarker.prototype={
-	onreset: function(map, canvas) {
+	mareset: function(map, canvas) {
 		var ellipse=this.ellipse,
 			settings=this.settings,
 			rx, ry,
@@ -92,17 +93,16 @@ EllipseMarker.prototype={
 			canvasWidth, canvasHeight,
 			centerX, centerY,
 			xy, x, y;
-		
+
 		// Either calculate rx/ry independently (true ellipse)
 		// or just take the radius and fake it to create circles
 		// visually.  Accurate for small areas and makes more sense
 		// visibly
-		if (rx in settings) {
+		if ('radius' in settings) {
+			rx=ry=translateX(map, settings.radius||0, unit);
+		} else {
 			rx=translateX(map, settings.rx||0, unit);
 			ry=translateY(map, settings.ry||0, unit);
-			
-		} else {
-			rx=ry=translateX(map, settings.radius||0, unit);
 		}
 			
 		canvasWidth=oddCeil(rx*2+20);
@@ -141,9 +141,6 @@ function oddCeil(n) {
 	return n;
 }
 
-/**
- * TODO: This method is not mathematically sound.
- */
 function translateX(map, distance, unit) {
 	var res=map.mapState.res;
 	switch (unit) {
@@ -155,9 +152,6 @@ function translateX(map, distance, unit) {
 	}
 }
 
-/**
- * TODO: This method is not mathematically sound.
- */
 function translateY(map, distance, unit) {
 	var res=map.mapState.res;
 	switch (unit) {

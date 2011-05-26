@@ -877,7 +877,7 @@ MapSurfaceMethods._notifyReset=function() {
  * @name _notifyResetSingle
  */
 MapSurfaceMethods._notifyResetSingle=function(element) {
-	var peer=element.mapeer||DefaultAttachmentDelegate;
+	var peer=element.mapeer||DefaultAttachmentPeer;
 	if (isFunction(peer.mareset))
 		peer.mareset(this, element);
 };
@@ -1138,7 +1138,7 @@ MapSurfaceMethods.collect=function() {
 MapSurfaceMethods.update=function(attachment) {
 	var element=getAttachmentElement(this, attachment),
 		parent=element.parentNode;
-	if (!parent || !parent.nmt) this.attach(element);
+	if (!parent || !parent.nmt) this.attach(attachment);
 	else this._notifyResetSingle(element);
 	return element;
 };

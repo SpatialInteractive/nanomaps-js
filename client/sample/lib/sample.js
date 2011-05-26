@@ -12,16 +12,13 @@ var map,
 	locationMarker=new nanomaps.ImgMarker({
 			src: 'orb_blue.png'
 		}),
-	placeTemplate=new nanomaps.ImgMarker({
+	placeMarker=new nanomaps.ImgMarker({
 			src: 'pin_pink.png'
 		}),
-	placeElt,
-	locationElt,
 	locationUncertaintyMarker=new nanomaps.EllipseMarker({
 			className: 'errorHalo',
 			unit: 'm'
-		}),
-	locationUncertaintyElt;
+		});
 
 var TILE_LAYERS={
 	street: new nanomaps.TileLayer({
@@ -69,7 +66,6 @@ function initialize() {
 	//global.map=map;
 	
 	/** Don't attach tile layer yet - we do that after we acquire an initial location **/
-	/*
 	try {
 		navigator.geolocation.getCurrentPosition(
 			handleGeoLocation,
@@ -84,8 +80,6 @@ function initialize() {
 	} catch (e) {
 		showMap();
 	}
-	*/
-	showMap();
 	
 	setupControls();
 	setupQuery();
@@ -133,7 +127,6 @@ function runQuery(q) {
 		jsonp: 'json_callback',
 		data: params,
 		success: function(result) {
-			return;
 			if (result.length==0) {
 				alert('No results found.');
 				return;
@@ -141,15 +134,10 @@ function runQuery(q) {
 			var place=result[0],
 				lat=Number(place.lat),
 				lng=Number(place.lon);
-			if (placeElt) {
-				$(placeElt).remove();
-			}
 			
 			// Place marker
-			placeElt=map.attach(placeTemplate);
-			placeElt.geo.latitude=lat;
-			placeElt.geo.longitude=lng;
-			map.update(placeElt);
+			placeMarker.setLocation({lat:lat,lng:lng});
+			map.attach(placeMarker);
 			
 			// Move map
 			map.begin();
@@ -191,7 +179,6 @@ function showMap(initialPosition, initialLevel) {
 }
 
 function handleGeoLocation(position) {
-	return;
 	var latLng={lat: position.coords.latitude, lng: position.coords.longitude };
 	showMap(latLng, 13);
 
@@ -199,20 +186,10 @@ function handleGeoLocation(position) {
 	locationUncertaintyMarker.settings.latitude=latLng.lat;
 	locationUncertaintyMarker.settings.longitude=latLng.lng;
 	locationUncertaintyMarker.settings.radius=position.coords.accuracy;
-	if (locationUncertaintyElt) {
-		map.update(locationUncertaintyElt);
-	} else {
-		locationUncertaintyElt=map.attach(locationUncertaintyMarker);
-	}
+	map.update(locationUncertaintyMarker);
 	
-	
-	if (!locationElt) {
-		locationElt=map.attach(locationMarker);
-	}
-
-	locationElt.geo.latitude=latLng.lat;
-	locationElt.geo.longitude=latLng.lng;
-	map.update(locationElt);
+	locationMarker.setLocation(latLng);
+	map.update(locationMarker);
 	
 	if (!geoLocationWatchId) {
 		geoLocationWatchId=navigator.geolocation.watchPosition(handleGeoLocation, handleGeoLocationError);
