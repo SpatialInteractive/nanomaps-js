@@ -854,11 +854,9 @@ MapSurfaceMethods._each=function(includeSurfaces, callback) {
  */
 MapSurfaceMethods._notifyPosition=function() {
 	this._each(false, function(element) {
-		var delegate=element.mapDelegate||{},
-			handler=delegate.onposition;
-		if (typeof handler==='function') {
-			handler.call(delegate, this, element);
-		}
+		var peer=element.mapeer||DEFAULT_MAP_DELEGATE;
+		if (isFunction(peer.maposition))
+			peer.maposition(this, element);
 	});
 };
 
@@ -879,11 +877,9 @@ MapSurfaceMethods._notifyReset=function() {
  * @name _notifyResetSingle
  */
 MapSurfaceMethods._notifyResetSingle=function(element) {
-	var delegate=element.mapDelegate||DEFAULT_MAP_DELEGATE,
-		handler=delegate.onreset;
-	if (typeof handler==='function')
-		handler.call(delegate, this, element);
-	
+	var peer=element.mapeer||DEFAULT_MAP_DELEGATE;
+	if (isFunction(peer.mareset))
+		peer.mareset(this, element);
 };
 
 /**
@@ -932,10 +928,107 @@ MapSurfaceMethods.eventToContainer=function(event, elementName) {
 };
 
 /**
+ * Get the element associated with an attachment
+ * @private
+ */
+function getAttachmentElement(mapSurface, attachment) {
+	if (isHtmlElement(attachment)) return attachment;
+	if (!attachment || !isFunction(attachment.getElement))
+		throw new Error('Object ' + attachment + ' is not a valid Attachment');
+	return attachment.getElement(mapSurface);
+}
+
+/**
  * Adds content to the map.  This is the primary method of attaching DOM content
- * to the map after construction.  Give it either an HTMLElement or a factory
- * object that supports a createElement(mapSurface) method.
+ * to the map after construction.  Give it either an HTMLElement or an Attachment
+ * object that supports the Attachable protocol.
+ *
+ * <h2>Design Pattern</h2>
+ * Internally, the MapSurface works solely with content that is raw DOM elements.
+ * It is expected that any active DOM elements on the map can be associated with
+ * an AttachmentPeer object that manages the display lifecycle of the elements
+ * while on the map surface.  Connecting an HTMLElement to its AttachmentPeer can
+ * be done by setting the element's "mapeer" (Map-Attachment Peer) property to its
+ * peer object.  If this property is not set, then each element will share a single
+ * global AttachmentPeer providing default behaviour.  See Default Behavior below.
+ * <p>
+ * It is often desirable to maintain a high-level JavaScript object providing a
+ * structured API for manipulating the element's content.  This API is most easily
+ * expressed on the Attachment object, which can maintain a reference to the MapSurface
+ * and the AttachmentPeer.  This is precisely how the high level provided attachments
+ * function (markers, SVG, TileLayer, etc).
+ * <p>
+ * It is acknowledged that this peer structure is somewhat awkward but it is done to
+ * support reference models that do not require circular references ensnaring DOM references.
+ * In 2011, the state of such things is better than it was designing an API that requires
+ * circular references is still a recipe for creating sluggish garbage collection at best
+ * and browser-bug induced leaks at worst.
+ *
+ * <h2>Objects</h2>
+ * The following classes or interfaces participate to manage an element's display on the map:
+ * <ul>
+ * <li>HTMLElement - Actual DOM element representing the content
+ * <li>Attachment - Optional object that references the element and provides a user-level api
+ * for manipulating the content
+ * <li>AttachmentPeer - Object attached to the HTMLElement which manages the display state
+ * <li>MapSurface - The target of the attachment
+ * <li>DefaultAttachmentPeer - Default peer used if an HTMLElement does not supply its own peer.
+ * </ul>
  * 
+ * There are multiple ways to combine and/or collapse these items.  An API could be constructed
+ * for example that just adds methods directly to an HTMLElement and makes it do everything.
+ * The built-in map attachments, however follow a pattern with references in the following pattern:
+ * <pre>
+ * 	MapSurface  ----> HTMLElement  ----> AttachmentPeer
+ * 	    ^              ^
+ * 	    |             /
+ * 	Attachment  -----/
+ * </pre>
+ *
+ * An Attachment will host the user-level API and maintain references to the MapSurface and
+ * the HTMLElement.  The HTMLElement references the AttachmentPeer via its mapeer property.
+ * The AttachmentPeer does not maintain a reference to any of the other objects.  All of its
+ * methods accept the objects it needs to operate against as arguments.  In this way, the peer
+ * can either be a stateless singleton or allocated per attachment.
+ * 
+ * <h3>Associating an HTMLElement with an AttachmentPeer</h3>
+ * The peer for an HTMLElement is located in the following way:
+ * <ol>
+ * <li>If the HTMLElement.mapeer property is set, use that
+ * <li>If the HTMLElement.mapself property === true, then the element should
+ * be considered its own peer
+ * <li>The global DefaultAttachmentPeer is used
+ * </ol>
+ *
+ * <h3>Attachment API</h3>
+ * In order for an arbitrary object to be attached to the map, it should support
+ * the following properties/methods:
+ * <ul>
+ * <li>defaultLayer:Number|String - If specified, this is the default layer
+ * that should host the object (unless if an explicit layer was passed to attach).
+ * Defaults to "overlay" if not present.
+ * <li>unmanaged:Boolean - If true, then the attachment is added to the dom
+ * under the root layer, otherwise, it is added under the surface layer (which
+ * is positioned based on map movement)
+ * <li>getElement(MapSurface):HTMLElement - Attaches or reattaches this Attachment
+ * object to the given MapSurface.  Should return the HTMLElement representing
+ * the attachment
+ * </ul>
+ * 
+ * Note in particular that there is no detach method.  Attachments can be
+ * removed by either removing the corresponding HTMLElement or calling MapSurface.detach
+ * with the Attachment object. 
+ *
+ * <h3>AttachmentPeer API</h3>
+ * Attachment peers should implement the following:
+ * <ul>
+ * <li>maposition(MapSurface,HTMLElement) - If defined, called whenever the map's position
+ * changes
+ * <li>mareset(MapSurface,HTMLElement) - If defined, called whenever the map's resolution or
+ * other parameter changes which is considered a "heavy weight" change
+ * </ul>
+ *
+ * <h1>The following is old docs</h1>
  * <h2>Display Management</h2>
  * The primary thing that map content needs to be able to do is position itself
  * relative to a global coordinate system.  Each element managed by the map
@@ -960,29 +1053,56 @@ MapSurfaceMethods.eventToContainer=function(event, elementName) {
  * @methodOf nanomaps.MapSurface.prototype
  * @name attach
  * @param {HTMLElement or factory} element Element or factory to add
+ * @param {String or Number} options.layer The target layer
  * @return {HTMLElement} the element attached
  */
-MapSurfaceMethods.attach=function(element) {
-	if (!isHtmlElement(element)) {
-		// Treat as a delegate
-		element=element.createElement(this);
+MapSurfaceMethods.attach=function(attachment, options) {
+	if (!options) options={};
+	var layerSpec=options.layer,
+		unmanaged=options.unmanaged,
+		parent,
+		element=getAttachmentElement(this, attachment);
+	
+	if (attachment!==element) {
+		// Process as attachment
+		if (!layerSpec) layerSpec=attachment.defaultLayer;
+		unmanaged=attachment.unmanaged;
 	}
 	
-	var delegate=element.mapDelegate||DEFAULT_MAP_DELEGATE,
-		layerIndex=delegate.mapLayer;
-
-	element.style.position='absolute';	// Make positioned
-	if (delegate.unmanaged) {
-		// Add to the viewport before the global element
-		this.layer(layerIndex).appendChild(element);
-	} else {
-		// Add to the managed element
-		this.surface(layerIndex).appendChild(element);
+	// Make sure it is positioned
+	element.style.position='absolute';
+	
+	parent=unmanaged ? this.layer(layerSpec) : this.surface(layerSpec);
+	if (element.parentNode===parent) {
+		// Already attached to the right place
+		return;
 	}
 	
+	try {
+		parent.appendChild(element);
+	} catch (e) {
+		throwNotDomElement(element);
+	}
+	
+	// Send it a reset event
 	this._notifyResetSingle(element);
 	
 	return element;
+};
+
+/**
+ * Convenience method to balance calls to attach.  Gets the element associated
+ * with the attachment and removes it from the DOM tree.  It is also perfectly
+ * acceptable to remove the element yourself.
+ *
+ * @public
+ * @methodOf nanomaps.MapSurface.prototype
+ * @name detach
+ * @param {HTMLElement or Attachment} attachment
+ */
+MapSurfaceMethods.detach=function(attachment) {
+	var element=getAttachmentElement(this, attachment);
+	if (element.parentNode) element.parentNode.removeChild(element);
 };
 
 /**
@@ -1015,8 +1135,9 @@ MapSurfaceMethods.collect=function() {
  * @name update
  * @param {HTMLElement} element
  */
-MapSurfaceMethods.update=function(element) {
-	var parent=element.parentNode;
+MapSurfaceMethods.update=function(attachment) {
+	var element=getAttachmentElement(this, attachment),
+		parent=element.parentNode;
 	if (!parent || !parent.nmt) this.attach(element);
 	else this._notifyResetSingle(element);
 	return element;

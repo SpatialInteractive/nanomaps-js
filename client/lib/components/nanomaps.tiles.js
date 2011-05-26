@@ -8,6 +8,305 @@
 **/
 
 /**
+ * Construct a standard TileLayer that can be attached to a MapSurface.  If a
+ * TileSelector is not passed in the options, then a default is constructed and
+ * options are passed to it.  See the options accepted by the TileSelector
+ * constructor for additional parameters.
+ *
+ * @example 
+ * var map=new nanomaps.MapSurface(someElement);
+ * map.attach(new nanomaps.TileLayer({ 
+ *    tileSrc: "http://otile${modulo:1,2,3}.mqcdn.com/tiles/1.0.0/osm/${level}/${tileX}/${tileY}.png" })); 
+ *
+ * @class
+ * @name nanomaps.TileLayer
+ * @param {TileSelector} [options.selector] describes the source and geometry of the
+ * tiles
+ * @param {integer} [options.buffer=64] The number of pixels to actively buffer on
+ * all sides of the map
+ */
+function TileLayer(options) {
+	if (!options) options={};
+	/**
+	 * The TileLayerPeer object
+	 * @name peer
+	 * @public
+	 * @memberOf nanomaps.TileLayer#
+	 */
+	var peer=this.peer=new TileLayerPeer();
+	var sel=peer.sel=new CartesianTileSelector(options);
+	
+	/**
+	 * The element that is the root of the TileLayer
+	 * @name element
+	 * @public
+	 * @memberOf nanomaps.TileLayer#
+	 */
+	var element=this.element=document.createElement('div');
+	element.style.position='absolute';
+	element.style.left='0px';
+	element.style.top='0px';
+	element.mapeer=peer;
+	element.setAttribute('tilesrc', sel.toString());	// For DOM debugging
+}
+TileLayer.prototype={
+	/**
+	 * (Attachment Api) Tile layers are unmanaged attachments
+	 * @public
+	 * @memberOf nanomaps.TileLayer.prototype
+	 */
+	unmanaged: true,
+	
+	/**
+	 * (Attachment Api) Default attachment layer is 'map'.
+	 * For touch support it is imperitive that the map layer
+	 * is below the event layer because touch state will be lost
+	 * if the event ever attaches to nodes that are removed
+	 * are the target of a touch event.
+	 * @public
+	 * @memberOf nanomaps.TileLayer.prototype
+	 */
+	defaultLayer: 'map',
+
+	/**
+	 * (Attachment Api) Get the element that should be attached
+	 * to the map.
+	 * @public
+	 * @memberOf nanomaps.TileLayer.prototype
+	 */
+	getElement: function(mapSurface) {
+		/**
+		 * When a TileLayer has been attached to a map, its owner
+		 * property is the owning MapSurface
+		 * @public
+		 * @memberOf nanomaps.TileLayer#
+		 */
+		this.owner=mapSurface;
+		return this.element;
+	}
+};
+
+/**
+ * Peer object for TileLayers
+ * @private
+ * @name nanomaps.TileLayerPeer
+ * @constructor
+ */
+function TileLayerPeer() {
+	// TileSets
+	this.lockedState=null;
+	this.current=new TileSet();
+	this.old=new TileSet();
+	this.transition=new TileSet();
+}
+TileLayerPeer.prototype={
+	/**
+	 * @private
+	 */
+	maposition: function(map, element) {
+		this.mareset(map, element);
+	},
+	
+	/**
+	 * Populates the transition TileSet with tiles for the given mapState.
+	 * A lot of this code is semi-duplicated in onreset but with minor twists
+	 * and I've not been able to condense them into one without breaking things.
+	 * @private
+	 */
+	loadPendingTiles: function(mapState) {
+		var transitionTileSet=this.transition,
+			currentTileSet=this.current,
+			right=mapState.w-1,
+			bottom=mapState.h-1,
+			updatedKeys,
+			i,
+			key,
+			tile,
+			newTiles=[];
+		
+		//console.log('Loading pending tiles for target state ' + mapState.res);
+		
+		transitionTileSet.clear();
+		// Select tiles that intersect our display area
+		updatedKeys=this.sel.select(mapState.prj,
+			mapState.res,
+			mapState.getPrjX(0,0),
+			mapState.getPrjY(0,0),
+			mapState.getPrjX(right,bottom),
+			mapState.getPrjY(right,bottom));
+		
+		// Match them up against what we are already displaying
+		for (i=0; i<updatedKeys.length; i++) {
+			key=updatedKeys[i];
+			tile=currentTileSet.move(key, transitionTileSet);
+			if (!tile) {
+				// We only create a new transitional tile if the tile isn't
+				// on the current display
+				tile=new Tile(this.sel, key);
+				transitionTileSet.add(tile);
+				newTiles.push(tile);
+				setTileBounds(mapState, tile);
+			}
+		}
+		
+		// Sort and load
+		sortTiles(newTiles, mapState.w/2, mapState.h/2);
+		for (i=0; i<newTiles.length; i++) {
+			tile=newTiles[i];
+			// Load the tiles but don't generate previews because
+			// no other tilesets are referenced to the same display.
+			// We'll need to generate previews when we actually go
+			// to use them later
+			tile.loading=true;
+			this.sel.loadTile(tile, null, true);
+		}
+	},
+	
+	/**
+	 * TODO: Port transition parts back in later
+	 * @private
+	 */
+	mareset: function(map, element) {
+		var currentTileSet=this.current,
+			transitionTileSet=this.transition,
+			oldTileSet=this.old,
+			mapState=map.mapState,
+			lockedState=this.lockedState,
+			right=mapState.w-1,
+			bottom=mapState.h-1,
+			updatedKeys,
+			i,
+			key,
+			tile,
+			newTiles=[];
+		
+		if (lockedState!==mapState.finalState) {
+			// Handle transition and detransition
+			lockedState=this.lockedState=mapState.finalState;
+
+			// Dump pending tiles into current for consideration in the main loop
+			//console.log('Transitional end state changed: Sweeping tiles to current');
+			//transitionTileSet.sweep(currentTileSet);
+			//console.log('Tiles swept to current');
+			
+			if (lockedState) {
+				// Load tiles for a new final state
+				this.loadPendingTiles(lockedState);
+			}
+		}
+		
+		//console.log('TileLayer.onreset(transition locked=' + (!!lockedState) + ')');
+		currentTileSet.resetMarks();
+		
+		// Select tiles that intersect our display area
+		updatedKeys=this.sel.select(mapState.prj,
+			mapState.res,
+			mapState.getPrjX(0,0),
+			mapState.getPrjY(0,0),
+			mapState.getPrjX(right,bottom),
+			mapState.getPrjY(right,bottom));
+
+		// Match them up against what we are already displaying
+		for (i=0; i<updatedKeys.length; i++) {
+			key=updatedKeys[i];
+			tile=currentTileSet.get(key) || transitionTileSet.move(key, currentTileSet);
+
+			// If we're not in a transitional state.
+			// If the tile is marked temporary, then disregard it
+			// because we don't want half rendered crap anymore.
+			// Just the good stuff for us from here on out.
+			if (!lockedState && tile && tile.temporary) tile=null;
+
+			// Still no tile?  Create one.
+			if (!tile) {
+				tile=new Tile(this.sel, key);
+				if (lockedState) tile.temporary=true;
+				currentTileSet.add(tile);
+			}
+			tile.mark=true;
+			
+			setTileBounds(mapState, tile);
+
+			// After a transition we may be dealing with a child that
+			// was loaded without ever being attached.  Fix that now.
+			if (!tile.parent) {
+				// Not yet added to display.  Put it in the list
+				// to be fixed up as a new tile
+				newTiles.push(tile);
+			}
+		}
+		
+		// If we are generating previews, then we need to sweep
+		// no longer used tiles into the oldTileSet and update their
+		// display metrics so that the new tiles can use them for
+		// previews
+		if (newTiles.length>0) {
+			currentTileSet.sweep(oldTileSet, function(tile) {
+				setTileBounds(mapState, tile);
+			});
+		}
+		
+		// newTileRecords now contains all records that have been newly allocated.
+		// We initialize them here in this ass-backwards way because we want to sort
+		// them by proximity to the center but don't have the display information until
+		// after we've iterated over all of them.  Think of this as the "initialize new
+		// tiles" loop
+		sortTiles(newTiles, mapState.w/2, mapState.h/2);
+		for (i=0; i<newTiles.length; i++) {
+			tile=newTiles[i];
+			
+			// Order is important here.  The tile may have a drawable
+			// set within the call to loadTile, in which case don't do
+			// the work to generate a preview
+			if (!tile.loading && !tile.temporary) {
+				tile.loading=true;
+				this.sel.loadTile(tile);
+			}
+			if (!tile.drawable) {
+				tile.generatePreview(oldTileSet);
+			}
+			tile.attach(element);
+		}
+		
+		currentTileSet.sweep();
+		oldTileSet.sweep();
+		if (!lockedState) transitionTileSet.clear();
+	}
+	
+};
+
+/**
+ * Sort tiles based on their center coordinate's proximity to
+ * some reference coordinate.  The idea is that we are trying to
+ * load tiles near the center before tiles on the edges.
+ */
+function sortTiles(tilesAry, x, y) {
+	tilesAry.sort(function(tile1, tile2) {
+		var score1=Math.abs(tile1.left+tile1.width/2 - x) + Math.abs(tile1.top+tile1.height/2 - y),
+			score2=Math.abs(tile2.left+tile2.width/2 - x) + Math.abs(tile2.top+tile2.height/2 - y);
+		return score1 - score2;
+	});
+}
+
+/**
+ * Given a MapState and TileKey, fill in a Rect with the pixel coordinates
+ * of the tile for the current state.
+ * This assumes rectangular display.  For rotation, this will all need to
+ * be reworked.
+ * @param mapState
+ * @param tile
+ */
+function setTileBounds(mapState, tile) {
+	var size=tile.sel.tileSize,
+		tileKey=tile.tileKey,
+		scaledSize=Math.ceil(size * tileKey.res / mapState.res),
+		left=Math.floor(mapState.prjToDspX(tileKey.scaledX * tileKey.res) - mapState.x),
+		top=Math.floor(mapState.prjToDspY(tileKey.scaledY * tileKey.res) - mapState.y);
+		
+	tile.setBounds(left, top, scaledSize, scaledSize);
+}
+
+/**
  * Class representing a tile selector for the layout of OSM, MS, Google, et al.
  * <p>
  * Typically, all that will need to be specified is options.tileSrc.  This string
@@ -54,6 +353,10 @@ function CartesianTileSelector(options) {
 	this.pending={};
 }
 CartesianTileSelector.prototype={
+	toString: function() {
+		return this.srcSpec;
+	},
+	
 	_sched: function(pended) {
 		var self=this, 
 			id=pended.tile.tileKey.id,
@@ -226,264 +529,6 @@ CartesianTileSelector.prototype={
 		return ret;
 	}
 };
-
-
-/**
- * Construct a standard TileLayer that can be attached to a MapSurface.  If a
- * TileSelector is not passed in the options, then a default is constructed and
- * options are passed to it.  See the options accepted by the TileSelector
- * constructor for additional parameters.
- *
- * @example 
- * var map=new nanomaps.MapSurface(someElement);
- * map.attach(new nanomaps.TileLayer({ 
- *    tileSrc: "http://otile${modulo:1,2,3}.mqcdn.com/tiles/1.0.0/osm/${level}/${tileX}/${tileY}.png" })); 
- *
- * @class
- * @name nanomaps.TileLayer
- * @param {TileSelector} [options.selector] describes the source and geometry of the
- * tiles
- * @param {integer} [options.buffer=64] The number of pixels to actively buffer on
- * all sides of the map
- */
-function TileLayer(options) {
-	if (!options) options={};
-	this.options=options;
-	this.sel=new CartesianTileSelector(options);
-	
-	// TileSets
-	this.lockedState=null;
-	this.current=new TileSet();
-	this.old=new TileSet();
-	this.transition=new TileSet();
-}
-TileLayer.prototype={
-	unmanaged: true,
-	mapLayer: 'map',
-	
-	/**
-	 * Returns a new element ready to be added to the MapSurface.  This method
-	 * fulfills the contract for MapSurface.attach.
-	 * @public
-	 * @methodOf nanomaps.TileLayer.prototype
-	 * @name createElement
-	 * @param {MapSurface} map
-	 * @return {HTMLElement}
-	 */
-	createElement: function(map) {
-		var element=document.createElement('div');
-		element.style.position='absolute';
-		element.style.left='0px';
-		element.style.top='0px';
-		element.mapDelegate=this;
-		return element;
-	},
-	
-	/**
-	 * @private
-	 */
-	onposition: function(map, element) {
-		this.onreset(map, element);
-	},
-	
-	/**
-	 * Populates the transition TileSet with tiles for the given mapState.
-	 * A lot of this code is semi-duplicated in onreset but with minor twists
-	 * and I've not been able to condense them into one without breaking things.
-	 * @private
-	 */
-	loadPendingTiles: function(mapState) {
-		var transitionTileSet=this.transition,
-			currentTileSet=this.current,
-			right=mapState.w-1,
-			bottom=mapState.h-1,
-			updatedKeys,
-			i,
-			key,
-			tile,
-			newTiles=[];
-		
-		//console.log('Loading pending tiles for target state ' + mapState.res);
-		
-		transitionTileSet.clear();
-		// Select tiles that intersect our display area
-		updatedKeys=this.sel.select(mapState.prj,
-			mapState.res,
-			mapState.getPrjX(0,0),
-			mapState.getPrjY(0,0),
-			mapState.getPrjX(right,bottom),
-			mapState.getPrjY(right,bottom));
-		
-		// Match them up against what we are already displaying
-		for (i=0; i<updatedKeys.length; i++) {
-			key=updatedKeys[i];
-			tile=currentTileSet.move(key, transitionTileSet);
-			if (!tile) {
-				// We only create a new transitional tile if the tile isn't
-				// on the current display
-				tile=new Tile(this.sel, key);
-				transitionTileSet.add(tile);
-				newTiles.push(tile);
-				setTileBounds(mapState, tile);
-			}
-		}
-		
-		// Sort and load
-		sortTiles(newTiles, mapState.w/2, mapState.h/2);
-		for (i=0; i<newTiles.length; i++) {
-			tile=newTiles[i];
-			// Load the tiles but don't generate previews because
-			// no other tilesets are referenced to the same display.
-			// We'll need to generate previews when we actually go
-			// to use them later
-			tile.loading=true;
-			this.sel.loadTile(tile, null, true);
-		}
-	},
-	
-	/**
-	 * TODO: Port transition parts back in later
-	 * @private
-	 */
-	onreset: function(map, element) {
-		var currentTileSet=this.current,
-			transitionTileSet=this.transition,
-			oldTileSet=this.old,
-			mapState=map.mapState,
-			lockedState=this.lockedState,
-			right=mapState.w-1,
-			bottom=mapState.h-1,
-			updatedKeys,
-			i,
-			key,
-			tile,
-			newTiles=[];
-		
-		if (lockedState!==mapState.finalState) {
-			// Handle transition and detransition
-			lockedState=this.lockedState=mapState.finalState;
-
-			// Dump pending tiles into current for consideration in the main loop
-			//console.log('Transitional end state changed: Sweeping tiles to current');
-			//transitionTileSet.sweep(currentTileSet);
-			//console.log('Tiles swept to current');
-			
-			if (lockedState) {
-				// Load tiles for a new final state
-				this.loadPendingTiles(lockedState);
-			}
-		}
-		
-		//console.log('TileLayer.onreset(transition locked=' + (!!lockedState) + ')');
-		currentTileSet.resetMarks();
-		
-		// Select tiles that intersect our display area
-		updatedKeys=this.sel.select(mapState.prj,
-			mapState.res,
-			mapState.getPrjX(0,0),
-			mapState.getPrjY(0,0),
-			mapState.getPrjX(right,bottom),
-			mapState.getPrjY(right,bottom));
-
-		// Match them up against what we are already displaying
-		for (i=0; i<updatedKeys.length; i++) {
-			key=updatedKeys[i];
-			tile=currentTileSet.get(key) || transitionTileSet.move(key, currentTileSet);
-
-			// If we're not in a transitional state.
-			// If the tile is marked temporary, then disregard it
-			// because we don't want half rendered crap anymore.
-			// Just the good stuff for us from here on out.
-			if (!lockedState && tile && tile.temporary) tile=null;
-
-			// Still no tile?  Create one.
-			if (!tile) {
-				tile=new Tile(this.sel, key);
-				if (lockedState) tile.temporary=true;
-				currentTileSet.add(tile);
-			}
-			tile.mark=true;
-			
-			setTileBounds(mapState, tile);
-
-			// After a transition we may be dealing with a child that
-			// was loaded without ever being attached.  Fix that now.
-			if (!tile.parent) {
-				// Not yet added to display.  Put it in the list
-				// to be fixed up as a new tile
-				newTiles.push(tile);
-			}
-		}
-		
-		// If we are generating previews, then we need to sweep
-		// no longer used tiles into the oldTileSet and update their
-		// display metrics so that the new tiles can use them for
-		// previews
-		if (newTiles.length>0) {
-			currentTileSet.sweep(oldTileSet, function(tile) {
-				setTileBounds(mapState, tile);
-			});
-		}
-		
-		// newTileRecords now contains all records that have been newly allocated.
-		// We initialize them here in this ass-backwards way because we want to sort
-		// them by proximity to the center but don't have the display information until
-		// after we've iterated over all of them.  Think of this as the "initialize new
-		// tiles" loop
-		sortTiles(newTiles, mapState.w/2, mapState.h/2);
-		for (i=0; i<newTiles.length; i++) {
-			tile=newTiles[i];
-			
-			// Order is important here.  The tile may have a drawable
-			// set within the call to loadTile, in which case don't do
-			// the work to generate a preview
-			if (!tile.loading && !tile.temporary) {
-				tile.loading=true;
-				this.sel.loadTile(tile);
-			}
-			if (!tile.drawable) {
-				tile.generatePreview(oldTileSet);
-			}
-			tile.attach(element);
-		}
-		
-		currentTileSet.sweep();
-		oldTileSet.sweep();
-		if (!lockedState) transitionTileSet.clear();
-	}
-	
-};
-
-/**
- * Sort tiles based on their center coordinate's proximity to
- * some reference coordinate.  The idea is that we are trying to
- * load tiles near the center before tiles on the edges.
- */
-function sortTiles(tilesAry, x, y) {
-	tilesAry.sort(function(tile1, tile2) {
-		var score1=Math.abs(tile1.left+tile1.width/2 - x) + Math.abs(tile1.top+tile1.height/2 - y),
-			score2=Math.abs(tile2.left+tile2.width/2 - x) + Math.abs(tile2.top+tile2.height/2 - y);
-		return score1 - score2;
-	});
-}
-
-/**
- * Given a MapState and TileKey, fill in a Rect with the pixel coordinates
- * of the tile for the current state.
- * This assumes rectangular display.  For rotation, this will all need to
- * be reworked.
- * @param mapState
- * @param tile
- */
-function setTileBounds(mapState, tile) {
-	var size=tile.sel.tileSize,
-		tileKey=tile.tileKey,
-		scaledSize=Math.ceil(size * tileKey.res / mapState.res),
-		left=Math.floor(mapState.prjToDspX(tileKey.scaledX * tileKey.res) - mapState.x),
-		top=Math.floor(mapState.prjToDspY(tileKey.scaledY * tileKey.res) - mapState.y);
-		
-	tile.setBounds(left, top, scaledSize, scaledSize);
-}
 
 /**
  * Uniquely identified a tile from a given TileSelector and contains

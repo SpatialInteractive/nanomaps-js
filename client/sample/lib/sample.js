@@ -6,8 +6,7 @@
 var nanomaps=global.nanomaps;
 
 /** Locals **/
-var map, 
-	activeTileLayerElts=[],
+var map,
 	mapShowing,
 	geoLocationWatchId,
 	locationMarker=new nanomaps.ImgMarker({
@@ -24,29 +23,27 @@ var map,
 		}),
 	locationUncertaintyElt;
 
-function setTileLayer(type) {
-	var tileLayer, i, elt;
-	
-	for (i=0; i<activeTileLayerElts.length; i++) {
-		elt=activeTileLayerElts[i];
-		elt.parentNode.removeChild(elt);
-	}
-	activeTileLayerElts.length=0;
-	
-	if (type==='street') {
-		tileLayer=new nanomaps.TileLayer({
+var TILE_LAYERS={
+	street: new nanomaps.TileLayer({
 			tileSrc: "http://otile${modulo:1,2,3}.mqcdn.com/tiles/1.0.0/osm/${level}/${tileX}/${tileY}.png"
-		});
-		activeTileLayerElts.push(map.attach(tileLayer));
-	} else if (type==='aerial') {
-		tileLayer=new nanomaps.TileLayer({
+		}),
+	sat: new nanomaps.TileLayer({
 			tileSrc: "http://oatile${modulo:1,2,3}.mqcdn.com/naip/${level}/${tileX}/${tileY}.jpg"
-		});
-		activeTileLayerElts.push(map.attach(tileLayer));
-		tileLayer=new nanomaps.TileLayer({
+		}),
+	hyb: new nanomaps.TileLayer({
 			tileSrc: "http://otile${modulo:1,2,3}.mqcdn.com/tiles/1.0.0/hyb/${level}/${tileX}/${tileY}.png"
-		});
-		activeTileLayerElts.push(map.attach(tileLayer));
+		})
+};
+	
+function setTileLayer(type) {
+	if (type==='street') {
+		map.detach(TILE_LAYERS.sat);
+		map.detach(TILE_LAYERS.hyb);
+		map.attach(TILE_LAYERS.street);
+	} else if (type==='aerial') {
+		map.detach(TILE_LAYERS.street);
+		map.attach(TILE_LAYERS.sat);
+		map.attach(TILE_LAYERS.hyb);
 	}
 }
 	
@@ -72,6 +69,7 @@ function initialize() {
 	//global.map=map;
 	
 	/** Don't attach tile layer yet - we do that after we acquire an initial location **/
+	/*
 	try {
 		navigator.geolocation.getCurrentPosition(
 			handleGeoLocation,
@@ -86,6 +84,8 @@ function initialize() {
 	} catch (e) {
 		showMap();
 	}
+	*/
+	showMap();
 	
 	setupControls();
 	setupQuery();
@@ -133,6 +133,7 @@ function runQuery(q) {
 		jsonp: 'json_callback',
 		data: params,
 		success: function(result) {
+			return;
 			if (result.length==0) {
 				alert('No results found.');
 				return;
@@ -190,6 +191,7 @@ function showMap(initialPosition, initialLevel) {
 }
 
 function handleGeoLocation(position) {
+	return;
 	var latLng={lat: position.coords.latitude, lng: position.coords.longitude };
 	showMap(latLng, 13);
 

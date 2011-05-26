@@ -282,5 +282,13 @@ function now() {
 	return new Date().getTime();
 }
 
+function isFunction(value) {
+	return typeof value === 'function';
+}
+
+function throwNotDomElement(value) {
+	throw new Error('Object ' + value + ' is not a DOM element');
+}
+
 exports.EventEmitter=EventEmitter;
 
