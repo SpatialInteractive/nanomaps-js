@@ -71,7 +71,7 @@ SvgMarker.prototype={
 	invalidate: function() {
 		var owner=this.owner, canvas=this.canvas;
 		if (owner && canvas.parentNode) 
-			this.onreset(owner, canvas);
+			this.mareset(owner, canvas);
 	}
 };
 inherits(SvgMarker, EventEmitter);
