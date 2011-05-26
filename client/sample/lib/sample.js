@@ -47,7 +47,15 @@ function setTileLayer(type) {
 /** Global scope **/
 function initialize() {
 	var mapElt=$('#map').get(0);
-	map=new nanomaps.MapSurface(mapElt, {});
+	
+	// Detect hi resolution display and bias zoom levels
+	var pixelRatio=window.devicePixelRatio||1,
+		zoomBias=0.0;
+	if (pixelRatio>1.5) zoomBias=-0.50;
+	
+	map=new nanomaps.MapSurface(mapElt, {
+		zoomBias: zoomBias
+	});
 	map.on('motion.longtap', function(motionEvent) {
 		var latLng=map.getLocation(motionEvent.x, motionEvent.y);
 		showDebugMessage('Long tap: ' + latLng.lat() + ',' + latLng.lng());
@@ -56,7 +64,7 @@ function initialize() {
 	map.on('motion.click', function(motionEvent) {
 		if (motionEvent.count===1) {
 			var latLng=map.getLocation(motionEvent.x, motionEvent.y);
-			showDebugMessage('Single tap: ' + latLng.lat() + ',' + latLng.lng());
+			showDebugMessage('Single tap: ' + latLng.lat() + ',' + latLng.lng() + ', Zoom=' + map.getZoom());
 			motionEvent.handled=true;
 		}
 	});

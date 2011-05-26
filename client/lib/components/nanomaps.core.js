@@ -350,7 +350,8 @@ function MapSurface(elt, options) {
 	this.mapState=mapState=new MapState();
 	mapState.prj=options.projection||new Projections.WebMercator();
 	mapState.res=options.resolution||mapState.prj.DEFAULT_RESOLUTION;
-
+	this._zoomBias=options.zoomBias||0;
+	
 	// Pending mapState
 	this._pendMapState=new MapState(mapState);
 	this._pendLock=0;
@@ -691,7 +692,7 @@ MapSurfaceMethods.surface=function(index) {
  * @return the current zoom level as a floating point number
  */
 MapSurfaceMethods.getZoom=function() {
-	return this._pendMapState.getZoom();
+	return this._pendMapState.getZoom()+this._zoomBias;
 };
 
 /**
@@ -710,7 +711,7 @@ MapSurfaceMethods.setZoom=function(level, x, y) {
 		origRes=mapState.res;
 
 	this.begin();
-	level=clampZoom(this, level);
+	level=clampZoom(this, level-this._zoomBias);
 	mapState.setZoom(level, optionalX(this,x), optionalY(this,y));
 	this.commit();
 };
