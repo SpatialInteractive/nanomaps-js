@@ -574,7 +574,7 @@ MapSurfaceMethods.advise('initialize', 'after', function(options) {
 		);
 		
 	// TODO: This is temp.  Going to do a CSS approach later.
-	this.elements.event.style.cursor='move';
+	//this.elements.event.style.cursor='move';
 });
 
 /**

@@ -290,5 +290,9 @@ function throwNotDomElement(value) {
 	throw new Error('Object ' + value + ' is not a DOM element');
 }
 
+function dupArray(ary) {
+	return Array.prototype.slice(ary);
+}
+
 exports.EventEmitter=EventEmitter;
 

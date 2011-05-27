@@ -692,7 +692,7 @@ MapSurfaceMethods.surface=function(index) {
  * @return the current zoom level as a floating point number
  */
 MapSurfaceMethods.getZoom=function() {
-	return this._pendMapState.getZoom()+this._zoomBias;
+	return this._pendMapState.getZoom()-this._zoomBias;
 };
 
 /**
@@ -711,7 +711,7 @@ MapSurfaceMethods.setZoom=function(level, x, y) {
 		origRes=mapState.res;
 
 	this.begin();
-	level=clampZoom(this, level-this._zoomBias);
+	level=clampZoom(this, level+this._zoomBias);
 	mapState.setZoom(level, optionalX(this,x), optionalY(this,y));
 	this.commit();
 };
@@ -1244,7 +1244,6 @@ function extractDefaultPosition(element) {
  * @private
  */
 var DefaultAttachmentPeer={
-	defaultLayer: 'overlay',
 	mareset: function(map, element) {
 		var geo=extractDefaultPosition(element), xy, x, y;
 		if (geo) {

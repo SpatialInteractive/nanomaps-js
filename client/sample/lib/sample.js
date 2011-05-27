@@ -7,6 +7,7 @@ var nanomaps=global.nanomaps;
 
 /** Locals **/
 var map,
+	tapIw,
 	mapShowing,
 	geoLocationWatchId,
 	locationMarker=new nanomaps.ImgMarker({
@@ -64,8 +65,17 @@ function initialize() {
 	map.on('motion.click', function(motionEvent) {
 		if (motionEvent.count===1) {
 			var latLng=map.getLocation(motionEvent.x, motionEvent.y);
-			showDebugMessage('Single tap: ' + latLng.lat() + ',' + latLng.lng() + ', Zoom=' + map.getZoom());
+			//showDebugMessage('Single tap: ' + latLng.lat() + ',' + latLng.lng() + ', Zoom=' + map.getZoom());
 			motionEvent.handled=true;
+
+			if (tapIw) map.detach(tapIw);
+			tapIw=new nanomaps.InfoWindow();
+			$(tapIw.getContent()).text('Location: (' + latLng.lat() + ', ' + latLng.lng() + ')');
+			$(tapIw.element).click(function() {
+				if (tapIw) map.detach(tapIw);
+			});
+			tapIw.setLocation(latLng);
+			map.attach(tapIw);
 		}
 	});
 	
@@ -198,6 +208,20 @@ function handleGeoLocation(position) {
 	
 	locationMarker.setLocation(latLng);
 	map.update(locationMarker);
+	
+	$(locationMarker.element).click(function() {
+		if (tapIw) map.detach(tapIw);
+		tapIw=new nanomaps.InfoWindow();
+		$(tapIw.getContent()).text('My Location');
+		tapIw.setLocation(latLng, {
+			x: 0,
+			y: locationMarker.element.clientHeight/2
+		});
+		$(tapIw.element).click(function() {
+			if (tapIw) map.detach(tapIw);
+		});
+		map.attach(tapIw);
+	});
 	
 	if (!geoLocationWatchId) {
 		geoLocationWatchId=navigator.geolocation.watchPosition(handleGeoLocation, handleGeoLocationError);

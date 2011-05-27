@@ -56,3 +56,7 @@ function stopEvent(event) {
 	}
 }
 
+function div() {
+	return document.createElement('div');
+}
+
