@@ -28,6 +28,44 @@
  * Inspiration for some of the default styling presented here was
  * derived from <a href="http://google-maps-utility-library-v3.googlecode.com/svn/trunk/infobubble/examples/example.html">google-maps-utility-library-v3</a>.
  * 
+ * <h3>Default Styling</h3>
+ * The following styling block works with the default infowindow settings
+ * <pre>
+ *	.nmiw {
+ *		padding: 4px 15px 4px 15px;
+ *		background: -webkit-gradient(linear,left top,left bottom,color-stop(0, #707070),color-stop(0.51, #5E5E5E),color-stop(0.52, #393939));
+ *		background: -moz-linear-gradient(center top,#707070 0%,#5E5E5E 51%,#393939 52%);
+ *	
+ *		border-color: #2C2C2C;
+ *		border-style: solid;
+ *		border-width: 1px;
+ *		border-top-left-radius: 4px 4px;
+ *		border-top-right-radius: 4px 4px;
+ *		border-bottom-right-radius: 4px 4px;
+ *		border-bottom-left-radius: 4px 4px;
+ *		opacity: 0.95;
+ *	}
+ *	
+ *	.nmiw-content {
+ *		font-family: Helvetica-Neue, Helvetica, arial, sans-serif;
+ *		font-size: 18px;
+ *		line-height: 25px;
+ *		text-shadow: 0 -1px 0 black;	
+ *		font-weight: bold;
+ *		color: #fff;
+ *	}
+ *	
+ *	.nmiw-pointer {
+ *		position: absolute;
+ *		bottom: -15px;
+ *		width: 0px;
+ *		height: 0px;
+ *		margin-left: -16px;
+ *		border-top: 15px solid #393939;
+ *		border-left: 15px solid transparent;
+ *		border-right: 15px solid transparent;
+ *	}
+ * </pre>
  * @constructor
  * @public
  * @name nanomaps.InfoWindow
