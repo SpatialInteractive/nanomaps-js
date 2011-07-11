@@ -1,0 +1,647 @@
+<html><head><meta http-equiv="content-type" content="text/html; charset=UTF-8"> <style>
+	.KEYW {color: #933;}
+	.COMM {color: #bbb; font-style: italic;}
+	.NUMB {color: #393;}
+	.STRN {color: #393;}
+	.REGX {color: #339;}
+	.line {border-right: 1px dotted #666; color: #666; font-style: normal;}
+	</style></head><body><pre><span class='line'>  1</span> <span class="COMM">/**
+<span class='line'>  2</span>  * nanomaps.motion.js
+<span class='line'>  3</span>  * Motion events (click and touch) on a MapSurface
+<span class='line'>  4</span>  */</span><span class="WHIT">
+<span class='line'>  5</span> </span><span class="COMM">/**
+<span class='line'>  6</span>  * Class that can handle motion events on a map
+<span class='line'>  7</span>  * @constructor
+<span class='line'>  8</span>  * @name nanomaps.MotionController
+<span class='line'>  9</span>  * @private
+<span class='line'> 10</span>  */</span><span class="WHIT">
+<span class='line'> 11</span> </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">STATE_DOWN</span><span class="PUNC">=</span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 12</span> </span><span class="WHIT">	</span><span class="NAME">STATE_DRAG</span><span class="PUNC">=</span><span class="NUMB">1</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 13</span> </span><span class="WHIT">	</span><span class="NAME">STATE_CLICK_PEND</span><span class="PUNC">=</span><span class="NUMB">2</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 14</span> </span><span class="WHIT">	</span><span class="NAME">CLICK_DOUBLE_MS</span><span class="PUNC">=</span><span class="NUMB">280</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 15</span> </span><span class="WHIT">	</span><span class="NAME">TOUCH_THRESHOLD</span><span class="PUNC">=</span><span class="NUMB">10</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 16</span> </span><span class="WHIT">	</span><span class="NAME">TOUCH_LONGTAP_MS</span><span class="PUNC">=</span><span class="NUMB">1000</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 17</span> </span><span class="WHIT">	</span><span class="NAME">TOUCH_DOUBLE_MS</span><span class="PUNC">=</span><span class="NUMB">280</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 18</span> 
+<span class='line'> 19</span> </span><span class="COMM">/**
+<span class='line'> 20</span>  * MotionEvent instances are passed to handler functions
+<span class='line'> 21</span>  * and summarize touch or click interactions that are subject
+<span class='line'> 22</span>  * to default handling.
+<span class='line'> 23</span>  *
+<span class='line'> 24</span>  * @public
+<span class='line'> 25</span>  * @constructor
+<span class='line'> 26</span>  * @name nanomaps.MotionEvent
+<span class='line'> 27</span>  */</span><span class="WHIT">
+<span class='line'> 28</span> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="NAME">MotionEvent</span><span class="PUNC">(</span><span class="NAME">type</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 29</span> </span><span class="WHIT">	</span><span class="COMM">/**
+<span class='line'> 30</span> 	 * The type of motion event.  Different properties
+<span class='line'> 31</span> 	 * will be available based on the type.
+<span class='line'> 32</span> 	 * &lt;ul>
+<span class='line'> 33</span> 	 * &lt;li>'click': A gesture to be interpreted as a click has
+<span class='line'> 34</span> 	 * occurred.  The count field indicates how many consecutive clicks
+<span class='line'> 35</span> 	 * took place.
+<span class='line'> 36</span> 	 * &lt;li>'drag': A single step in a drag gesture.  deltaX and deltaY
+<span class='line'> 37</span> 	 * describe magnitude of this change
+<span class='line'> 38</span> 	 * &lt;li>'pinch': Single step of a pinch gesture.  This is a combined move
+<span class='line'> 39</span> 	 * and zoom and has fields deltaX, deltaY and deltaZoom
+<span class='line'> 40</span> 	 * &lt;li>'longtap': A press and hold gesture has been detected.  If it is
+<span class='line'> 41</span> 	 * handled, it will stop default processing which will either allow
+<span class='line'> 42</span> 	 * panning/pinching or interpetation as a normal click/multi-click.
+<span class='line'> 43</span> 	 * &lt;/ul>
+<span class='line'> 44</span> 	 * @name type
+<span class='line'> 45</span> 	 * @memberOf nanomaps.MotionEvent#
+<span class='line'> 46</span> 	 */</span><span class="WHIT">
+<span class='line'> 47</span> </span><span class="WHIT">	</span><span class="NAME">this.type</span><span class="PUNC">=</span><span class="NAME">type</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 48</span> </span><span class="WHIT">	
+<span class='line'> 49</span> 	</span><span class="COMM">/**
+<span class='line'> 50</span> 	 * If the event has been handled by prior logic this flag
+<span class='line'> 51</span> 	 * should be set to true, in which case, default actions will not
+<span class='line'> 52</span> 	 * be performed.
+<span class='line'> 53</span> 	 * @name handled
+<span class='line'> 54</span> 	 * @memberOf nanomaps.MotionEvent#
+<span class='line'> 55</span> 	 */</span><span class="WHIT">
+<span class='line'> 56</span> </span><span class="WHIT">	</span><span class="NAME">this.handled</span><span class="PUNC">=</span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 57</span> </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 58</span> 
+<span class='line'> 59</span> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="NAME">MotionController</span><span class="PUNC">(</span><span class="NAME">map</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 60</span> </span><span class="WHIT">	</span><span class="KEYW">function</span><span class="WHIT"> </span><span class="NAME">dispatch</span><span class="PUNC">(</span><span class="NAME">motionEvent</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 61</span> </span><span class="WHIT">		</span><span class="COMM">//console.log('dispatch motion event: ' + motionEvent.type + ': ' + motionEvent.count);</span><span class="WHIT">
+<span class='line'> 62</span> </span><span class="WHIT">		</span><span class="NAME">map.dispatchMotionEvent</span><span class="PUNC">(</span><span class="NAME">motionEvent</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 63</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 64</span> </span><span class="WHIT">	
+<span class='line'> 65</span> 	</span><span class="COMM">// ---- Click Handling</span><span class="WHIT">
+<span class='line'> 66</span> </span><span class="WHIT">	</span><span class="COMM">/**
+<span class='line'> 67</span> 	 * If a click is in progress, this will be an object
+<span class='line'> 68</span> 	 * {
+<span class='line'> 69</span> 	 * }
+<span class='line'> 70</span> 	 */</span><span class="WHIT">
+<span class='line'> 71</span> </span><span class="WHIT">	</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">clickState</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 72</span> </span><span class="WHIT">		</span><span class="NAME">clickAttached</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 73</span> </span><span class="WHIT">	
+<span class='line'> 74</span> 	</span><span class="KEYW">function</span><span class="WHIT"> </span><span class="NAME">clickAttach</span><span class="PUNC">(</span><span class="NAME">attach</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 75</span> </span><span class="WHIT">		</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">document</span><span class="PUNC">=</span><span class="NAME">map.elements.document</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 76</span> </span><span class="WHIT">		</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">attach</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="PUNC">!</span><span class="NAME">clickAttached</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 77</span> </span><span class="WHIT">			</span><span class="NAME">addEventListener</span><span class="PUNC">(</span><span class="NAME">document</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">'mouseup'</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">clickHandleEvent</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 78</span> </span><span class="WHIT">			</span><span class="NAME">addEventListener</span><span class="PUNC">(</span><span class="NAME">document</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">'mousemove'</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">clickHandleEvent</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 79</span> </span><span class="WHIT">			</span><span class="NAME">clickAttached</span><span class="PUNC">=</span><span class="KEYW">true</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 80</span> </span><span class="WHIT">		</span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">attach</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="NAME">clickAttached</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 81</span> </span><span class="WHIT">			</span><span class="NAME">removeEventListener</span><span class="PUNC">(</span><span class="NAME">document</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">'mouseup'</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">clickHandleEvent</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 82</span> </span><span class="WHIT">			</span><span class="NAME">removeEventListener</span><span class="PUNC">(</span><span class="NAME">document</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">'mousemove'</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">clickHandleEvent</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 83</span> </span><span class="WHIT">			</span><span class="NAME">clickAttached</span><span class="PUNC">=</span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 84</span> </span><span class="WHIT">		</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 85</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 86</span> </span><span class="WHIT">	
+<span class='line'> 87</span> 	</span><span class="KEYW">function</span><span class="WHIT"> </span><span class="NAME">clickStart</span><span class="PUNC">(</span><span class="NAME">event</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">coords</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 88</span> </span><span class="WHIT">		</span><span class="NAME">clickCancel</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 89</span> </span><span class="WHIT">		</span><span class="NAME">clickState</span><span class="PUNC">=</span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 90</span> </span><span class="WHIT">			</span><span class="NAME">b</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NAME">event.button</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 91</span> </span><span class="WHIT">			</span><span class="NAME">s</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NAME">STATE_DOWN</span><span class="PUNC">,</span><span class="WHIT">	</span><span class="COMM">// State</span><span class="WHIT">
+<span class='line'> 92</span> </span><span class="WHIT">			</span><span class="NAME">cnt</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT">			</span><span class="COMM">// Click count</span><span class="WHIT">
+<span class='line'> 93</span> </span><span class="WHIT">			</span><span class="NAME">cs</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NAME">coords</span><span class="PUNC">,</span><span class="WHIT">		</span><span class="COMM">// Click start coords</span><span class="WHIT">
+<span class='line'> 94</span> </span><span class="WHIT">			</span><span class="NAME">cl</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NAME">coords</span><span class="PUNC">,</span><span class="WHIT">		</span><span class="COMM">// Click last coords</span><span class="WHIT">
+<span class='line'> 95</span> </span><span class="WHIT">			</span><span class="NAME">t</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT">			</span><span class="COMM">// Click time</span><span class="WHIT">
+<span class='line'> 96</span> </span><span class="WHIT">			</span><span class="NAME">ti</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">null</span><span class="WHIT">		</span><span class="COMM">// Timer id</span><span class="WHIT">
+<span class='line'> 97</span> </span><span class="WHIT">		</span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 98</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 99</span> </span><span class="WHIT">	
+<span class='line'>100</span> 	</span><span class="KEYW">function</span><span class="WHIT"> </span><span class="NAME">clickStartTimer</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>101</span> </span><span class="WHIT">		</span><span class="NAME">setTimeout</span><span class="PUNC">(</span><span class="KEYW">function</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>102</span> </span><span class="WHIT">			</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">clickState</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="NAME">clickState.s</span><span class="PUNC">===</span><span class="NAME">STATE_CLICK_PEND</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>103</span> </span><span class="WHIT">				</span><span class="NAME">clickState.ti</span><span class="PUNC">=</span><span class="KEYW">null</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>104</span> </span><span class="WHIT">				</span><span class="NAME">clickDispatch</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>105</span> </span><span class="WHIT">				</span><span class="NAME">clickCancel</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>106</span> </span><span class="WHIT">			</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>107</span> </span><span class="WHIT">		</span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">CLICK_DOUBLE_MS</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>108</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>109</span> </span><span class="WHIT">	
+<span class='line'>110</span> 	</span><span class="KEYW">function</span><span class="WHIT"> </span><span class="NAME">clickStopTimer</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>111</span> </span><span class="WHIT">		</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">clickState</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="NAME">clickState.ti</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>112</span> </span><span class="WHIT">			</span><span class="NAME">clearTimeout</span><span class="PUNC">(</span><span class="NAME">clickState.ti</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>113</span> </span><span class="WHIT">		</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>114</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>115</span> </span><span class="WHIT">	
+<span class='line'>116</span> 	</span><span class="KEYW">function</span><span class="WHIT"> </span><span class="NAME">clickDispatch</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>117</span> </span><span class="WHIT">		</span><span class="COMM">//console.log('clickDispatch: ' + clickState.cnt);</span><span class="WHIT">
+<span class='line'>118</span> </span><span class="WHIT">		</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">me</span><span class="PUNC">=</span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">MotionEvent</span><span class="PUNC">(</span><span class="STRN">'click'</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>119</span> </span><span class="WHIT">		
+<span class='line'>120</span> 		</span><span class="COMM">/**
+<span class='line'>121</span> 		 * Button number that this click represents as defined
+<span class='line'>122</span> 		 * by W3C mouse events.
+<span class='line'>123</span> 		 * &lt;ul>
+<span class='line'>124</span> 		 * &lt;li>0 = Left / Primary
+<span class='line'>125</span> 		 * &lt;li>1 = Middle
+<span class='line'>126</span> 		 * &lt;li>2 = Right
+<span class='line'>127</span> 		 * &lt;/ul>
+<span class='line'>128</span> 		 * @public
+<span class='line'>129</span> 		 * @name button
+<span class='line'>130</span> 		 * @memberOf nanomaps.MotionEvent#
+<span class='line'>131</span> 		 */</span><span class="WHIT">
+<span class='line'>132</span> </span><span class="WHIT">		</span><span class="NAME">me.button</span><span class="PUNC">=</span><span class="NAME">clickState.b</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>133</span> </span><span class="WHIT">		
+<span class='line'>134</span> 		</span><span class="COMM">/**
+<span class='line'>135</span> 		 * For 'click' events, this is the number of consecutive
+<span class='line'>136</span> 		 * clicks performed.  1 for single click, 2 for double click,
+<span class='line'>137</span> 		 * 3 for lots of caffeine, etc.
+<span class='line'>138</span> 		 * @public
+<span class='line'>139</span> 		 * @name count
+<span class='line'>140</span> 		 * @memberOf nanomaps.MotionEvent#
+<span class='line'>141</span> 		 */</span><span class="WHIT">
+<span class='line'>142</span> </span><span class="WHIT">		</span><span class="NAME">me.count</span><span class="PUNC">=</span><span class="NAME">clickState.cnt</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>143</span> </span><span class="WHIT">		
+<span class='line'>144</span> 		</span><span class="COMM">/**
+<span class='line'>145</span> 		 * Viewport x coordinate of the gesture.
+<span class='line'>146</span> 		 * @public
+<span class='line'>147</span> 		 * @name x
+<span class='line'>148</span> 		 * @memberOf nanomaps.MotionEvent#
+<span class='line'>149</span> 		 */</span><span class="WHIT">
+<span class='line'>150</span> </span><span class="WHIT">		</span><span class="NAME">me.x</span><span class="PUNC">=</span><span class="NAME">clickState.cs.x</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>151</span> 
+<span class='line'>152</span> </span><span class="WHIT">		</span><span class="COMM">/**
+<span class='line'>153</span> 		 * Viewport y coordinate of the gesture.
+<span class='line'>154</span> 		 * @public
+<span class='line'>155</span> 		 * @name y
+<span class='line'>156</span> 		 * @memberOf nanomaps.MotionEvent#
+<span class='line'>157</span> 		 */</span><span class="WHIT">
+<span class='line'>158</span> </span><span class="WHIT">		</span><span class="NAME">me.y</span><span class="PUNC">=</span><span class="NAME">clickState.cs.y</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>159</span> </span><span class="WHIT">		
+<span class='line'>160</span> 		</span><span class="NAME">dispatch</span><span class="PUNC">(</span><span class="NAME">me</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>161</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>162</span> </span><span class="WHIT">	
+<span class='line'>163</span> 	</span><span class="KEYW">function</span><span class="WHIT"> </span><span class="NAME">clickCancel</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>164</span> </span><span class="WHIT">		</span><span class="NAME">clickStopTimer</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>165</span> </span><span class="WHIT">		</span><span class="NAME">clickState</span><span class="PUNC">=</span><span class="KEYW">null</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>166</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>167</span> </span><span class="WHIT">	
+<span class='line'>168</span> 	</span><span class="COMM">/**
+<span class='line'>169</span> 	 * This is the target of all click events
+<span class='line'>170</span> 	 * (mousedown, mouseup, mousemove, mousewheel)
+<span class='line'>171</span> 	 */</span><span class="WHIT">
+<span class='line'>172</span> </span><span class="WHIT">	</span><span class="KEYW">function</span><span class="WHIT"> </span><span class="NAME">clickHandleEvent</span><span class="PUNC">(</span><span class="NAME">event</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>173</span> </span><span class="WHIT">		</span><span class="COMM">// Filter out any events that</span><span class="WHIT">
+<span class='line'>174</span> </span><span class="WHIT">		</span><span class="COMM">// are not the first button.</span><span class="WHIT">
+<span class='line'>175</span> </span><span class="WHIT">		</span><span class="COMM">// We'll enable other clicks later but they are tricky-tricky</span><span class="WHIT">
+<span class='line'>176</span> </span><span class="WHIT">		</span><span class="COMM">// to get right.</span><span class="WHIT">
+<span class='line'>177</span> </span><span class="WHIT">		</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">isLeftClick</span><span class="PUNC">(</span><span class="NAME">event</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="KEYW">return</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>178</span> </span><span class="WHIT">		</span><span class="COMM">//console.log('handleClickEvent: ' + event.type + ' button=' + event.button);</span><span class="WHIT">
+<span class='line'>179</span> </span><span class="WHIT">		
+<span class='line'>180</span> 		</span><span class="COMM">// It's ours now</span><span class="WHIT">
+<span class='line'>181</span> </span><span class="WHIT">		</span><span class="NAME">stopEvent</span><span class="PUNC">(</span><span class="NAME">event</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>182</span> </span><span class="WHIT">		
+<span class='line'>183</span> 		</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">coords</span><span class="PUNC">=</span><span class="NAME">map.eventToContainer</span><span class="PUNC">(</span><span class="NAME">event</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>184</span> </span><span class="WHIT">			</span><span class="NAME">me</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>185</span> </span><span class="WHIT">		
+<span class='line'>186</span> 		</span><span class="KEYW">switch</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">event.type</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>187</span> </span><span class="WHIT">		</span><span class="KEYW">case</span><span class="WHIT"> </span><span class="STRN">'mousemove'</span><span class="PUNC">:</span><span class="WHIT">
+<span class='line'>188</span> </span><span class="WHIT">			</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">clickState.s</span><span class="PUNC">===</span><span class="NAME">STATE_DOWN</span><span class="WHIT"> </span><span class="PUNC">||</span><span class="WHIT"> </span><span class="NAME">clickState.s</span><span class="PUNC">===</span><span class="NAME">STATE_DRAG</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>189</span> </span><span class="WHIT">				</span><span class="NAME">clickState.s</span><span class="PUNC">=</span><span class="NAME">STATE_DRAG</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>190</span> </span><span class="WHIT">				</span><span class="NAME">me</span><span class="PUNC">=</span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">MotionEvent</span><span class="PUNC">(</span><span class="STRN">'drag'</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>191</span> </span><span class="WHIT">				</span><span class="NAME">me.button</span><span class="PUNC">=</span><span class="NAME">clickState.b</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>192</span> </span><span class="WHIT">				</span><span class="NAME">me.x</span><span class="PUNC">=</span><span class="NAME">coords.x</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>193</span> </span><span class="WHIT">				</span><span class="NAME">me.y</span><span class="PUNC">=</span><span class="NAME">coords.y</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>194</span> </span><span class="WHIT">				
+<span class='line'>195</span> 				</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">clickState.cl</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="NAME">clickState.cl</span><span class="PUNC">=</span><span class="NAME">clickState.cs</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>196</span> </span><span class="WHIT">				</span><span class="COMM">/**
+<span class='line'>197</span> 				 * For drag, change in x from the last anchor position.
+<span class='line'>198</span> 				 * @public
+<span class='line'>199</span> 				 * @name deltaX
+<span class='line'>200</span> 				 * @memberOf nanomaps.MotionEvent#
+<span class='line'>201</span> 				 */</span><span class="WHIT">
+<span class='line'>202</span> </span><span class="WHIT">				</span><span class="NAME">me.deltaX</span><span class="PUNC">=</span><span class="NAME">clickState.cl.x</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">coords.x</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>203</span> 
+<span class='line'>204</span> </span><span class="WHIT">				</span><span class="COMM">/**
+<span class='line'>205</span> 				 * For drag, change in y from the last anchor position.
+<span class='line'>206</span> 				 * @public
+<span class='line'>207</span> 				 * @name deltaY
+<span class='line'>208</span> 				 * @memberOf nanomaps.MotionEvent#
+<span class='line'>209</span> 				 */</span><span class="WHIT">
+<span class='line'>210</span> </span><span class="WHIT">				</span><span class="NAME">me.deltaY</span><span class="PUNC">=</span><span class="NAME">clickState.cl.y</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">coords.y</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>211</span> </span><span class="WHIT">				</span><span class="NAME">clickState.cl</span><span class="PUNC">=</span><span class="NAME">coords</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>212</span> </span><span class="WHIT">				
+<span class='line'>213</span> 				</span><span class="NAME">dispatch</span><span class="PUNC">(</span><span class="NAME">me</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>214</span> </span><span class="WHIT">			</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>215</span> </span><span class="WHIT">			</span><span class="KEYW">break</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>216</span> 
+<span class='line'>217</span> </span><span class="WHIT">		</span><span class="KEYW">case</span><span class="WHIT"> </span><span class="STRN">'mousedown'</span><span class="PUNC">:</span><span class="WHIT">
+<span class='line'>218</span> </span><span class="WHIT">			</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">clickState</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="NAME">clickState.s</span><span class="PUNC">===</span><span class="NAME">STATE_CLICK_PEND</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>219</span> </span><span class="WHIT">				</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">(</span><span class="NAME">now</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">-</span><span class="NAME">clickState.t</span><span class="PUNC">)</span><span class="PUNC">></span><span class="NAME">CLICK_DOUBLE_MS</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>220</span> </span><span class="WHIT">					</span><span class="COMM">// Not a valid followon click</span><span class="WHIT">
+<span class='line'>221</span> </span><span class="WHIT">					</span><span class="COMM">// Dispatch current and reset</span><span class="WHIT">
+<span class='line'>222</span> </span><span class="WHIT">					</span><span class="NAME">clickDispatch</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>223</span> </span><span class="WHIT">					</span><span class="NAME">clickStart</span><span class="PUNC">(</span><span class="NAME">event</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">coords</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>224</span> </span><span class="WHIT">				</span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>225</span> </span><span class="WHIT">					</span><span class="COMM">// Just let it resume the click sequence</span><span class="WHIT">
+<span class='line'>226</span> </span><span class="WHIT">					</span><span class="NAME">clickState.s</span><span class="PUNC">=</span><span class="NAME">STATE_DOWN</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>227</span> </span><span class="WHIT">					</span><span class="NAME">clickStopTimer</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>228</span> </span><span class="WHIT">				</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>229</span> </span><span class="WHIT">			</span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>230</span> </span><span class="WHIT">				</span><span class="NAME">clickStart</span><span class="PUNC">(</span><span class="NAME">event</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">coords</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>231</span> </span><span class="WHIT">			</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>232</span> </span><span class="WHIT">			</span><span class="NAME">clickAttach</span><span class="PUNC">(</span><span class="KEYW">true</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>233</span> </span><span class="WHIT">			</span><span class="KEYW">break</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>234</span> </span><span class="WHIT">			
+<span class='line'>235</span> 		</span><span class="KEYW">case</span><span class="WHIT"> </span><span class="STRN">'mouseup'</span><span class="PUNC">:</span><span class="WHIT">
+<span class='line'>236</span> </span><span class="WHIT">			</span><span class="NAME">clickAttach</span><span class="PUNC">(</span><span class="KEYW">false</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>237</span> </span><span class="WHIT">			</span><span class="NAME">clickState.cnt</span><span class="PUNC">++</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>238</span> </span><span class="WHIT">			</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">clickState.s</span><span class="PUNC">===</span><span class="NAME">STATE_DOWN</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>239</span> </span><span class="WHIT">				</span><span class="COMM">// Start the double click timer</span><span class="WHIT">
+<span class='line'>240</span> </span><span class="WHIT">				</span><span class="NAME">clickState.s</span><span class="PUNC">=</span><span class="NAME">STATE_CLICK_PEND</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>241</span> </span><span class="WHIT">				</span><span class="NAME">clickState.t</span><span class="PUNC">=</span><span class="NAME">now</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>242</span> </span><span class="WHIT">				</span><span class="NAME">clickStartTimer</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>243</span> </span><span class="WHIT">			</span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>244</span> </span><span class="WHIT">				</span><span class="NAME">clickCancel</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>245</span> </span><span class="WHIT">			</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>246</span> </span><span class="WHIT">			</span><span class="KEYW">break</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>247</span> </span><span class="WHIT">			
+<span class='line'>248</span> 		</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>249</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>250</span> </span><span class="WHIT">	
+<span class='line'>251</span> 	</span><span class="COMM">/**
+<span class='line'>252</span> 	 * Handle mouse wheel events
+<span class='line'>253</span> 	 * This is still shaky.  I think we need an interval timer
+<span class='line'>254</span> 	 * and accumulator to straighten it out.  I also need a real
+<span class='line'>255</span> 	 * scroll wheel mouse.
+<span class='line'>256</span> 	 */</span><span class="WHIT">
+<span class='line'>257</span> </span><span class="WHIT">	</span><span class="KEYW">function</span><span class="WHIT"> </span><span class="NAME">wheelHandleEvent</span><span class="PUNC">(</span><span class="NAME">event</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>258</span> </span><span class="WHIT">		</span><span class="NAME">stopEvent</span><span class="PUNC">(</span><span class="NAME">event</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>259</span> </span><span class="WHIT">		</span><span class="NAME">clickCancel</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>260</span> </span><span class="WHIT">		</span><span class="NAME">clickAttach</span><span class="PUNC">(</span><span class="KEYW">false</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>261</span> </span><span class="WHIT">		
+<span class='line'>262</span> 		</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">delta</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">factor</span><span class="PUNC">=</span><span class="NUMB">10.0</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>263</span> </span><span class="WHIT">			</span><span class="NAME">coords</span><span class="PUNC">=</span><span class="NAME">map.eventToContainer</span><span class="PUNC">(</span><span class="NAME">event</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT"> 
+<span class='line'>264</span> 			</span><span class="NAME">me</span><span class="PUNC">=</span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">MotionEvent</span><span class="PUNC">(</span><span class="STRN">'scroll'</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>265</span> </span><span class="WHIT">		</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">event.wheelDelta</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="NAME">delta</span><span class="PUNC">=</span><span class="NAME">event.wheelDelta</span><span class="PUNC">/</span><span class="NUMB">120</span><span class="PUNC">;</span><span class="WHIT">	</span><span class="COMM">// IE</span><span class="WHIT">
+<span class='line'>266</span> </span><span class="WHIT">		</span><span class="KEYW">else</span><span class="WHIT"> </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">event.delta</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="NAME">delta</span><span class="PUNC">=</span><span class="PUNC">-</span><span class="NAME">event.delta</span><span class="PUNC">/</span><span class="NUMB">3</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>267</span> </span><span class="WHIT">		</span><span class="KEYW">else</span><span class="WHIT"> </span><span class="NAME">delta</span><span class="PUNC">=</span><span class="PUNC">-</span><span class="NAME">event.detail</span><span class="PUNC">/</span><span class="NUMB">3</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>268</span> </span><span class="WHIT">		
+<span class='line'>269</span> 		</span><span class="COMM">// Wheel deltas can get pretty crazy.  Clamp them</span><span class="WHIT">
+<span class='line'>270</span> </span><span class="WHIT">		</span><span class="NAME">delta</span><span class="PUNC">/</span><span class="PUNC">=</span><span class="NAME">factor</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>271</span> </span><span class="WHIT">		</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">delta</span><span class="PUNC">></span><span class="NUMB">2.0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="NAME">delta</span><span class="PUNC">=</span><span class="NUMB">2.0</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>272</span> </span><span class="WHIT">		</span><span class="KEYW">else</span><span class="WHIT"> </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">delta</span><span class="PUNC">&lt;</span><span class="PUNC">-</span><span class="NUMB">2.0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="NAME">delta</span><span class="PUNC">=</span><span class="PUNC">-</span><span class="NUMB">2.0</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>273</span> </span><span class="WHIT">		
+<span class='line'>274</span> 		</span><span class="NAME">me.x</span><span class="PUNC">=</span><span class="NAME">coords.x</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>275</span> </span><span class="WHIT">		</span><span class="NAME">me.y</span><span class="PUNC">=</span><span class="NAME">coords.y</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>276</span> </span><span class="WHIT">		
+<span class='line'>277</span> 		</span><span class="COMM">/**
+<span class='line'>278</span> 		 * For 'scroll' events, this is the approximated zoom
+<span class='line'>279</span> 		 * level change based on the magnitude of the scroll.
+<span class='line'>280</span> 		 * @public
+<span class='line'>281</span> 		 * @memberOf nanomaps.MotionEvent#
+<span class='line'>282</span> 		 * @name deltaZoom
+<span class='line'>283</span> 		 */</span><span class="WHIT">
+<span class='line'>284</span> </span><span class="WHIT">		</span><span class="NAME">me.deltaZoom</span><span class="PUNC">=</span><span class="NAME">delta</span><span class="PUNC">/</span><span class="NAME">factor</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>285</span> </span><span class="WHIT">		
+<span class='line'>286</span> 		</span><span class="NAME">dispatch</span><span class="PUNC">(</span><span class="NAME">me</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>287</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>288</span> </span><span class="WHIT">	
+<span class='line'>289</span> 	</span><span class="COMM">// -- Touch handling</span><span class="WHIT">
+<span class='line'>290</span> </span><span class="WHIT">	</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">touchState</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>291</span> </span><span class="WHIT">	
+<span class='line'>292</span> 	</span><span class="KEYW">function</span><span class="WHIT"> </span><span class="NAME">touchStartClickTimer</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>293</span> </span><span class="WHIT">		</span><span class="NAME">touchStopTimer</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>294</span> </span><span class="WHIT">		</span><span class="NAME">touchState.ti</span><span class="PUNC">=</span><span class="NAME">setTimeout</span><span class="PUNC">(</span><span class="KEYW">function</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>295</span> </span><span class="WHIT">			</span><span class="NAME">touchState.ti</span><span class="PUNC">=</span><span class="KEYW">null</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>296</span> </span><span class="WHIT">			</span><span class="NAME">touchDispatchTap</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>297</span> </span><span class="WHIT">			</span><span class="NAME">touchCancel</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>298</span> </span><span class="WHIT">		</span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">TOUCH_DOUBLE_MS</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>299</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>300</span> </span><span class="WHIT">	
+<span class='line'>301</span> 	</span><span class="KEYW">function</span><span class="WHIT"> </span><span class="NAME">touchStartLongTapTimer</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>302</span> </span><span class="WHIT">		</span><span class="NAME">touchStopTimer</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>303</span> </span><span class="WHIT">		</span><span class="NAME">touchState.ti</span><span class="PUNC">=</span><span class="NAME">setTimeout</span><span class="PUNC">(</span><span class="KEYW">function</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>304</span> </span><span class="WHIT">			</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">touchState</span><span class="WHIT"> </span><span class="PUNC">||</span><span class="WHIT"> </span><span class="NAME">touchState.s</span><span class="PUNC">!==</span><span class="NAME">STATE_DOWN</span><span class="WHIT"> </span><span class="PUNC">||</span><span class="WHIT"> </span><span class="NAME">touchState.t.length</span><span class="PUNC">!==</span><span class="NUMB">1</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="KEYW">return</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>305</span> </span><span class="WHIT">			</span><span class="COMM">// Dispatch a longtap event and consume this tap if handled</span><span class="WHIT">
+<span class='line'>306</span> </span><span class="WHIT">			</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">me</span><span class="PUNC">=</span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">MotionEvent</span><span class="PUNC">(</span><span class="STRN">'longtap'</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>307</span> </span><span class="WHIT">			</span><span class="NAME">me.button</span><span class="PUNC">=</span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>308</span> </span><span class="WHIT">			</span><span class="NAME">me.x</span><span class="PUNC">=</span><span class="NAME">touchState.t</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">x</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>309</span> </span><span class="WHIT">			</span><span class="NAME">me.y</span><span class="PUNC">=</span><span class="NAME">touchState.t</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">y</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>310</span> </span><span class="WHIT">			</span><span class="NAME">me.count</span><span class="PUNC">=</span><span class="NUMB">1</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>311</span> </span><span class="WHIT">			</span><span class="NAME">dispatch</span><span class="PUNC">(</span><span class="NAME">me</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>312</span> </span><span class="WHIT">			
+<span class='line'>313</span> 			</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">me.handled</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>314</span> </span><span class="WHIT">				</span><span class="NAME">touchCancel</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>315</span> </span><span class="WHIT">			</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>316</span> </span><span class="WHIT">		</span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">TOUCH_LONGTAP_MS</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>317</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>318</span> </span><span class="WHIT">	
+<span class='line'>319</span> 	</span><span class="KEYW">function</span><span class="WHIT"> </span><span class="NAME">touchStopTimer</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>320</span> </span><span class="WHIT">		</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">touchState</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>321</span> </span><span class="WHIT">			</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">touchState.ti</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="NAME">clearTimeout</span><span class="PUNC">(</span><span class="NAME">touchState.ti</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>322</span> </span><span class="WHIT">			</span><span class="NAME">touchState.ti</span><span class="PUNC">=</span><span class="KEYW">null</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>323</span> </span><span class="WHIT">		</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>324</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>325</span> </span><span class="WHIT">	
+<span class='line'>326</span> 	</span><span class="KEYW">function</span><span class="WHIT"> </span><span class="NAME">touchCancel</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>327</span> </span><span class="WHIT">		</span><span class="NAME">touchStopTimer</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>328</span> </span><span class="WHIT">		</span><span class="NAME">touchState</span><span class="PUNC">=</span><span class="KEYW">null</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>329</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>330</span> </span><span class="WHIT">	
+<span class='line'>331</span> 	</span><span class="KEYW">function</span><span class="WHIT"> </span><span class="NAME">touchDispatchTap</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>332</span> </span><span class="WHIT">		</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">me</span><span class="PUNC">=</span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">MotionEvent</span><span class="PUNC">(</span><span class="STRN">'click'</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>333</span> </span><span class="WHIT">		</span><span class="NAME">me.button</span><span class="PUNC">=</span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>334</span> </span><span class="WHIT">		</span><span class="NAME">me.count</span><span class="PUNC">=</span><span class="NAME">touchState.cnt</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>335</span> </span><span class="WHIT">		</span><span class="NAME">me.x</span><span class="PUNC">=</span><span class="NAME">touchState.tapX</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>336</span> </span><span class="WHIT">		</span><span class="NAME">me.y</span><span class="PUNC">=</span><span class="NAME">touchState.tapY</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>337</span> </span><span class="WHIT">		
+<span class='line'>338</span> 		</span><span class="COMM">//console.log('tap: count=' + me.count + ', xy=(' + me.x + ',' + me.y + ')');</span><span class="WHIT">
+<span class='line'>339</span> </span><span class="WHIT">		</span><span class="NAME">dispatch</span><span class="PUNC">(</span><span class="NAME">me</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>340</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>341</span> </span><span class="WHIT">	
+<span class='line'>342</span> 	
+<span class='line'>343</span> 	</span><span class="KEYW">function</span><span class="WHIT"> </span><span class="NAME">touchTranslate</span><span class="PUNC">(</span><span class="NAME">eventTouches</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>344</span> </span><span class="WHIT">		</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">touches</span><span class="PUNC">=</span><span class="PUNC">[</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>345</span> </span><span class="WHIT">		</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">eventTouches</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT"> 
+<span class='line'>346</span> 			</span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">i</span><span class="PUNC">=</span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">&lt;</span><span class="NAME">eventTouches.length</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">++</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>347</span> </span><span class="WHIT">				</span><span class="NAME">touch</span><span class="PUNC">=</span><span class="NAME">eventTouches</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>348</span> </span><span class="WHIT">				</span><span class="NAME">touches.push</span><span class="PUNC">(</span><span class="NAME">map.eventToContainer</span><span class="PUNC">(</span><span class="NAME">touch</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>349</span> </span><span class="WHIT">			</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>350</span> </span><span class="WHIT">		</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>351</span> </span><span class="WHIT">		</span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">touches</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>352</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>353</span> </span><span class="WHIT">	
+<span class='line'>354</span> 	</span><span class="KEYW">function</span><span class="WHIT"> </span><span class="NAME">touchMoveSingle</span><span class="PUNC">(</span><span class="NAME">currentXY</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">prevXY</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>355</span> </span><span class="WHIT">		</span><span class="COMM">//console.log('touchMoveSingle (' + prevXY.x + ',' + prevXY.y + ') -> (' + currentXY.x + ',' + currentXY.y + ')');</span><span class="WHIT">
+<span class='line'>356</span> </span><span class="WHIT">		</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">me</span><span class="PUNC">=</span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">MotionEvent</span><span class="PUNC">(</span><span class="STRN">'drag'</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>357</span> </span><span class="WHIT">		</span><span class="NAME">me.button</span><span class="PUNC">=</span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>358</span> </span><span class="WHIT">		
+<span class='line'>359</span> 		</span><span class="NAME">me.x</span><span class="PUNC">=</span><span class="NAME">currentXY.x</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>360</span> </span><span class="WHIT">		</span><span class="NAME">me.y</span><span class="PUNC">=</span><span class="NAME">currentXY.y</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>361</span> </span><span class="WHIT">		</span><span class="NAME">me.deltaX</span><span class="PUNC">=</span><span class="NAME">prevXY.x</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">currentXY.x</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>362</span> </span><span class="WHIT">		</span><span class="NAME">me.deltaY</span><span class="PUNC">=</span><span class="NAME">prevXY.y</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">currentXY.y</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>363</span> </span><span class="WHIT">		
+<span class='line'>364</span> 		</span><span class="NAME">dispatch</span><span class="PUNC">(</span><span class="NAME">me</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>365</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>366</span> </span><span class="WHIT">	
+<span class='line'>367</span> 	</span><span class="KEYW">function</span><span class="WHIT"> </span><span class="NAME">touchMoveMulti</span><span class="PUNC">(</span><span class="NAME">currentXY1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">currentXY2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">prevXY1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">prevXY2</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>368</span> </span><span class="WHIT">		</span><span class="COMM">//console.log('touchMoveMulti [(' + prevXY1.x + ',' + prevXY1.y + '),(' + prevXY2.x + ',' + prevXY2.y + ')] -> [(' + currentXY1.x + ',' + currentXY1.y + '),(' + currentXY2.x + ',' + currentXY2.y + ')]');</span><span class="WHIT">
+<span class='line'>369</span> </span><span class="WHIT">		
+<span class='line'>370</span> 		</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">me</span><span class="PUNC">=</span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">MotionEvent</span><span class="PUNC">(</span><span class="STRN">'pinch'</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>371</span> </span><span class="WHIT">			</span><span class="NAME">ccX</span><span class="PUNC">=</span><span class="PUNC">(</span><span class="NAME">currentXY1.x</span><span class="PUNC">+</span><span class="NAME">currentXY2.x</span><span class="PUNC">)</span><span class="PUNC">/</span><span class="NUMB">2</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>372</span> </span><span class="WHIT">			</span><span class="NAME">ccY</span><span class="PUNC">=</span><span class="PUNC">(</span><span class="NAME">currentXY1.y</span><span class="PUNC">+</span><span class="NAME">currentXY2.y</span><span class="PUNC">)</span><span class="PUNC">/</span><span class="NUMB">2</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>373</span> </span><span class="WHIT">			</span><span class="NAME">pcX</span><span class="PUNC">=</span><span class="PUNC">(</span><span class="NAME">prevXY1.x</span><span class="PUNC">+</span><span class="NAME">prevXY2.x</span><span class="PUNC">)</span><span class="PUNC">/</span><span class="NUMB">2</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>374</span> </span><span class="WHIT">			</span><span class="NAME">pcY</span><span class="PUNC">=</span><span class="PUNC">(</span><span class="NAME">prevXY1.y</span><span class="PUNC">+</span><span class="NAME">prevXY2.y</span><span class="PUNC">)</span><span class="PUNC">/</span><span class="NUMB">2</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>375</span> </span><span class="WHIT">			</span><span class="NAME">cdx</span><span class="PUNC">=</span><span class="NAME">currentXY1.x</span><span class="PUNC">-</span><span class="NAME">currentXY2.x</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>376</span> </span><span class="WHIT">			</span><span class="NAME">cdy</span><span class="PUNC">=</span><span class="NAME">currentXY1.y</span><span class="PUNC">-</span><span class="NAME">currentXY2.y</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>377</span> </span><span class="WHIT">			</span><span class="NAME">pdx</span><span class="PUNC">=</span><span class="NAME">prevXY1.x</span><span class="PUNC">-</span><span class="NAME">prevXY2.x</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>378</span> </span><span class="WHIT">			</span><span class="NAME">pdy</span><span class="PUNC">=</span><span class="NAME">prevXY1.y</span><span class="PUNC">-</span><span class="NAME">prevXY2.y</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>379</span> </span><span class="WHIT">			</span><span class="NAME">cmag</span><span class="PUNC">=</span><span class="NAME">Math.sqrt</span><span class="PUNC">(</span><span class="NAME">cdx</span><span class="PUNC">*</span><span class="NAME">cdx</span><span class="PUNC">+</span><span class="NAME">cdy</span><span class="PUNC">*</span><span class="NAME">cdy</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>380</span> </span><span class="WHIT">			</span><span class="NAME">pmag</span><span class="PUNC">=</span><span class="NAME">Math.sqrt</span><span class="PUNC">(</span><span class="NAME">pdx</span><span class="PUNC">*</span><span class="NAME">pdx</span><span class="PUNC">+</span><span class="NAME">pdy</span><span class="PUNC">*</span><span class="NAME">pdy</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>381</span> </span><span class="WHIT">		
+<span class='line'>382</span> 		</span><span class="NAME">me.button</span><span class="PUNC">=</span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>383</span> </span><span class="WHIT">		</span><span class="NAME">me.x</span><span class="PUNC">=</span><span class="NAME">ccX</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>384</span> </span><span class="WHIT">		</span><span class="NAME">me.y</span><span class="PUNC">=</span><span class="NAME">ccY</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>385</span> </span><span class="WHIT">		</span><span class="NAME">me.deltaX</span><span class="PUNC">=</span><span class="NAME">pcX</span><span class="PUNC">-</span><span class="NAME">ccX</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>386</span> </span><span class="WHIT">		</span><span class="NAME">me.deltaY</span><span class="PUNC">=</span><span class="NAME">pcY</span><span class="PUNC">-</span><span class="NAME">ccY</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>387</span> </span><span class="WHIT">		
+<span class='line'>388</span> 		</span><span class="COMM">/**
+<span class='line'>389</span> 		 * For pinch, this is the change in zoom level that should be
+<span class='line'>390</span> 		 * applied around the centroid (x,y) in addition to any movement
+<span class='line'>391</span> 		 * by (deltaX, deltaY)
+<span class='line'>392</span> 		 * @public
+<span class='line'>393</span> 		 * @name deltaZoom
+<span class='line'>394</span> 		 * @memberOf nanomaps.MotionEvent#
+<span class='line'>395</span> 		 */</span><span class="WHIT">
+<span class='line'>396</span> </span><span class="WHIT">		</span><span class="NAME">me.deltaZoom</span><span class="PUNC">=</span><span class="NAME">Math.log</span><span class="PUNC">(</span><span class="NAME">cmag</span><span class="PUNC">/</span><span class="NAME">pmag</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NUMB">1.5</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>397</span> </span><span class="WHIT">		
+<span class='line'>398</span> 		</span><span class="COMM">//console.log('pinch: deltaXY=(' + me.deltaX + ',' + me.deltaY + '), deltaZoom=' + me.deltaZoom);</span><span class="WHIT">
+<span class='line'>399</span> </span><span class="WHIT">		</span><span class="NAME">dispatch</span><span class="PUNC">(</span><span class="NAME">me</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>400</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>401</span> </span><span class="WHIT">	
+<span class='line'>402</span> 	</span><span class="KEYW">function</span><span class="WHIT"> </span><span class="NAME">touchHandleEvent</span><span class="PUNC">(</span><span class="NAME">event</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>403</span> </span><span class="WHIT">		</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">type</span><span class="PUNC">=</span><span class="NAME">event.type</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>404</span> </span><span class="WHIT">			</span><span class="NAME">currentTouches</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>405</span> </span><span class="WHIT">			
+<span class='line'>406</span> 		</span><span class="NAME">stopEvent</span><span class="PUNC">(</span><span class="NAME">event</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>407</span> </span><span class="WHIT">		
+<span class='line'>408</span> 		</span><span class="COMM">// Extract current touches and translate to local coordinates</span><span class="WHIT">
+<span class='line'>409</span> </span><span class="WHIT">		</span><span class="NAME">currentTouches</span><span class="PUNC">=</span><span class="NAME">touchTranslate</span><span class="PUNC">(</span><span class="NAME">event.touches</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>410</span> </span><span class="WHIT">		
+<span class='line'>411</span> 		</span><span class="COMM">//console.log('ontouch: ' + event.type + ', touches=' + currentTouches.length);</span><span class="WHIT">
+<span class='line'>412</span> </span><span class="WHIT">		
+<span class='line'>413</span> 		</span><span class="COMM">// Handle touch start</span><span class="WHIT">
+<span class='line'>414</span> </span><span class="WHIT">		</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">type</span><span class="PUNC">===</span><span class="STRN">'touchstart'</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>415</span> </span><span class="WHIT">			</span><span class="COMM">// Handle followon tap</span><span class="WHIT">
+<span class='line'>416</span> </span><span class="WHIT">			</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">touchState</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="NAME">touchState.s</span><span class="PUNC">===</span><span class="NAME">STATE_CLICK_PEND</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>417</span> </span><span class="WHIT">				</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">(</span><span class="NAME">now</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">-</span><span class="NAME">touchState.te</span><span class="PUNC">)</span><span class="PUNC">></span><span class="NAME">TOUCH_DOUBLE_MS</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>418</span> </span><span class="WHIT">					</span><span class="COMM">// Not a valid followon tap</span><span class="WHIT">
+<span class='line'>419</span> </span><span class="WHIT">					</span><span class="COMM">// Dispatch current and reset</span><span class="WHIT">
+<span class='line'>420</span> </span><span class="WHIT">					</span><span class="NAME">touchDispatch</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>421</span> </span><span class="WHIT">					</span><span class="NAME">touchCancel</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>422</span> </span><span class="WHIT">					
+<span class='line'>423</span> 					</span><span class="COMM">// Fall through to normal touch start</span><span class="WHIT">
+<span class='line'>424</span> </span><span class="WHIT">				</span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">currentTouches.length</span><span class="PUNC">===</span><span class="NUMB">1</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>425</span> </span><span class="WHIT">					</span><span class="COMM">// Just let it resume the tap-tap sequence</span><span class="WHIT">
+<span class='line'>426</span> </span><span class="WHIT">					</span><span class="NAME">touchState.s</span><span class="PUNC">=</span><span class="NAME">STATE_DOWN</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>427</span> </span><span class="WHIT">					</span><span class="NAME">touchState.t</span><span class="PUNC">=</span><span class="NAME">currentTouches</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>428</span> </span><span class="WHIT">					</span><span class="NAME">touchStopTimer</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>429</span> </span><span class="WHIT">					</span><span class="KEYW">return</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>430</span> </span><span class="WHIT">				</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>431</span> </span><span class="WHIT">			</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>432</span> </span><span class="WHIT">			
+<span class='line'>433</span> 			</span><span class="COMM">// Normal touch initiation when a new finger is pressed</span><span class="WHIT">
+<span class='line'>434</span> </span><span class="WHIT">			</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">touchState</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>435</span> </span><span class="WHIT">				</span><span class="NAME">touchState</span><span class="PUNC">=</span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>436</span> </span><span class="WHIT">					</span><span class="NAME">s</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NAME">STATE_DOWN</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>437</span> </span><span class="WHIT">					</span><span class="NAME">t</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NAME">currentTouches</span><span class="PUNC">,</span><span class="WHIT">	</span><span class="COMM">// Touches array</span><span class="WHIT">
+<span class='line'>438</span> </span><span class="WHIT">					</span><span class="NAME">mt</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">,</span><span class="WHIT">			</span><span class="COMM">// True if multi-touch</span><span class="WHIT">
+<span class='line'>439</span> </span><span class="WHIT">					</span><span class="NAME">te</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT">				</span><span class="COMM">// Last touch end time</span><span class="WHIT">
+<span class='line'>440</span> </span><span class="WHIT">					</span><span class="NAME">ts</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NAME">now</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT">			</span><span class="COMM">// Current touch start time</span><span class="WHIT">
+<span class='line'>441</span> </span><span class="WHIT">					</span><span class="NAME">ti</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">null</span><span class="PUNC">,</span><span class="WHIT">			</span><span class="COMM">// Touch timer id</span><span class="WHIT">
+<span class='line'>442</span> </span><span class="WHIT">					</span><span class="NAME">cnt</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="WHIT">				</span><span class="COMM">// Number of consecutive touches</span><span class="WHIT">
+<span class='line'>443</span> </span><span class="WHIT">				</span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>444</span> </span><span class="WHIT">				</span><span class="NAME">touchStartLongTapTimer</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>445</span> </span><span class="WHIT">			</span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>446</span> </span><span class="WHIT">				</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">currentTouches.length</span><span class="PUNC">></span><span class="NUMB">1</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="NAME">touchState.mt</span><span class="PUNC">=</span><span class="KEYW">true</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>447</span> </span><span class="WHIT">				</span><span class="NAME">touchState.t</span><span class="PUNC">=</span><span class="NAME">currentTouches</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>448</span> </span><span class="WHIT">			</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>449</span> </span><span class="WHIT">			</span><span class="KEYW">return</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>450</span> </span><span class="WHIT">		</span><span class="PUNC">}</span><span class="WHIT"> 
+<span class='line'>451</span> 		
+<span class='line'>452</span> 		</span><span class="COMM">// Don't do anything else if not in a touch state</span><span class="WHIT">
+<span class='line'>453</span> </span><span class="WHIT">		</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">touchState</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="KEYW">return</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>454</span> </span><span class="WHIT">		
+<span class='line'>455</span> 		</span><span class="KEYW">switch</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">event.type</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>456</span> </span><span class="WHIT">		</span><span class="KEYW">case</span><span class="WHIT"> </span><span class="STRN">'touchmove'</span><span class="PUNC">:</span><span class="WHIT">
+<span class='line'>457</span> </span><span class="WHIT">			</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">currentTouches.length</span><span class="PUNC">===</span><span class="NUMB">1</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>458</span> </span><span class="WHIT">				</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">touchState.s</span><span class="PUNC">===</span><span class="NAME">STATE_DRAG</span><span class="WHIT"> </span><span class="PUNC">||</span><span class="WHIT">
+<span class='line'>459</span> </span><span class="WHIT">					</span><span class="NAME">Math.abs</span><span class="PUNC">(</span><span class="NAME">currentTouches</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">x</span><span class="PUNC">-</span><span class="NAME">touchState.t</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">x</span><span class="PUNC">)</span><span class="PUNC">></span><span class="NAME">TOUCH_THRESHOLD</span><span class="WHIT"> </span><span class="PUNC">||</span><span class="WHIT">
+<span class='line'>460</span> </span><span class="WHIT">					</span><span class="NAME">Math.abs</span><span class="PUNC">(</span><span class="NAME">currentTouches</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">y</span><span class="PUNC">-</span><span class="NAME">touchState.t</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">y</span><span class="PUNC">)</span><span class="PUNC">></span><span class="NAME">TOUCH_THRESHOLD</span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'>461</span> </span><span class="WHIT">				</span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>462</span> </span><span class="WHIT">					</span><span class="COMM">// Cancel any longtap in progress</span><span class="WHIT">
+<span class='line'>463</span> </span><span class="WHIT">					</span><span class="NAME">touchStopTimer</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>464</span> </span><span class="WHIT">					
+<span class='line'>465</span> 					</span><span class="COMM">// Single touch over touch threshold</span><span class="WHIT">
+<span class='line'>466</span> </span><span class="WHIT">					</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">touchState.s</span><span class="PUNC">===</span><span class="NAME">STATE_CLICK_PEND</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>467</span> </span><span class="WHIT">						</span><span class="COMM">// Dispatch pending and reset</span><span class="WHIT">
+<span class='line'>468</span> </span><span class="WHIT">						</span><span class="NAME">touchDispatch</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>469</span> </span><span class="WHIT">						</span><span class="NAME">touchState.cnt</span><span class="PUNC">=</span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>470</span> </span><span class="WHIT">					</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>471</span> </span><span class="WHIT">					
+<span class='line'>472</span> 					</span><span class="NAME">touchState.s</span><span class="PUNC">=</span><span class="NAME">STATE_DRAG</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>473</span> </span><span class="WHIT">					</span><span class="NAME">touchMoveSingle</span><span class="PUNC">(</span><span class="NAME">currentTouches</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">touchState.t</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>474</span> </span><span class="WHIT">					</span><span class="NAME">touchState.t</span><span class="PUNC">=</span><span class="NAME">currentTouches</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>475</span> </span><span class="WHIT">				</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>476</span> </span><span class="WHIT">			</span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">currentTouches.length</span><span class="PUNC">></span><span class="NUMB">1</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>477</span> </span><span class="WHIT">				</span><span class="NAME">touchState.s</span><span class="PUNC">=</span><span class="NAME">STATE_DRAG</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>478</span> </span><span class="WHIT">				</span><span class="NAME">touchMoveMulti</span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>479</span> </span><span class="WHIT">					</span><span class="NAME">currentTouches</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>480</span> </span><span class="WHIT">					</span><span class="NAME">currentTouches</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>481</span> </span><span class="WHIT">					</span><span class="NAME">touchState.t</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>482</span> </span><span class="WHIT">					</span><span class="NAME">touchState.t</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="WHIT">
+<span class='line'>483</span> </span><span class="WHIT">				</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>484</span> </span><span class="WHIT">				</span><span class="NAME">touchState.t</span><span class="PUNC">=</span><span class="NAME">currentTouches</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>485</span> </span><span class="WHIT">			</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>486</span> </span><span class="WHIT">			
+<span class='line'>487</span> 			</span><span class="KEYW">break</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>488</span> </span><span class="WHIT">		</span><span class="KEYW">case</span><span class="WHIT"> </span><span class="STRN">'touchend'</span><span class="PUNC">:</span><span class="WHIT">
+<span class='line'>489</span> </span><span class="WHIT">			</span><span class="COMM">// Note that ios calls touchend with 0 touches</span><span class="WHIT">
+<span class='line'>490</span> </span><span class="WHIT">			</span><span class="COMM">// when done, but android calls it with its 1 touch</span><span class="WHIT">
+<span class='line'>491</span> </span><span class="WHIT">			</span><span class="COMM">// still present (at least on single touch devices).</span><span class="WHIT">
+<span class='line'>492</span> </span><span class="WHIT">			</span><span class="COMM">// This is a pita since we don't have a clear signal</span><span class="WHIT">
+<span class='line'>493</span> </span><span class="WHIT">			</span><span class="COMM">// of completion.</span><span class="WHIT">
+<span class='line'>494</span> </span><span class="WHIT">			</span><span class="COMM">// This may not work on android multi-touch.</span><span class="WHIT">
+<span class='line'>495</span> </span><span class="WHIT">			</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">touchState.mt</span><span class="WHIT"> </span><span class="PUNC">||</span><span class="WHIT"> </span><span class="NAME">currentTouches.length</span><span class="PUNC">===</span><span class="NUMB">0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>496</span> </span><span class="WHIT">				</span><span class="COMM">// All done here</span><span class="WHIT">
+<span class='line'>497</span> </span><span class="WHIT">				</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">touchState.s</span><span class="PUNC">===</span><span class="NAME">STATE_DOWN</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>498</span> </span><span class="WHIT">					</span><span class="NAME">touchState.cnt</span><span class="PUNC">++</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>499</span> </span><span class="WHIT">					</span><span class="NAME">touchState.s</span><span class="PUNC">=</span><span class="NAME">STATE_CLICK_PEND</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>500</span> </span><span class="WHIT">					</span><span class="NAME">touchState.tapX</span><span class="PUNC">=</span><span class="NAME">touchState.t</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">x</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>501</span> </span><span class="WHIT">					</span><span class="NAME">touchState.tapY</span><span class="PUNC">=</span><span class="NAME">touchState.t</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">y</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>502</span> </span><span class="WHIT">					</span><span class="NAME">touchState.te</span><span class="PUNC">=</span><span class="NAME">now</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>503</span> </span><span class="WHIT">					</span><span class="NAME">touchStartClickTimer</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>504</span> </span><span class="WHIT">				</span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>505</span> </span><span class="WHIT">					</span><span class="NAME">touchCancel</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>506</span> </span><span class="WHIT">				</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>507</span> </span><span class="WHIT">			</span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>508</span> </span><span class="WHIT">				</span><span class="NAME">touchState.t</span><span class="PUNC">=</span><span class="NAME">currentTouches</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>509</span> </span><span class="WHIT">			</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>510</span> </span><span class="WHIT">			</span><span class="KEYW">break</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>511</span> </span><span class="WHIT">		</span><span class="KEYW">case</span><span class="WHIT"> </span><span class="STRN">'touchcancel'</span><span class="PUNC">:</span><span class="WHIT">
+<span class='line'>512</span> </span><span class="WHIT">			</span><span class="NAME">touchCancel</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>513</span> </span><span class="WHIT">			</span><span class="KEYW">break</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>514</span> </span><span class="WHIT">		</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>515</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>516</span> </span><span class="WHIT">	
+<span class='line'>517</span> 	</span><span class="COMM">/**
+<span class='line'>518</span> 	 * Listen to all motion related events on
+<span class='line'>519</span> 	 * the map.
+<span class='line'>520</span> 	 *
+<span class='line'>521</span> 	 * @methodOf Nanomaps.MotionController#
+<span class='line'>522</span> 	 */</span><span class="WHIT">
+<span class='line'>523</span> </span><span class="WHIT">	</span><span class="NAME">this.listen</span><span class="PUNC">=</span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">enableClick</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">enableTouch</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">enableWheel</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>524</span> </span><span class="WHIT">		</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">elements</span><span class="PUNC">=</span><span class="NAME">map.elements</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>525</span> </span><span class="WHIT">			</span><span class="NAME">target</span><span class="PUNC">=</span><span class="NAME">elements.event</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>526</span> </span><span class="WHIT">			</span><span class="NAME">parent</span><span class="PUNC">=</span><span class="NAME">elements.parent</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>527</span> </span><span class="WHIT">			</span><span class="NAME">touchEvents</span><span class="PUNC">=</span><span class="PUNC">[</span><span class="WHIT">
+<span class='line'>528</span> </span><span class="WHIT">				</span><span class="STRN">'touchstart'</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>529</span> </span><span class="WHIT">				</span><span class="STRN">'touchend'</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>530</span> </span><span class="WHIT">				</span><span class="STRN">'touchmove'</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>531</span> </span><span class="WHIT">				</span><span class="STRN">'touchcancel'</span><span class="WHIT">
+<span class='line'>532</span> </span><span class="WHIT">			</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>533</span> </span><span class="WHIT">			</span><span class="NAME">i</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>534</span> </span><span class="WHIT">		
+<span class='line'>535</span> 		</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">enableClick</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>536</span> </span><span class="WHIT">			</span><span class="COMM">// Just listen for mousedown to start with</span><span class="WHIT">
+<span class='line'>537</span> </span><span class="WHIT">			</span><span class="COMM">// We will listen for mousemove and mouseup</span><span class="WHIT">
+<span class='line'>538</span> </span><span class="WHIT">			</span><span class="COMM">// on document when we enter a down state</span><span class="WHIT">
+<span class='line'>539</span> </span><span class="WHIT">			</span><span class="NAME">addEventListener</span><span class="PUNC">(</span><span class="NAME">target</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">'mousedown'</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">clickHandleEvent</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>540</span> </span><span class="WHIT">			
+<span class='line'>541</span> 			</span><span class="COMM">// Also listen on the parent so that we get mousedowns</span><span class="WHIT">
+<span class='line'>542</span> </span><span class="WHIT">			</span><span class="COMM">// that bubble up the hierarchy from inactive elements</span><span class="WHIT">
+<span class='line'>543</span> </span><span class="WHIT">			</span><span class="COMM">// ** Actually not doing this as it completely breaks containment</span><span class="WHIT">
+<span class='line'>544</span> </span><span class="WHIT">			</span><span class="COMM">//addEventListener(parent, 'mousedown', clickHandleEvent);</span><span class="WHIT">
+<span class='line'>545</span> </span><span class="WHIT">		</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>546</span> </span><span class="WHIT">		
+<span class='line'>547</span> 		</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">enableWheel</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>548</span> </span><span class="WHIT">			</span><span class="NAME">addEventListener</span><span class="PUNC">(</span><span class="NAME">target</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">'DOMMouseScroll'</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">wheelHandleEvent</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>549</span> </span><span class="WHIT">			</span><span class="NAME">addEventListener</span><span class="PUNC">(</span><span class="NAME">target</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">'mousewheel'</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">wheelHandleEvent</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>550</span> </span><span class="WHIT">		</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>551</span> </span><span class="WHIT">		
+<span class='line'>552</span> 		</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">enableTouch</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="NAME">target.addEventListener</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>553</span> </span><span class="WHIT">			</span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">i</span><span class="PUNC">=</span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">&lt;</span><span class="NAME">touchEvents.length</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">++</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>554</span> </span><span class="WHIT">				</span><span class="NAME">target.addEventListener</span><span class="PUNC">(</span><span class="NAME">touchEvents</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">touchHandleEvent</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>555</span> </span><span class="WHIT">			</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>556</span> </span><span class="WHIT">		</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>557</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>558</span> </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>559</span> 
+<span class='line'>560</span> </span><span class="NAME">MapSurfaceMethods.advise</span><span class="PUNC">(</span><span class="STRN">'initialize'</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">'after'</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">options</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>561</span> </span><span class="WHIT">	</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">motionController</span><span class="PUNC">=</span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">MotionController</span><span class="PUNC">(</span><span class="KEYW">this</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>562</span> </span><span class="WHIT">	
+<span class='line'>563</span> 	</span><span class="COMM">/**
+<span class='line'>564</span> 	 * Controller for motion related events (touch, click)
+<span class='line'>565</span> 	 * @public
+<span class='line'>566</span> 	 * @memberOf nanomaps.MapSurface#
+<span class='line'>567</span> 	 */</span><span class="WHIT">
+<span class='line'>568</span> </span><span class="WHIT">	</span><span class="NAME">this.motionController</span><span class="PUNC">=</span><span class="NAME">motionController</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>569</span> </span><span class="WHIT">	
+<span class='line'>570</span> 	</span><span class="NAME">motionController.listen</span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>571</span> </span><span class="WHIT">		</span><span class="PUNC">!</span><span class="NAME">options.noClick</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>572</span> </span><span class="WHIT">		</span><span class="PUNC">!</span><span class="NAME">options.noTouch</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>573</span> </span><span class="WHIT">		</span><span class="PUNC">!</span><span class="NAME">options.noWheel</span><span class="WHIT">
+<span class='line'>574</span> </span><span class="WHIT">		</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>575</span> </span><span class="WHIT">		
+<span class='line'>576</span> 	</span><span class="COMM">// TODO: This is temp.  Going to do a CSS approach later.</span><span class="WHIT">
+<span class='line'>577</span> </span><span class="WHIT">	</span><span class="COMM">//this.elements.event.style.cursor='move';</span><span class="WHIT">
+<span class='line'>578</span> </span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>579</span> 
+<span class='line'>580</span> </span><span class="COMM">/**
+<span class='line'>581</span>  * Dispatch a MotionEvent for processing.  This will emit
+<span class='line'>582</span>  * the 'motion' event on the map and then call handleMotionEvent
+<span class='line'>583</span>  * for default processing if the handled flag is false.
+<span class='line'>584</span>  * @public
+<span class='line'>585</span>  * @name dispatchMotionEvent
+<span class='line'>586</span>  * @methodOf nanomaps.MapSurface.prototype
+<span class='line'>587</span>  * @param motionEvent {nanomaps.MotionEvent}
+<span class='line'>588</span>  */</span><span class="WHIT">
+<span class='line'>589</span> </span><span class="NAME">MapSurfaceMethods.dispatchMotionEvent</span><span class="PUNC">=</span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">motionEvent</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>590</span> </span><span class="WHIT">	</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">eventName</span><span class="PUNC">=</span><span class="STRN">'motion.'</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">motionEvent.type</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>591</span> </span><span class="WHIT">	</span><span class="COMM">//console.log('emit(' + eventName + ')');</span><span class="WHIT">
+<span class='line'>592</span> </span><span class="WHIT">	</span><span class="NAME">this.emit</span><span class="PUNC">(</span><span class="NAME">eventName</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">motionEvent</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>593</span> </span><span class="WHIT">	</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">motionEvent.handled</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>594</span> </span><span class="WHIT">		</span><span class="NAME">this.handleMotionEvent</span><span class="PUNC">(</span><span class="NAME">motionEvent</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>595</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>596</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>597</span> 
+<span class='line'>598</span> </span><span class="COMM">/**
+<span class='line'>599</span>  * Perform default processing of a MotionEvent if its handled
+<span class='line'>600</span>  * property is false after dispatch.  You can intercept motion
+<span class='line'>601</span>  * events by registering an event with name 'motion.{type}'.
+<span class='line'>602</span>  * &lt;pre>
+<span class='line'>603</span>  * 	map.on('motion.click', function(motionEvent) {
+<span class='line'>604</span>  * 		alert('Clicked at ' + motionEvent.x + ',' + motionEvent.y);
+<span class='line'>605</span>  * 		motionEvent.handled=true;
+<span class='line'>606</span>  * 	});
+<span class='line'>607</span>  * &lt;/pre>
+<span class='line'>608</span>  * @public
+<span class='line'>609</span>  * @name handleMotionEvent
+<span class='line'>610</span>  * @methodOf nanomaps.MapSurface.prototype
+<span class='line'>611</span>  * @param motionEvent {nanomaps.MotionEvent}
+<span class='line'>612</span>  */</span><span class="WHIT">
+<span class='line'>613</span> </span><span class="NAME">MapSurfaceMethods.handleMotionEvent</span><span class="PUNC">=</span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">motionEvent</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>614</span> </span><span class="WHIT">	</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">motionEvent.handled</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="KEYW">return</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>615</span> </span><span class="WHIT">	
+<span class='line'>616</span> 	</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">type</span><span class="PUNC">=</span><span class="NAME">motionEvent.type</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">deltaZoom</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>617</span> </span><span class="WHIT">	</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">type</span><span class="PUNC">===</span><span class="STRN">'drag'</span><span class="WHIT"> </span><span class="PUNC">||</span><span class="WHIT"> </span><span class="NAME">type</span><span class="PUNC">===</span><span class="STRN">'pinch'</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>618</span> </span><span class="WHIT">		</span><span class="NAME">this.begin</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>619</span> </span><span class="WHIT">		</span><span class="NAME">this.moveBy</span><span class="PUNC">(</span><span class="NAME">motionEvent.deltaX</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="NAME">motionEvent.deltaY</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>620</span> </span><span class="WHIT">		</span><span class="NAME">deltaZoom</span><span class="PUNC">=</span><span class="NAME">Number</span><span class="PUNC">(</span><span class="NAME">motionEvent.deltaZoom</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>621</span> </span><span class="WHIT">		</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">isNaN</span><span class="PUNC">(</span><span class="NAME">deltaZoom</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>622</span> </span><span class="WHIT">			</span><span class="NAME">this.setZoom</span><span class="PUNC">(</span><span class="NAME">this.getZoom</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">deltaZoom</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">motionEvent.x</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">motionEvent.y</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>623</span> </span><span class="WHIT">		</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>624</span> </span><span class="WHIT">		</span><span class="NAME">this.commit</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>625</span> </span><span class="WHIT">		</span><span class="NAME">motionEvent.handled</span><span class="PUNC">=</span><span class="KEYW">true</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>626</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">type</span><span class="PUNC">===</span><span class="STRN">'scroll'</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>627</span> </span><span class="WHIT">		</span><span class="NAME">this.setZoom</span><span class="PUNC">(</span><span class="NAME">this.getZoom</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">+</span><span class="NAME">motionEvent.deltaZoom</span><span class="PUNC">,</span><span class="WHIT"> 
+<span class='line'>628</span> 			</span><span class="NAME">motionEvent.x</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">motionEvent.y</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>629</span> </span><span class="WHIT">		</span><span class="NAME">motionEvent.handled</span><span class="PUNC">=</span><span class="KEYW">true</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>630</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">type</span><span class="PUNC">===</span><span class="STRN">'click'</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="NAME">motionEvent.count</span><span class="PUNC">===</span><span class="NUMB">2</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>631</span> </span><span class="WHIT">		</span><span class="COMM">// Double-click to zoom</span><span class="WHIT">
+<span class='line'>632</span> </span><span class="WHIT">		</span><span class="NAME">this.begin</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>633</span> </span><span class="WHIT">		</span><span class="NAME">this.zoomIn</span><span class="PUNC">(</span><span class="NAME">motionEvent.x</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">motionEvent.y</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>634</span> </span><span class="WHIT">		</span><span class="NAME">this.commit</span><span class="PUNC">(</span><span class="KEYW">true</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>635</span> </span><span class="WHIT">		</span><span class="NAME">motionEvent.handled</span><span class="PUNC">=</span><span class="KEYW">true</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>636</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>637</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>638</span> 
+<span class='line'>639</span> 
+<span class='line'>640</span> </span></pre></body></html>

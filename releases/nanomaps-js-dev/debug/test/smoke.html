@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>nanomaps test page - smoke</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<script src="../lib/nanomaps.bundle.all.js"></script><script src="pageundertest.js"></script>
+<link rel="stylesheet" href="pageundertest.css" />
+<script>
+function initializePage() {
+	testMap=new nanomaps.MapSurface(testMapElement);
+	testMap.setLocation({
+		lat: 47.60551967716011, 
+		lng:-122.33306565199813
+	});
+	testMap.setZoom(10);
+	testMap.attach(new nanomaps.TileLayer({
+		tileSrc: TILESRC_MAP
+	}));
+}
+</script>
+
+
+</head>
+
+<body>
+	<div id="testMap" style="display:none">
+	<div id="mapcopy" onselectstart="return false">
+		<span>Tiles Courtesy of <a href="http://open.mapquest.co.uk/" target="_blank">MapQuest</a> <img width="16" height="16" src="http://developer.mapquest.com/content/osm/mq_logo.png" border="0"></span>
+		<br />
+		<span>&copy; <a href="http://www.openstreetmap.org/">OpenStreetMap</a> and contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a></span>
+	</div>
+	</div>
+
+<script>
+	_bootPage();
+</script>
+</body>
+</html>

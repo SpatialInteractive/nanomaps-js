@@ -1,0 +1,188 @@
+<html><head><meta http-equiv="content-type" content="text/html; charset=UTF-8"> <style>
+	.KEYW {color: #933;}
+	.COMM {color: #bbb; font-style: italic;}
+	.NUMB {color: #393;}
+	.STRN {color: #393;}
+	.REGX {color: #339;}
+	.line {border-right: 1px dotted #666; color: #666; font-style: normal;}
+	</style></head><body><pre><span class='line'>  1</span> <span class="COMM">/**
+<span class='line'>  2</span>  * nanomaps.projections.js
+<span class='line'>  3</span>  * Currently just the WebMercator projection
+<span class='line'>  4</span>  */</span><span class="WHIT">
+<span class='line'>  5</span> </span><span class="WHIT"> 
+<span class='line'>  6</span> </span><span class="COMM">/**
+<span class='line'>  7</span>  * @namespace Projections
+<span class='line'>  8</span>  * @name nanomaps.Projections
+<span class='line'>  9</span>  */</span><span class="WHIT">
+<span class='line'> 10</span> </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">Projections</span><span class="PUNC">=</span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 11</span> </span><span class="WHIT">	</span><span class="COMM">/**
+<span class='line'> 12</span> 	 * Standard "Web Mercator" projection as used by Google, Microsoft, OSM, et al.
+<span class='line'> 13</span> 	 * Instantiate as new WebMercator(options). 
+<span class='line'> 14</span> 	 * @class
+<span class='line'> 15</span> 	 * @name nanomaps.Projections.WebMercator
+<span class='line'> 16</span> 	 * @param {Number} [options.MIN_LEVEL=1]
+<span class='line'> 17</span> 	 * @param {Number} [options.MAX_LEVEL=18]
+<span class='line'> 18</span> 	 */</span><span class="WHIT">
+<span class='line'> 19</span> </span><span class="WHIT">	</span><span class="NAME">WebMercator</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">options</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 20</span> </span><span class="WHIT">		</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">options</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="NAME">options</span><span class="PUNC">=</span><span class="PUNC">{</span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 21</span> </span><span class="WHIT">		</span><span class="COMM">/**
+<span class='line'> 22</span> 		 * Default center for this projection
+<span class='line'> 23</span> 		 * @public
+<span class='line'> 24</span> 		 * @name DEFAULT_CENTER
+<span class='line'> 25</span> 		 * @memberOf nanomaps.Projections.WebMercator#
+<span class='line'> 26</span> 		 */</span><span class="WHIT">
+<span class='line'> 27</span> </span><span class="WHIT">		</span><span class="NAME">this.DEFAULT_CENTER</span><span class="PUNC">=</span><span class="PUNC">{</span><span class="NAME">lat</span><span class="PUNC">:</span><span class="NUMB">39.7406</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">lng</span><span class="PUNC">:</span><span class="PUNC">-</span><span class="NUMB">104.985441</span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 28</span> </span><span class="WHIT">		</span><span class="COMM">/**
+<span class='line'> 29</span> 		 * Default resolution for this projection
+<span class='line'> 30</span> 		 * @public
+<span class='line'> 31</span> 		 * @name DEFAULT_RESOLUTION
+<span class='line'> 32</span> 		 * @memberOf nanomaps.Projections.WebMercator#
+<span class='line'> 33</span> 		 */</span><span class="WHIT">
+<span class='line'> 34</span> </span><span class="WHIT">		</span><span class="NAME">this.DEFAULT_RESOLUTION</span><span class="PUNC">=</span><span class="NUMB">611.4962</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 35</span> </span><span class="WHIT">		
+<span class='line'> 36</span> 		</span><span class="COMM">/**
+<span class='line'> 37</span> 		 * WebMercator does not have an x inversion
+<span class='line'> 38</span> 		 * @public
+<span class='line'> 39</span> 		 * @name XINVERTED
+<span class='line'> 40</span> 		 * @memberOf nanomaps.Projections.WebMercator#
+<span class='line'> 41</span> 		 */</span><span class="WHIT">
+<span class='line'> 42</span> </span><span class="WHIT">		</span><span class="NAME">this.XINVERTED</span><span class="PUNC">=</span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 43</span> 
+<span class='line'> 44</span> </span><span class="WHIT">		</span><span class="COMM">/**
+<span class='line'> 45</span> 		 * WebMercator &lt;b>does&lt;/b> have a y inversion
+<span class='line'> 46</span> 		 * @public
+<span class='line'> 47</span> 		 * @name XINVERTED
+<span class='line'> 48</span> 		 * @memberOf nanomaps.Projections.WebMercator#
+<span class='line'> 49</span> 		 */</span><span class="WHIT">
+<span class='line'> 50</span> </span><span class="WHIT">		</span><span class="NAME">this.YINVERTED</span><span class="PUNC">=</span><span class="KEYW">true</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 51</span> </span><span class="WHIT">		
+<span class='line'> 52</span> 		</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">EARTH_RADIUS</span><span class="PUNC">=</span><span class="NUMB">6378137.0</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 53</span> </span><span class="WHIT">			</span><span class="NAME">DEG_TO_RAD</span><span class="PUNC">=</span><span class="PUNC">.</span><span class="NUMB">0174532925199432958</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 54</span> </span><span class="WHIT">			</span><span class="NAME">RAD_TO_DEG</span><span class="PUNC">=</span><span class="NUMB">57.29577951308232</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 55</span> </span><span class="WHIT">			</span><span class="NAME">FOURTHPI</span><span class="PUNC">=</span><span class="NUMB">0.78539816339744833</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 56</span> </span><span class="WHIT">			</span><span class="NAME">HALFPI</span><span class="PUNC">=</span><span class="NUMB">1.5707963267948966</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 57</span> </span><span class="WHIT">			</span><span class="NAME">HIGHEST_RES</span><span class="PUNC">=</span><span class="NUMB">78271.5170</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 58</span> </span><span class="WHIT">		
+<span class='line'> 59</span> 		</span><span class="COMM">/**
+<span class='line'> 60</span> 		 * Minimum valid level
+<span class='line'> 61</span> 		 * @public
+<span class='line'> 62</span> 		 * @name MIN_LEVEL
+<span class='line'> 63</span> 		 * @memberOf nanomaps.Projections.WebMercator#
+<span class='line'> 64</span> 		 */</span><span class="WHIT">
+<span class='line'> 65</span> </span><span class="WHIT">		</span><span class="NAME">this.MIN_LEVEL</span><span class="PUNC">=</span><span class="NAME">options.MIN_LEVEL</span><span class="PUNC">||</span><span class="NUMB">1</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 66</span> </span><span class="WHIT">		</span><span class="COMM">/**
+<span class='line'> 67</span> 		 * Maximum valid level
+<span class='line'> 68</span> 		 * @public
+<span class='line'> 69</span> 		 * @name MAX_LEVEL
+<span class='line'> 70</span> 		 * @memberOf nanomaps.Projections.WebMercator#
+<span class='line'> 71</span> 		 */</span><span class="WHIT">
+<span class='line'> 72</span> </span><span class="WHIT">		</span><span class="NAME">this.MAX_LEVEL</span><span class="PUNC">=</span><span class="NAME">options.MAX_LEVEL</span><span class="PUNC">||</span><span class="NUMB">18</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 73</span> </span><span class="WHIT">		
+<span class='line'> 74</span> 		</span><span class="COMM">/**
+<span class='line'> 75</span> 		 * Convert from global to projected units (x) 
+<span class='line'> 76</span> 		 * @public
+<span class='line'> 77</span> 		 * @name fwdX
+<span class='line'> 78</span> 		 * @methodOf nanomaps.Projections.WebMercator#
+<span class='line'> 79</span> 		 * @param {Number} x
+<span class='line'> 80</span> 		 * @return {Number}
+<span class='line'> 81</span> 		 */</span><span class="WHIT">
+<span class='line'> 82</span> </span><span class="WHIT">		</span><span class="NAME">this.fwdX</span><span class="PUNC">=</span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">x</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 83</span> </span><span class="WHIT">			</span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">x</span><span class="PUNC">*</span><span class="NAME">DEG_TO_RAD</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">EARTH_RADIUS</span><span class="PUNC">;</span><span class="WHIT"> 
+<span class='line'> 84</span> 		</span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 85</span> 
+<span class='line'> 86</span> 
+<span class='line'> 87</span> </span><span class="WHIT">		</span><span class="COMM">/**
+<span class='line'> 88</span> 		 * Convert from global to projected units (y) 
+<span class='line'> 89</span> 		 * @public
+<span class='line'> 90</span> 		 * @name fwdY
+<span class='line'> 91</span> 		 * @methodOf nanomaps.Projections.WebMercator#
+<span class='line'> 92</span> 		 * @param {Number} y
+<span class='line'> 93</span> 		 * @return {Number}
+<span class='line'> 94</span> 		 */</span><span class="WHIT">
+<span class='line'> 95</span> </span><span class="WHIT">		</span><span class="NAME">this.fwdY</span><span class="PUNC">=</span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">y</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 96</span> </span><span class="WHIT">			</span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">Math.log</span><span class="PUNC">(</span><span class="NAME">Math.tan</span><span class="PUNC">(</span><span class="NAME">FOURTHPI</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NUMB">0.5</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">DEG_TO_RAD</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">y</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">EARTH_RADIUS</span><span class="PUNC">;</span><span class="WHIT"> 
+<span class='line'> 97</span> 		</span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 98</span> </span><span class="WHIT">		
+<span class='line'> 99</span> 		</span><span class="COMM">/**
+<span class='line'>100</span> 		 * Convert from projected to global units (x) 
+<span class='line'>101</span> 		 * @public
+<span class='line'>102</span> 		 * @name invX
+<span class='line'>103</span> 		 * @methodOf nanomaps.Projections.WebMercator#
+<span class='line'>104</span> 		 * @param {Number} x
+<span class='line'>105</span> 		 * @return {Number}
+<span class='line'>106</span> 		 */</span><span class="WHIT">
+<span class='line'>107</span> </span><span class="WHIT">		</span><span class="NAME">this.invX</span><span class="PUNC">=</span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">x</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>108</span> </span><span class="WHIT">			</span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">RAD_TO_DEG</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">x</span><span class="WHIT"> </span><span class="PUNC">/</span><span class="WHIT"> </span><span class="NAME">EARTH_RADIUS</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>109</span> </span><span class="WHIT">		</span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>110</span> 
+<span class='line'>111</span> </span><span class="WHIT">		</span><span class="COMM">/**
+<span class='line'>112</span> 		 * Convert from projected to global units (y) 
+<span class='line'>113</span> 		 * @public
+<span class='line'>114</span> 		 * @name invY
+<span class='line'>115</span> 		 * @methodOf nanomaps.Projections.WebMercator#
+<span class='line'>116</span> 		 * @param {Number} y
+<span class='line'>117</span> 		 * @return {Number}
+<span class='line'>118</span> 		 */</span><span class="WHIT">
+<span class='line'>119</span> </span><span class="WHIT">		</span><span class="NAME">this.invY</span><span class="PUNC">=</span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">y</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>120</span> </span><span class="WHIT">			</span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">RAD_TO_DEG</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">HALFPI</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NUMB">2.</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">Math.atan</span><span class="PUNC">(</span><span class="NAME">Math.exp</span><span class="PUNC">(</span><span class="PUNC">-</span><span class="NAME">y</span><span class="PUNC">/</span><span class="NAME">EARTH_RADIUS</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>121</span> </span><span class="WHIT">		</span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>122</span> </span><span class="WHIT">		
+<span class='line'>123</span> 		</span><span class="COMM">/**
+<span class='line'>124</span> 		 * Return the resolution (m/px) for the given zoom index given a standard
+<span class='line'>125</span> 		 * power of two zoom breakdown.
+<span class='line'>126</span> 		 * @public
+<span class='line'>127</span> 		 * @name fromLevel
+<span class='line'>128</span> 		 * @methodOf nanomaps.Projections.WebMercator#
+<span class='line'>129</span> 		 * @param {Number} level
+<span class='line'>130</span> 		 * @return {Number} resolution
+<span class='line'>131</span> 		 */</span><span class="WHIT">
+<span class='line'>132</span> </span><span class="WHIT">		</span><span class="NAME">this.fromLevel</span><span class="PUNC">=</span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">level</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>133</span> </span><span class="WHIT">			</span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">HIGHEST_RES</span><span class="PUNC">/</span><span class="NAME">Math.pow</span><span class="PUNC">(</span><span class="NUMB">2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">level</span><span class="PUNC">-</span><span class="NUMB">1</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>134</span> </span><span class="WHIT">		</span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>135</span> </span><span class="WHIT">		
+<span class='line'>136</span> 		</span><span class="COMM">/**
+<span class='line'>137</span> 		 * Return the level for the given resolution on the standard power of
+<span class='line'>138</span> 		 * two scale.
+<span class='line'>139</span> 		 * @public
+<span class='line'>140</span> 		 * @name toLevel
+<span class='line'>141</span> 		 * @methodOf nanomaps.Projections.WebMercator#
+<span class='line'>142</span> 		 * @param {Number} resolution
+<span class='line'>143</span> 		 * @return {Number} level
+<span class='line'>144</span> 		 */</span><span class="WHIT">
+<span class='line'>145</span> </span><span class="WHIT">		</span><span class="NAME">this.toLevel</span><span class="PUNC">=</span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">resolution</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>146</span> </span><span class="WHIT">			</span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">Math.log</span><span class="PUNC">(</span><span class="NAME">HIGHEST_RES</span><span class="PUNC">/</span><span class="NAME">resolution</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">/</span><span class="WHIT"> </span><span class="NAME">Math.log</span><span class="PUNC">(</span><span class="NUMB">2</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>147</span> </span><span class="WHIT">		</span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>148</span> 
+<span class='line'>149</span> </span><span class="WHIT">		</span><span class="COMM">/**
+<span class='line'>150</span> 		 * Bounds object defining map extent in global
+<span class='line'>151</span> 		 * coordinates.
+<span class='line'>152</span> 		 * @public
+<span class='line'>153</span> 		 * @name GLOBAL_EXTENT
+<span class='line'>154</span> 		 * @memberOf nanomaps.Projections.WebMercator#
+<span class='line'>155</span> 		 */</span><span class="WHIT">
+<span class='line'>156</span> </span><span class="WHIT">		</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">GLB_EXTENT</span><span class="PUNC">=</span><span class="NAME">this.GLB_EXTENT</span><span class="PUNC">=</span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">Bounds</span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>157</span> </span><span class="WHIT">			</span><span class="PUNC">-</span><span class="NUMB">180.0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="NUMB">85.05112878</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">180.0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">85.05112878</span><span class="WHIT">
+<span class='line'>158</span> </span><span class="WHIT">			</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>159</span> </span><span class="WHIT">			
+<span class='line'>160</span> 		</span><span class="COMM">/**
+<span class='line'>161</span> 		 * Bounds object defining map extent in projected
+<span class='line'>162</span> 		 * coordinates
+<span class='line'>163</span> 		 * @public
+<span class='line'>164</span> 		 * @name GLOBAL_EXTENT
+<span class='line'>165</span> 		 * @memberOf nanomaps.Projections.WebMercator#
+<span class='line'>166</span> 		 */</span><span class="WHIT">
+<span class='line'>167</span> </span><span class="WHIT">		</span><span class="NAME">this.PRJ_EXTENT</span><span class="PUNC">=</span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">Bounds</span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>168</span> </span><span class="WHIT">			</span><span class="NAME">this.fwdX</span><span class="PUNC">(</span><span class="NAME">GLB_EXTENT.minx</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>169</span> </span><span class="WHIT">			</span><span class="NAME">this.fwdY</span><span class="PUNC">(</span><span class="NAME">GLB_EXTENT.miny</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>170</span> </span><span class="WHIT">			</span><span class="NAME">this.fwdX</span><span class="PUNC">(</span><span class="NAME">GLB_EXTENT.maxx</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>171</span> </span><span class="WHIT">			</span><span class="NAME">this.fwdY</span><span class="PUNC">(</span><span class="NAME">GLB_EXTENT.maxy</span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'>172</span> </span><span class="WHIT">			</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>173</span> </span><span class="WHIT">		
+<span class='line'>174</span> 		</span><span class="COMM">// release memory from closure</span><span class="WHIT">
+<span class='line'>175</span> </span><span class="WHIT">		</span><span class="NAME">options</span><span class="PUNC">=</span><span class="KEYW">null</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>176</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>177</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>178</span> 
+<span class='line'>179</span> </span><span class="NAME">exports.Projections</span><span class="PUNC">=</span><span class="NAME">Projections</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>180</span> 
+<span class='line'>181</span> </span></pre></body></html>

@@ -1,0 +1,1716 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+		<meta name="generator" content="JsDoc Toolkit" />
+		
+		<title>JsDoc Reference - nanomaps.MapSurface</title>
+
+		<style type="text/css">
+			/* default.css */
+body
+{
+	font: 12px "Lucida Grande", Tahoma, Arial, Helvetica, sans-serif;
+	width: 800px;
+}
+
+.header
+{
+	clear: both;
+	background-color: #ccc;
+	padding: 8px;
+}
+
+h1
+{
+	font-size: 150%;
+	font-weight: bold;
+	padding: 0;
+	margin: 1em 0 0 .3em;
+}
+
+hr
+{
+	border: none 0;
+	border-top: 1px solid #7F8FB1;
+	height: 1px;
+}
+
+pre.code
+{
+	display: block;
+	padding: 8px;
+	border: 1px dashed #ccc;
+}
+
+#index
+{
+	margin-top: 24px;
+	float: left;
+	width: 160px;
+	position: absolute;
+	left: 8px;
+	background-color: #F3F3F3;
+	padding: 8px;
+}
+
+#content
+{
+	margin-left: 190px;
+	width: 600px;
+}
+
+.classList
+{
+	list-style-type: none;
+	padding: 0;
+	margin: 0 0 0 8px;
+	font-family: arial, sans-serif;
+	font-size: 1em;
+	overflow: auto;
+}
+
+.classList li
+{
+	padding: 0;
+	margin: 0 0 8px 0;
+}
+
+.summaryTable { width: 100%; }
+
+h1.classTitle
+{
+	font-size:170%;
+	line-height:130%;
+}
+
+h2 { font-size: 110%; }
+caption, div.sectionTitle
+{
+	background-color: #7F8FB1;
+	color: #fff;
+	font-size:130%;
+	text-align: left;
+	padding: 2px 6px 2px 6px;
+	border: 1px #7F8FB1 solid;
+}
+
+div.sectionTitle { margin-bottom: 8px; }
+.summaryTable thead { display: none; }
+
+.summaryTable td
+{
+	vertical-align: top;
+	padding: 4px;
+	border-bottom: 1px #7F8FB1 solid;
+	border-right: 1px #7F8FB1 solid;
+}
+
+/*col#summaryAttributes {}*/
+.summaryTable td.attributes
+{
+	border-left: 1px #7F8FB1 solid;
+	width: 140px;
+	text-align: right;
+}
+
+td.attributes, .fixedFont
+{
+	line-height: 15px;
+	color: #002EBE;
+	font-family: "Courier New",Courier,monospace;
+	font-size: 13px;
+}
+
+.summaryTable td.nameDescription
+{
+	text-align: left;
+	font-size: 13px;
+	line-height: 15px;
+}
+
+.summaryTable td.nameDescription, .description
+{
+	line-height: 15px;
+	padding: 4px;
+	padding-left: 4px;
+}
+
+.summaryTable { margin-bottom: 8px; }
+
+ul.inheritsList
+{
+	list-style: square;
+	margin-left: 20px;
+	padding-left: 0;
+}
+
+.detailList {
+	margin-left: 20px; 
+	line-height: 15px;
+}
+.detailList dt { margin-left: 20px; }
+
+.detailList .heading
+{
+	font-weight: bold;
+	padding-bottom: 6px;
+	margin-left: 0;
+}
+
+.light, td.attributes, .light a:link, .light a:visited
+{
+	color: #777;
+	font-style: italic;
+}
+
+.fineprint
+{
+	text-align: right;
+	font-size: 10px;
+}
+		</style>
+	</head>
+
+	<body>
+<!-- ============================== header ================================= -->	
+		<!-- begin static/header.html -->
+		<div id="header">
+</div>
+		<!-- end static/header.html -->
+
+<!-- ============================== classes index ============================ -->
+		<div id="index">
+			<!-- begin publish.classesIndex -->
+			<div align="center"><a href="../index.html">Class Index</a>
+| <a href="../files.html">File Index</a></div>
+<hr />
+<h2>Classes</h2>
+<ul class="classList">
+	
+	<li><i><a href="../symbols/_global_.html">_global_</a></i></li>
+	
+	<li><a href="../symbols/nanomaps.Bounds.html">nanomaps.Bounds</a></li>
+	
+	<li><a href="../symbols/nanomaps.CartesianTileSelector.html">nanomaps.CartesianTileSelector</a></li>
+	
+	<li><a href="../symbols/nanomaps.Coordinate.html">nanomaps.Coordinate</a></li>
+	
+	<li><a href="../symbols/nanomaps.EventEmitter.html">nanomaps.EventEmitter</a></li>
+	
+	<li><a href="../symbols/nanomaps.MapState.html">nanomaps.MapState</a></li>
+	
+	<li><a href="../symbols/nanomaps.MapSurface.html">nanomaps.MapSurface</a></li>
+	
+	<li><a href="../symbols/nanomaps.MotionEvent.html">nanomaps.MotionEvent</a></li>
+	
+	<li><a href="../symbols/nanomaps.Projections.html">nanomaps.Projections</a></li>
+	
+	<li><a href="../symbols/nanomaps.Projections.WebMercator.html">nanomaps.Projections.WebMercator</a></li>
+	
+	<li><a href="../symbols/nanomaps.TileLayer.html">nanomaps.TileLayer</a></li>
+	
+	<li><a href="../symbols/SvgMarker.html">SvgMarker</a></li>
+	
+</ul>
+<hr />
+			<!-- end publish.classesIndex -->
+		</div>
+		
+		<div id="content">
+<!-- ============================== class title ============================ -->
+			<h1 class="classTitle">
+				
+				Class nanomaps.MapSurface
+			</h1>
+
+<!-- ============================== class summary ========================== -->			
+			<p class="description">
+				
+				<br />Extends
+					<a href="../symbols/nanomaps.EventEmitter.html">nanomaps.EventEmitter</a>.<br />
+				
+			
+				
+				
+				
+					<br /><i>Defined in: </i> <a href="../symbols/src/client_lib_components_nanomaps.core.js.html">nanomaps.core.js</a>.
+				
+			</p>
+
+<!-- ============================== constructor summary ==================== -->			
+			
+			<table class="summaryTable" cellspacing="0" summary="A summary of the constructor documented in the class nanomaps.MapSurface.">
+				<caption>Class Summary</caption>
+				<thead>
+					<tr>
+						<th scope="col">Constructor Attributes</th>
+						<th scope="col">Constructor Name and Description</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td class="attributes">&nbsp;</td>
+						<td class="nameDescription" >
+							<div class="fixedFont">
+								<b><a href="../symbols/nanomaps.MapSurface.html#constructor">nanomaps.MapSurface</a></b>(elt)
+							</div>
+							<div class="description">Initialize an existing DOM element as a map.</div>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			
+
+<!-- ============================== properties summary ===================== -->
+			
+				
+				
+				<table class="summaryTable" cellspacing="0" summary="A summary of the fields documented in the class nanomaps.MapSurface.">
+					<caption>Field Summary</caption>
+					<thead>
+						<tr>
+							<th scope="col">Field Attributes</th>
+							<th scope="col">Field Name and Description</th>
+						</tr>
+					</thead>
+					<tbody>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/nanomaps.MapSurface.html#mapState">mapState</a></b>
+								</div>
+								<div class="description">MapState object currently being displayed.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/nanomaps.MapSurface.html#motionController">motionController</a></b>
+								</div>
+								<div class="description">Controller for motion related events (touch, click)</div>
+							</td>
+						</tr>
+					
+					</tbody>
+				</table>
+				
+				
+				
+				<dl class="inheritsList">
+				
+				</dl>
+				
+			
+
+<!-- ============================== methods summary ======================== -->
+			
+				
+				
+				<table class="summaryTable" cellspacing="0" summary="A summary of the methods documented in the class nanomaps.MapSurface.">
+					<caption>Method Summary</caption>
+					<thead>
+						<tr>
+							<th scope="col">Method Attributes</th>
+							<th scope="col">Method Name and Description</th>
+						</tr>
+					</thead>
+					<tbody>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapSurface.html#attach">attach</a></b>(element)
+								</div>
+								<div class="description">Adds content to the map.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapSurface.html#begin">begin</a></b>()
+								</div>
+								<div class="description">Begin a series of mapState changes including changes to position, size,
+resolution and projection.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapSurface.html#collect">collect</a></b>(element)
+								</div>
+								<div class="description">Collects all unattached DOM elements from the container which have geo
+referencing information and attaches them.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapSurface.html#commit">commit</a></b>(animate)
+								</div>
+								<div class="description">Commit a pending transaction, optionally animating between the current display
+state and changes introduced in the transaction.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapSurface.html#createElement">createElement</a></b>()
+								</div>
+								<div class="description">Create an element in the document that this map exists in.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapSurface.html#detach">detach</a></b>(attachment)
+								</div>
+								<div class="description">Convenience method to balance calls to attach.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapSurface.html#dispatchMotionEvent">dispatchMotionEvent</a></b>(motionEvent)
+								</div>
+								<div class="description">Dispatch a MotionEvent for processing.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapSurface.html#eventToContainer">eventToContainer</a></b>(event, elementName)
+								</div>
+								<div class="description">Translates a mouse event to viewport relative coordinates and returns
+{x:, y: }
+<p>TODO: Fix this.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapSurface.html#getLocation">getLocation</a></b>(x, y)
+								</div>
+								<div class="description">Gets the global location as a Coordinate object at the given
+viewport coordinates.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapSurface.html#getZoom">getZoom</a></b>()
+								</div>
+								<div class="description">Get the current zoom level</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapSurface.html#globalToXY">globalToXY</a></b>(object)
+								</div>
+								<div class="description">Returns a Coordinate object for the xy (left/top) position
+on the managed surface given global coordinates.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapSurface.html#handleMotionEvent">handleMotionEvent</a></b>(motionEvent)
+								</div>
+								<div class="description">Perform default processing of a MotionEvent if its handled
+property is false after dispatch.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapSurface.html#initialize">initialize</a></b>()
+								</div>
+								<div class="description">Initialization hook.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapSurface.html#layer">layer</a></b>(index)
+								</div>
+								<div class="description">All map objects exist within a layer.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapSurface.html#moveBy">moveBy</a></b>(eastingPx, northingPx)
+								</div>
+								<div class="description">Reposition the map by the given number of pixels expressed as pixels east
+and north.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapSurface.html#rollback">rollback</a></b>()
+								</div>
+								<div class="description">Rolls back all pending map state changes made since the first begin().</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapSurface.html#setLocation">setLocation</a></b>(globalCoord, x, y)
+								</div>
+								<div class="description">Set the map to the given global coordinates at the given
+viewport coordinates (default to map center).</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapSurface.html#setSize">setSize</a></b>(width, height)
+								</div>
+								<div class="description">Set the width/height of the map.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapSurface.html#update">update</a></b>(element)
+								</div>
+								<div class="description">Attaches or updates an element.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapSurface.html#zoomIn">zoomIn</a></b>(x, y)
+								</div>
+								<div class="description">Zoom in by one zoom level, rounding to the nearest integral
+zoom level.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapSurface.html#zoomOut">zoomOut</a></b>(x, y)
+								</div>
+								<div class="description">Zoom out by one zoom level, rounding to the nearest integral
+zoom level.</div>
+							</td>
+						</tr>
+					
+					</tbody>
+				</table>
+				
+				
+				
+				<dl class="inheritsList">
+				<dt>Methods borrowed from class <a href="../symbols/nanomaps.EventEmitter.html">nanomaps.EventEmitter</a>: </dt><dd><a href="../symbols/nanomaps.EventEmitter.html#addListener">addListener</a>, <a href="../symbols/nanomaps.EventEmitter.html#advise">advise</a>, <a href="../symbols/nanomaps.EventEmitter.html#emit">emit</a>, <a href="../symbols/nanomaps.EventEmitter.html#once">once</a>, <a href="../symbols/nanomaps.EventEmitter.html#removeAllListeners">removeAllListeners</a>, <a href="../symbols/nanomaps.EventEmitter.html#removeListener">removeListener</a></dd>
+				</dl>
+				
+			
+<!-- ============================== events summary ======================== -->
+			
+
+<!-- ============================== constructor details ==================== -->		
+			
+			<div class="details"><a name="constructor"> </a>
+				<div class="sectionTitle">
+					Class Detail
+				</div>
+				
+				<div class="fixedFont">
+						<b>nanomaps.MapSurface</b>(elt)
+				</div>
+				
+				<div class="description">
+					Initialize an existing DOM element as a map.  All internal map structures
+are added before any existing content in the element.
+
+<h2>Sizing</h2>
+The map size must be explicitly maintained.  If not specified, then the natural
+size of the containing element is used.  If this natural size ever changes,
+setSize() must be called to reset it.
+					
+				</div>
+				
+				
+				
+				<pre class="code">var map=new nanomaps.MapSurface(someElement);
+map.attach(new nanomaps.TileLayer({ 
+   tileSrc: "http://otile${modulo:1,2,3}.mqcdn.com/tiles/1.0.0/osm/${level}/${tileX}/${tileY}.png" }));</pre>
+				
+				
+				
+				
+					
+						<dl class="detailList">
+						<dt class="heading">Parameters:</dt>
+						
+							<dt>
+								<span class="light fixedFont">{HTMLElement}</span>  <b>elt</b>
+								
+							</dt>
+								<dd>The map container element</dd>
+						
+							<dt>
+								<span class="light fixedFont">{integer}</span>  <b>options.width</b>
+								<i>Optional</i>
+							</dt>
+								<dd>Explicit width of the map</dd>
+						
+							<dt>
+								<span class="light fixedFont">{integer}</span>  <b>options.height</b>
+								<i>Optional</i>
+							</dt>
+								<dd>Explicit height of the map</dd>
+						
+							<dt>
+								<span class="light fixedFont">{number}</span>  <b>options.resolution</b>
+								<i>Optional</i>
+							</dt>
+								<dd>Initial resolution</dd>
+						
+							<dt>
+								<span class="light fixedFont">{Projection}</span>  <b>options.projection</b>
+								<i>Optional, Default: new nanomaps.WebMercatorProjection()</i>
+							</dt>
+								<dd>Map projection</dd>
+						
+							<dt>
+								<span class="light fixedFont">{LatLngObject}</span>  <b>options.center</b>
+								<i>Optional</i>
+							</dt>
+								<dd>Initial center of the map</dd>
+						
+						</dl>
+					
+					
+					
+					
+					
+					
+					
+
+			</div>
+			
+
+<!-- ============================== field details ========================== -->		
+			
+				<div class="sectionTitle">
+					Field Detail
+				</div>
+				
+					<a name="mapState"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>mapState</b>
+					
+					</div>
+					<div class="description">
+						MapState object currently being displayed.  This does not
+contain uncommitted changes.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="motionController"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>motionController</b>
+					
+					</div>
+					<div class="description">
+						Controller for motion related events (touch, click)
+						
+							<br />
+							<i>Defined in: </i> <a href="../symbols/src/client_lib_components_nanomaps.motion.js.html">nanomaps.motion.js</a>.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+
+					
+				
+			
+
+<!-- ============================== method details ========================= -->		
+			
+				<div class="sectionTitle">
+					Method Detail
+				</div>
+				
+					<a name="attach"> </a>
+					<div class="fixedFont">
+					
+					<span class="light">{HTMLElement}</span>
+					<b>attach</b>(element)
+					
+					</div>
+					<div class="description">
+						Adds content to the map.  This is the primary method of attaching DOM content
+to the map after construction.  Give it either an HTMLElement or an Attachment
+object that supports the Attachable protocol.
+
+<h2>Design Pattern</h2>
+Internally, the MapSurface works solely with content that is raw DOM elements.
+It is expected that any active DOM elements on the map can be associated with
+an AttachmentPeer object that manages the display lifecycle of the elements
+while on the map surface.  Connecting an HTMLElement to its AttachmentPeer can
+be done by setting the element's "mapeer" (Map-Attachment Peer) property to its
+peer object.  If this property is not set, then each element will share a single
+global AttachmentPeer providing default behaviour.  See Default Behavior below.
+<p>
+It is often desirable to maintain a high-level JavaScript object providing a
+structured API for manipulating the element's content.  This API is most easily
+expressed on the Attachment object, which can maintain a reference to the MapSurface
+and the AttachmentPeer.  This is precisely how the high level provided attachments
+function (markers, SVG, TileLayer, etc).
+<p>
+It is acknowledged that this peer structure is somewhat awkward but it is done to
+support reference models that do not require circular references ensnaring DOM references.
+In 2011, the state of such things is better than it was designing an API that requires
+circular references is still a recipe for creating sluggish garbage collection at best
+and browser-bug induced leaks at worst.
+
+<h2>Objects</h2>
+The following classes or interfaces participate to manage an element's display on the map:
+<ul>
+<li>HTMLElement - Actual DOM element representing the content
+<li>Attachment - Optional object that references the element and provides a user-level api
+for manipulating the content
+<li>AttachmentPeer - Object attached to the HTMLElement which manages the display state
+<li>MapSurface - The target of the attachment
+<li>DefaultAttachmentPeer - Default peer used if an HTMLElement does not supply its own peer.
+</ul>
+
+There are multiple ways to combine and/or collapse these items.  An API could be constructed
+for example that just adds methods directly to an HTMLElement and makes it do everything.
+The built-in map attachments, however follow a pattern with references in the following pattern:
+<pre>
+	MapSurface  ----> HTMLElement  ----> AttachmentPeer
+	    ^              ^
+	    |             /
+	Attachment  -----/
+</pre>
+
+An Attachment will host the user-level API and maintain references to the MapSurface and
+the HTMLElement.  The HTMLElement references the AttachmentPeer via its mapeer property.
+The AttachmentPeer does not maintain a reference to any of the other objects.  All of its
+methods accept the objects it needs to operate against as arguments.  In this way, the peer
+can either be a stateless singleton or allocated per attachment.
+
+<h3>Associating an HTMLElement with an AttachmentPeer</h3>
+The peer for an HTMLElement is located in the following way:
+<ol>
+<li>If the HTMLElement.mapeer property is set, use that
+<li>If the HTMLElement.mapself property === true, then the element should
+be considered its own peer
+<li>The global DefaultAttachmentPeer is used
+</ol>
+
+<h3>Attachment API</h3>
+In order for an arbitrary object to be attached to the map, it should support
+the following properties/methods:
+<ul>
+<li>defaultLayer:Number|String - If specified, this is the default layer
+that should host the object (unless if an explicit layer was passed to attach).
+Defaults to "overlay" if not present.
+<li>unmanaged:Boolean - If true, then the attachment is added to the dom
+under the root layer, otherwise, it is added under the surface layer (which
+is positioned based on map movement)
+<li>getElement(MapSurface):HTMLElement - Attaches or reattaches this Attachment
+object to the given MapSurface.  Should return the HTMLElement representing
+the attachment
+</ul>
+
+Note in particular that there is no detach method.  Attachments can be
+removed by either removing the corresponding HTMLElement or calling MapSurface.detach
+with the Attachment object. 
+
+<h3>AttachmentPeer API</h3>
+Attachment peers should implement the following:
+<ul>
+<li>maposition(MapSurface,HTMLElement) - If defined, called whenever the map's position
+changes
+<li>mareset(MapSurface,HTMLElement) - If defined, called whenever the map's resolution or
+other parameter changes which is considered a "heavy weight" change
+</ul>
+
+<h1>The following is old docs</h1>
+<h2>Display Management</h2>
+The primary thing that map content needs to be able to do is position itself
+relative to a global coordinate system.  Each element managed by the map
+viewport is checked for a special "mapDelegate" property.  If defined, then
+this delegate object provides callbacks that will be invoked on map geometry
+changes and are responsible for displaying the element properly.  See the
+documentation for a complete treatment of MapDelegate objects.
+
+<h2>Default Behavior</h2>
+If an element added to the map does not have a mapDelegate property, the
+default delegate is used instead.  This default delegate defines standard
+and intuitive behavior for positioning a simple object.  The position and
+pixel offset are determined by taking the first defined result from the
+following sequence:
+<ol>
+<li>If the "geo" property exists on the DOM object.  Take the "latitude", 
+		"longitude", "x" and "y" properties.
+<li>Read the "latitude" and "longitude" attributes of the element.
+</ol>
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{HTMLElement or factory}</span> <b>element</b>
+									
+								</dt>
+								<dd>Element or factory to add</dd>
+							
+								<dt>
+									<span class="light fixedFont">{String or Number}</span> <b>options.layer</b>
+									
+								</dt>
+								<dd>The target layer</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{HTMLElement}</span> the element attached</dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="begin"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>begin</b>()
+					
+					</div>
+					<div class="description">
+						Begin a series of mapState changes including changes to position, size,
+resolution and projection.  Calling this method increments an internal
+lock count.  If the lock count is zero (default), then all changes to
+map state take effect immediately.  If it is >0 (as is the case after a
+call to begin), then the changes are "batched" up until a later call
+to commit or rollback.
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd>true if this starts a new transaction and false if it just incremented
+the lock count on an already started transaction</dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="collect"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>collect</b>(element)
+					
+					</div>
+					<div class="description">
+						Collects all unattached DOM elements from the container which have geo
+referencing information and attaches them.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{HTMLElement or factory}</span> <b>element</b>
+									
+								</dt>
+								<dd>Element or factory to add</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="commit"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>commit</b>(animate)
+					
+					</div>
+					<div class="description">
+						Commit a pending transaction, optionally animating between the current display
+state and changes introduced in the transaction.  Passing any true value as the
+animate parameter will enable animation.  If passing a non-null object, then it
+will be taken as animation parameters and will be passed through unchanged to the
+Animation() constructor.  The following animation options are settable:
+<ul>
+<li>curve: An animation curve function such as one produced by MakeBezierCurve(x1,y1,x2,y2).
+Defaults to a bezier curve with a pronounced tail acceleration
+<li>duration: Duration in seconds.  Default to 0.5.
+<li>rate: Frame rate in frames/s.  Default=20 but may be automatically adjusted based on platform 
+or previous preformance.
+</ul>
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>animate</b>
+									
+								</dt>
+								<dd>{boolean|Object} false to disable animation, true or animation options to animate</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd>true if this call to commit finished the transaction.  false if this commit
+did nothing</dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="createElement"> </a>
+					<div class="fixedFont">
+					
+					<span class="light">{HTMLElement}</span>
+					<b>createElement</b>()
+					
+					</div>
+					<div class="description">
+						Create an element in the document that this map exists in.
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{HTMLElement}</span> </dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="detach"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>detach</b>(attachment)
+					
+					</div>
+					<div class="description">
+						Convenience method to balance calls to attach.  Gets the element associated
+with the attachment and removes it from the DOM tree.  It is also perfectly
+acceptable to remove the element yourself.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{HTMLElement or Attachment}</span> <b>attachment</b>
+									
+								</dt>
+								<dd></dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="dispatchMotionEvent"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>dispatchMotionEvent</b>(motionEvent)
+					
+					</div>
+					<div class="description">
+						Dispatch a MotionEvent for processing.  This will emit
+the 'motion' event on the map and then call handleMotionEvent
+for default processing if the handled flag is false.
+						
+							<br />
+							<i>Defined in: </i> <a href="../symbols/src/client_lib_components_nanomaps.motion.js.html">nanomaps.motion.js</a>.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>motionEvent</b>
+									
+								</dt>
+								<dd>{nanomaps.MotionEvent}</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="eventToContainer"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>eventToContainer</b>(event, elementName)
+					
+					</div>
+					<div class="description">
+						Translates a mouse event to viewport relative coordinates and returns
+{x:, y: }
+<p>TODO: Fix this.  It doesn't work in a number of corner cases.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{string}</span> <b>event</b>
+									
+								</dt>
+								<dd>DOM event object</dd>
+							
+								<dt>
+									<span class="light fixedFont">{string}</span> <b>elementName</b>
+									<i>Optional, Default: 'viewport'</i>
+								</dt>
+								<dd>Relative to which element in the containment hierarchy</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="getLocation"> </a>
+					<div class="fixedFont">
+					
+					<span class="light">{<a href="../symbols/nanomaps.Coordinate.html">nanomaps.Coordinate</a>}</span>
+					<b>getLocation</b>(x, y)
+					
+					</div>
+					<div class="description">
+						Gets the global location as a Coordinate object at the given
+viewport coordinates.  If coordinates are ommitted/undefined,
+then the center is assumed.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>x</b>
+									
+								</dt>
+								<dd>{Number|undefined} viewport x coordinate</dd>
+							
+								<dt>
+									<b>y</b>
+									
+								</dt>
+								<dd>{Number|undefined} viewport y coordinate</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{<a href="../symbols/nanomaps.Coordinate.html">nanomaps.Coordinate</a>}</span> </dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="getZoom"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>getZoom</b>()
+					
+					</div>
+					<div class="description">
+						Get the current zoom level
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd>the current zoom level as a floating point number</dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="globalToXY"> </a>
+					<div class="fixedFont">
+					
+					<span class="light">{Coordinate}</span>
+					<b>globalToXY</b>(object)
+					
+					</div>
+					<div class="description">
+						Returns a Coordinate object for the xy (left/top) position
+on the managed surface given global coordinates.  This is a
+low-level function for use by map attachments that need to
+manage their position on the managed attachment div.  Always
+operates on the display MapState, not any pending MapState
+within a transaction.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Coordinate}</span> <b>object</b>
+									
+								</dt>
+								<dd>coercible to global coordinate</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{Coordinate}</span> xy value for placement on the managed div</dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="handleMotionEvent"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>handleMotionEvent</b>(motionEvent)
+					
+					</div>
+					<div class="description">
+						Perform default processing of a MotionEvent if its handled
+property is false after dispatch.  You can intercept motion
+events by registering an event with name 'motion.{type}'.
+<pre>
+	map.on('motion.click', function(motionEvent) {
+		alert('Clicked at ' + motionEvent.x + ',' + motionEvent.y);
+		motionEvent.handled=true;
+	});
+</pre>
+						
+							<br />
+							<i>Defined in: </i> <a href="../symbols/src/client_lib_components_nanomaps.motion.js.html">nanomaps.motion.js</a>.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>motionEvent</b>
+									
+								</dt>
+								<dd>{nanomaps.MotionEvent}</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="initialize"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>initialize</b>()
+					
+					</div>
+					<div class="description">
+						Initialization hook.  Performs initialization after map structures have
+been initialized but before content is added to the map.  This method
+does nothing but is an override hook for adding additional functionality.
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="layer"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>layer</b>(index)
+					
+					</div>
+					<div class="description">
+						All map objects exist within a layer.  Layers are ordered by an ordinal index
+and correspond to a div within the main map div.  Each layer div is identified
+by an attribute "layer" with its numeric layer value.  In this way, loose objects
+that need to exist in the layer hierarchy can have their "layer" attribute
+set to have them positioned in the correct place.  Loose objects without a layer
+are assumed to have a layer index of infinity, making them foreground objects.
+<p>
+This method will return a div for the layer.  If the layer does not exist, it
+will be created.
+<p>
+Layers do not establish a positioning context, inheriting the context of the
+containing map div.  They also have zero width and height but are set to display
+overflow.  The system may make the special events layer positioned with full width
+and height, but this is considered a special case.
+<p>
+The following layer names are acceptable arguments to index in addition to numeric
+values:
+<ul>
+<li>background (0): The background layer will contain background drawables, generally the
+thatch pattern that is below the map
+<li>map (10): The map layer should contain views for drawing the map (ie MapTileView)
+stacked in order of display.
+<li>event (100): Touch events are handled from this layer.  This layer is special.
+<li>shadow (500): By convention, the SHADOW layer is where you will want to put overlay shadows
+<li>overlay (1000): By convention, the OVERLAY layer is where map overlays and markers should
+be added
+<li>foreground (10000): Extreme foreground layer.  This is where unattached map objects go and
+is synonymous with infinity.
+</ul>
+Layer names are case insensitive.  The event layer is a special 100% width/height layer
+that catches all background events.  Anything below this ordinal will not receive any ui
+events.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>index</b>
+									
+								</dt>
+								<dd>The layer name or ordinal value of the desired layer</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd>layer div corresponding to index</dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="moveBy"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>moveBy</b>(eastingPx, northingPx)
+					
+					</div>
+					<div class="description">
+						Reposition the map by the given number of pixels expressed as pixels east
+and north.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>eastingPx</b>
+									
+								</dt>
+								<dd>Number of pixels to the right (east) to move towards
+the center</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>northingPx</b>
+									
+								</dt>
+								<dd>Number of pixels to the top (north) to move towards
+the center</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="rollback"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>rollback</b>()
+					
+					</div>
+					<div class="description">
+						Rolls back all pending map state changes made since the first begin().  Note that
+nested rollbacks (ie. savepoints in SQL parlance) are not supported.  Rollback 
+resets the entire transaction.  Future calls to commit will have no effect since
+the transaction lock will be zero.
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="setLocation"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>setLocation</b>(globalCoord, x, y)
+					
+					</div>
+					<div class="description">
+						Set the map to the given global coordinates at the given
+viewport coordinates (default to map center).
+The first argument must either be a Coordinate object
+or something that is coercible from Coordinate.from(...).
+Examples: Coordinate.latLng(39,-104), {lat:39,lng:-104}.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>globalCoord</b>
+									
+								</dt>
+								<dd>{Coordinate coercible}</dd>
+							
+								<dt>
+									<b>x</b>
+									
+								</dt>
+								<dd>viewport coordinate to set location relative to</dd>
+							
+								<dt>
+									<b>y</b>
+									
+								</dt>
+								<dd>viewport coordinate to set location relative to</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="setSize"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>setSize</b>(width, height)
+					
+					</div>
+					<div class="description">
+						Set the width/height of the map.  The style.width and style.height is always
+hardcoded so as to avoid strange effects if the container changes size.
+<p>
+If no arguments are given, the container element's size is set to automatic,
+its natural width/height are measured, and this size is used to lay out the map.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{integer}</span> <b>width</b>
+									
+								</dt>
+								<dd></dd>
+							
+								<dt>
+									<span class="light fixedFont">{integer}</span> <b>height</b>
+									
+								</dt>
+								<dd></dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="update"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>update</b>(element)
+					
+					</div>
+					<div class="description">
+						Attaches or updates an element.  If the element is already a child of the
+map viewport, then it is "reset" (its position is updated).  Otherwise, this
+acts like a call to attach.  This method is only designed to take an element,
+not a factory.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{HTMLElement}</span> <b>element</b>
+									
+								</dt>
+								<dd></dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="zoomIn"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>zoomIn</b>(x, y)
+					
+					</div>
+					<div class="description">
+						Zoom in by one zoom level, rounding to the nearest integral
+zoom level.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>x</b>
+									
+								</dt>
+								<dd>{Number||undefined} x viewport coordinate to preserve (default=center)</dd>
+							
+								<dt>
+									<b>y</b>
+									
+								</dt>
+								<dd>{Number||undefined} y viewport coordinate to preserve (default=center)</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="zoomOut"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>zoomOut</b>(x, y)
+					
+					</div>
+					<div class="description">
+						Zoom out by one zoom level, rounding to the nearest integral
+zoom level.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>x</b>
+									
+								</dt>
+								<dd>{Number||undefined} x viewport coordinate to preserve (default=center)</dd>
+							
+								<dt>
+									<b>y</b>
+									
+								</dt>
+								<dd>{Number||undefined} y viewport coordinate to preserve (default=center)</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+				
+			
+			
+<!-- ============================== event details ========================= -->		
+			
+			
+			<hr />
+		</div>
+
+		
+<!-- ============================== footer ================================= -->
+		<div class="fineprint" style="clear:both">
+			
+			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Mon Jul 11 2011 16:04:19 GMT-0700 (PDT)
+		</div>
+	</body>
+</html>
