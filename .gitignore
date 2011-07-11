@@ -1,8 +1,9 @@
 *~
-build
+build/
+build.asconfig
 .DS_Store
-pages
+pages/
 jsdoc-toolkit
-.ascache
+.ascache/
 
 

@@ -23,9 +23,9 @@ var map,
 
 var TILE_LAYERS={
 	street: new nanomaps.TileLayer({
-			//tileSrc: "http://otile${modulo:1,2,3}.mqcdn.com/tiles/1.0.0/osm/${level}/${tileX}/${tileY}.png",
-			tileSrc: "http://192.168.0.102:7666/map/mqstreet/${level}/${tileX}/${tileY}?pixelRatio=${pixelRatio}",
-			autoPixelRatio: true
+			tileSrc: "http://otile${modulo:1,2,3}.mqcdn.com/tiles/1.0.0/osm/${level}/${tileX}/${tileY}.png"
+			//tileSrc: "http://192.168.0.102:7666/map/mqstreet/${level}/${tileX}/${tileY}?pixelRatio=${pixelRatio}",
+			//autoPixelRatio: true
 		}),
 	sat: new nanomaps.TileLayer({
 			tileSrc: "http://oatile${modulo:1,2,3}.mqcdn.com/naip/${level}/${tileX}/${tileY}.jpg"
