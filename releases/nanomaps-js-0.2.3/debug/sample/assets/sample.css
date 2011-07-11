@@ -1,0 +1,145 @@
+#debugpane {
+	position: absolute;
+	bottom: 5px;
+	right: 5px;
+	left: 5px;
+	border: 1px solid black;
+	background-color: #efefef;
+	padding: 10px;
+	border-radius: 5px;
+	z-index: 100000;
+}
+
+
+html, body {
+	height: 100%;
+}
+
+body {
+	overflow: hidden;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	line-height: 18px;
+	margin: 0;
+	padding: 0;
+}
+
+#shell {
+	position: relative;
+	width: 100%;
+	height: 100%;
+}
+
+#actionBar {
+	height: 49px;
+	border-bottom: 1px solid black;
+	background-color: #efefef;
+}
+
+#actionBar form {
+	display: inline;
+}
+#actionBar .btn {
+	color: blue;
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+#mapContainer {
+	position: absolute;
+	left: 0px;
+	top: 50px;
+	right: 0px;
+	bottom: 0px;
+	background-color: #777777;
+}
+
+#map {
+	position: relative;
+	width: 100%;
+	height: 100%;
+}
+
+.nmim-orb {
+	width: 15px;
+	height: 15px;
+}
+
+.nmiw {
+	padding: 4px 15px 4px 15px;
+	background: -webkit-gradient(linear,left top,left bottom,color-stop(0, #707070),color-stop(0.51, #5E5E5E),color-stop(0.52, #393939));
+	background: -moz-linear-gradient(center top,#707070 0%,#5E5E5E 51%,#393939 52%);
+
+	border-color: #2C2C2C;
+	border-style: solid;
+	border-width: 1px;
+	border-top-left-radius: 4px 4px;
+	border-top-right-radius: 4px 4px;
+	border-bottom-right-radius: 4px 4px;
+	border-bottom-left-radius: 4px 4px;
+	opacity: 0.95;
+}
+
+.nmiw-content {
+	font-family: Helvetica-Neue, Helvetica, arial, sans-serif;
+	font-size: 18px;
+	line-height: 25px;
+	text-shadow: 0 -1px 0 black;	
+	font-weight: bold;
+	color: #fff;
+}
+
+.nmiw-pointer {
+	position: absolute;
+	bottom: -15px;
+	width: 0px;
+	height: 0px;
+	margin-left: -16px; /* - (parent padding left + parent border left width) */
+	border-top: 15px solid #393939;
+	border-left: 15px solid transparent;
+	border-right: 15px solid transparent;
+}
+
+/* Zoom controls */
+#zoomControl {
+	position: absolute;
+	top: 36px;
+	left: 5px;
+}
+
+#zoomControl .zoomIn {
+	background-image: url(zoomin.png);
+	width: 40px;
+	height: 40px;
+}
+
+#zoomControl .zoomOut {
+	background-image: url(zoomout.png);
+	width: 40px;
+	height: 40px;
+}
+
+svg.errorHalo ellipse {
+	fill-opacity: 0.3;
+	stroke-opacity: 0.7;
+	fill: #03a;
+	stroke: #00f;
+}
+
+/* Map copyright */
+#mapcopy {
+	z-index: 50;
+	position: absolute;
+	right: 2px; bottom: 2px;
+	text-align: right;
+	white-space: nobreak;
+	font-family: sans-serif;
+	font-size: 10px;
+	line-height: 12px;
+	-webkit-user-select:none;
+	-moz-user-select:none;
+	cursor: default;
+}
+#mapcopy a:visited {
+	color: #00f;
+}

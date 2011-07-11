@@ -1,0 +1,1030 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+		<meta name="generator" content="JsDoc Toolkit" />
+		
+		<title>JsDoc Reference - nanomaps.MapState</title>
+
+		<style type="text/css">
+			/* default.css */
+body
+{
+	font: 12px "Lucida Grande", Tahoma, Arial, Helvetica, sans-serif;
+	width: 800px;
+}
+
+.header
+{
+	clear: both;
+	background-color: #ccc;
+	padding: 8px;
+}
+
+h1
+{
+	font-size: 150%;
+	font-weight: bold;
+	padding: 0;
+	margin: 1em 0 0 .3em;
+}
+
+hr
+{
+	border: none 0;
+	border-top: 1px solid #7F8FB1;
+	height: 1px;
+}
+
+pre.code
+{
+	display: block;
+	padding: 8px;
+	border: 1px dashed #ccc;
+}
+
+#index
+{
+	margin-top: 24px;
+	float: left;
+	width: 160px;
+	position: absolute;
+	left: 8px;
+	background-color: #F3F3F3;
+	padding: 8px;
+}
+
+#content
+{
+	margin-left: 190px;
+	width: 600px;
+}
+
+.classList
+{
+	list-style-type: none;
+	padding: 0;
+	margin: 0 0 0 8px;
+	font-family: arial, sans-serif;
+	font-size: 1em;
+	overflow: auto;
+}
+
+.classList li
+{
+	padding: 0;
+	margin: 0 0 8px 0;
+}
+
+.summaryTable { width: 100%; }
+
+h1.classTitle
+{
+	font-size:170%;
+	line-height:130%;
+}
+
+h2 { font-size: 110%; }
+caption, div.sectionTitle
+{
+	background-color: #7F8FB1;
+	color: #fff;
+	font-size:130%;
+	text-align: left;
+	padding: 2px 6px 2px 6px;
+	border: 1px #7F8FB1 solid;
+}
+
+div.sectionTitle { margin-bottom: 8px; }
+.summaryTable thead { display: none; }
+
+.summaryTable td
+{
+	vertical-align: top;
+	padding: 4px;
+	border-bottom: 1px #7F8FB1 solid;
+	border-right: 1px #7F8FB1 solid;
+}
+
+/*col#summaryAttributes {}*/
+.summaryTable td.attributes
+{
+	border-left: 1px #7F8FB1 solid;
+	width: 140px;
+	text-align: right;
+}
+
+td.attributes, .fixedFont
+{
+	line-height: 15px;
+	color: #002EBE;
+	font-family: "Courier New",Courier,monospace;
+	font-size: 13px;
+}
+
+.summaryTable td.nameDescription
+{
+	text-align: left;
+	font-size: 13px;
+	line-height: 15px;
+}
+
+.summaryTable td.nameDescription, .description
+{
+	line-height: 15px;
+	padding: 4px;
+	padding-left: 4px;
+}
+
+.summaryTable { margin-bottom: 8px; }
+
+ul.inheritsList
+{
+	list-style: square;
+	margin-left: 20px;
+	padding-left: 0;
+}
+
+.detailList {
+	margin-left: 20px; 
+	line-height: 15px;
+}
+.detailList dt { margin-left: 20px; }
+
+.detailList .heading
+{
+	font-weight: bold;
+	padding-bottom: 6px;
+	margin-left: 0;
+}
+
+.light, td.attributes, .light a:link, .light a:visited
+{
+	color: #777;
+	font-style: italic;
+}
+
+.fineprint
+{
+	text-align: right;
+	font-size: 10px;
+}
+		</style>
+	</head>
+
+	<body>
+<!-- ============================== header ================================= -->	
+		<!-- begin static/header.html -->
+		<div id="header">
+</div>
+		<!-- end static/header.html -->
+
+<!-- ============================== classes index ============================ -->
+		<div id="index">
+			<!-- begin publish.classesIndex -->
+			<div align="center"><a href="../index.html">Class Index</a>
+| <a href="../files.html">File Index</a></div>
+<hr />
+<h2>Classes</h2>
+<ul class="classList">
+	
+	<li><i><a href="../symbols/_global_.html">_global_</a></i></li>
+	
+	<li><a href="../symbols/nanomaps.Bounds.html">nanomaps.Bounds</a></li>
+	
+	<li><a href="../symbols/nanomaps.CartesianTileSelector.html">nanomaps.CartesianTileSelector</a></li>
+	
+	<li><a href="../symbols/nanomaps.Coordinate.html">nanomaps.Coordinate</a></li>
+	
+	<li><a href="../symbols/nanomaps.EventEmitter.html">nanomaps.EventEmitter</a></li>
+	
+	<li><a href="../symbols/nanomaps.MapState.html">nanomaps.MapState</a></li>
+	
+	<li><a href="../symbols/nanomaps.MapSurface.html">nanomaps.MapSurface</a></li>
+	
+	<li><a href="../symbols/nanomaps.MotionEvent.html">nanomaps.MotionEvent</a></li>
+	
+	<li><a href="../symbols/nanomaps.Projections.html">nanomaps.Projections</a></li>
+	
+	<li><a href="../symbols/nanomaps.Projections.WebMercator.html">nanomaps.Projections.WebMercator</a></li>
+	
+	<li><a href="../symbols/nanomaps.TileLayer.html">nanomaps.TileLayer</a></li>
+	
+	<li><a href="../symbols/SvgMarker.html">SvgMarker</a></li>
+	
+</ul>
+<hr />
+			<!-- end publish.classesIndex -->
+		</div>
+		
+		<div id="content">
+<!-- ============================== class title ============================ -->
+			<h1 class="classTitle">
+				
+				Class nanomaps.MapState
+			</h1>
+
+<!-- ============================== class summary ========================== -->			
+			<p class="description">
+				
+				
+			
+				
+				
+				
+					<br /><i>Defined in: </i> <a href="../symbols/src/client_lib_components_nanomaps.core.js.html">nanomaps.core.js</a>.
+				
+			</p>
+
+<!-- ============================== constructor summary ==================== -->			
+			
+			<table class="summaryTable" cellspacing="0" summary="A summary of the constructor documented in the class nanomaps.MapState.">
+				<caption>Class Summary</caption>
+				<thead>
+					<tr>
+						<th scope="col">Constructor Attributes</th>
+						<th scope="col">Constructor Name and Description</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td class="attributes">&nbsp;</td>
+						<td class="nameDescription" >
+							<div class="fixedFont">
+								<b><a href="../symbols/nanomaps.MapState.html#constructor">nanomaps.MapState</a></b>()
+							</div>
+							<div class="description">The entire viewable state of the map is represented by the
+following vital parameters:
+<ul>
+<li>prj - Map projection
+<li>res - resolution (projected units/pixel)
+<li>x - origin of the upper left corner of the map
+<li>y - origin of the upper left corner of the map
+<li>w - width of the map area
+<li>h - height of the map area
+</ul>
+
+Representing this as a value object aids when dealing
+with transitions, animations, etc where we want to interpolate
+between two or more MapState instances.</div>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			
+
+<!-- ============================== properties summary ===================== -->
+			
+				
+				
+				<table class="summaryTable" cellspacing="0" summary="A summary of the fields documented in the class nanomaps.MapState.">
+					<caption>Field Summary</caption>
+					<thead>
+						<tr>
+							<th scope="col">Field Attributes</th>
+							<th scope="col">Field Name and Description</th>
+						</tr>
+					</thead>
+					<tbody>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b>finalState {MapState} {MapState}</b>
+								</div>
+								<div class="description">If this state represents a transitional state on the way to
+some final state, then that final state will be set here.</div>
+							</td>
+						</tr>
+					
+					</tbody>
+				</table>
+				
+				
+				
+			
+
+<!-- ============================== methods summary ======================== -->
+			
+				
+				
+				<table class="summaryTable" cellspacing="0" summary="A summary of the methods documented in the class nanomaps.MapState.">
+					<caption>Method Summary</caption>
+					<thead>
+						<tr>
+							<th scope="col">Method Attributes</th>
+							<th scope="col">Method Name and Description</th>
+						</tr>
+					</thead>
+					<tbody>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapState.html#compare">compare</a></b>(other)
+								</div>
+								<div class="description">Detect the level of change between this mapState and a comparison
+mapState.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapState.html#copy">copy</a></b>(dest)
+								</div>
+								<div class="description">Copy parameters from this mapState to dest</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapState.html#getDspX">getDspX</a></b>()
+								</div>
+								<div class="description">Return the x-coordinate in display space of the given viewport
+coordinates.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapState.html#getDspY">getDspY</a></b>()
+								</div>
+								<div class="description">Return the y-coordinate in display space of the given viewport
+coordinates.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapState.html#getGlbX">getGlbX</a></b>()
+								</div>
+								<div class="description">Return global x coordinate corresponding to viewport coordinate (x,y).</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapState.html#getGlbY">getGlbY</a></b>()
+								</div>
+								<div class="description">Return global y coordinate corresponding to viewport coordinate (x,y).</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapState.html#getPrjX">getPrjX</a></b>()
+								</div>
+								<div class="description">Get projected x-coordinate of the given viewport coordinates.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapState.html#getPrjY">getPrjY</a></b>()
+								</div>
+								<div class="description">Get projected y-coordinate of the given viewport coordinates.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapState.html#getZoom">getZoom</a></b>()
+								</div>
+								<div class="description"></div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapState.html#prjToDspX">prjToDspX</a></b>()
+								</div>
+								<div class="description"></div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapState.html#prjToDspY">prjToDspY</a></b>()
+								</div>
+								<div class="description"></div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapState.html#setDspXY">setDspXY</a></b>()
+								</div>
+								<div class="description"></div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapState.html#setGlbXY">setGlbXY</a></b>()
+								</div>
+								<div class="description"></div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapState.html#setPrjXY">setPrjXY</a></b>()
+								</div>
+								<div class="description"></div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapState.html#setRes">setRes</a></b>()
+								</div>
+								<div class="description"></div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/nanomaps.MapState.html#setZoom">setZoom</a></b>()
+								</div>
+								<div class="description"></div>
+							</td>
+						</tr>
+					
+					</tbody>
+				</table>
+				
+				
+				
+			
+<!-- ============================== events summary ======================== -->
+			
+
+<!-- ============================== constructor details ==================== -->		
+			
+			<div class="details"><a name="constructor"> </a>
+				<div class="sectionTitle">
+					Class Detail
+				</div>
+				
+				<div class="fixedFont">
+						<b>nanomaps.MapState</b>()
+				</div>
+				
+				<div class="description">
+					The entire viewable state of the map is represented by the
+following vital parameters:
+<ul>
+<li>prj - Map projection
+<li>res - resolution (projected units/pixel)
+<li>x - origin of the upper left corner of the map
+<li>y - origin of the upper left corner of the map
+<li>w - width of the map area
+<li>h - height of the map area
+</ul>
+
+Representing this as a value object aids when dealing
+with transitions, animations, etc where we want to interpolate
+between two or more MapState instances.
+<p>
+The MapSurface holds the "master" MapState in its mapState
+property.  This property can be read but should only be modified
+through appropriate API calls.
+<p>
+Note that the MapState is a quasi-internal object.  It is used directly
+by code integrating into nanomaps, but users generally will not/should not
+encounter it.  It's methods are terse and no validity checks are done
+on arguments.  That is left to higher level code.
+					
+				</div>
+				
+				
+				
+				
+					
+					
+					
+					
+					
+					
+					
+
+			</div>
+			
+
+<!-- ============================== field details ========================== -->		
+			
+				<div class="sectionTitle">
+					Field Detail
+				</div>
+				
+					<a name="finalState {MapState}"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>finalState {MapState}</b>
+					
+					</div>
+					<div class="description">
+						If this state represents a transitional state on the way to
+some final state, then that final state will be set here.
+This is intended to be used by components that either may just
+take a swag during transitions or may wish to preload resources
+based on final states instead of intermediate.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+
+					
+				
+			
+
+<!-- ============================== method details ========================= -->		
+			
+				<div class="sectionTitle">
+					Method Detail
+				</div>
+				
+					<a name="compare"> </a>
+					<div class="fixedFont">
+					
+					<span class="light">{Number}</span>
+					<b>compare</b>(other)
+					
+					</div>
+					<div class="description">
+						Detect the level of change between this mapState and a comparison
+mapState.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>other</b>
+									
+								</dt>
+								<dd>{MapState}</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{Number}</span> 0 if no change, 1 if position change, 2 if full change</dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="copy"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>copy</b>(dest)
+					
+					</div>
+					<div class="description">
+						Copy parameters from this mapState to dest
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>dest</b>
+									
+								</dt>
+								<dd>{MapState}</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="getDspX"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>getDspX</b>()
+					
+					</div>
+					<div class="description">
+						Return the x-coordinate in display space of the given viewport
+coordinates.  Note this function takes (x,y) as it is forward
+designed to be able to represent orientation.
+<p>
+This value will be resolution pre-divided
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="getDspY"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>getDspY</b>()
+					
+					</div>
+					<div class="description">
+						Return the y-coordinate in display space of the given viewport
+coordinates.  Note this function takes (x,y) as it is forward
+designed to be able to represent orientation.
+<p>
+This value will be resolution pre-divided
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="getGlbX"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>getGlbX</b>()
+					
+					</div>
+					<div class="description">
+						Return global x coordinate corresponding to viewport coordinate (x,y).
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="getGlbY"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>getGlbY</b>()
+					
+					</div>
+					<div class="description">
+						Return global y coordinate corresponding to viewport coordinate (x,y).
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="getPrjX"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>getPrjX</b>()
+					
+					</div>
+					<div class="description">
+						Get projected x-coordinate of the given viewport coordinates.
+Note that these coordinates will have resolution multiplied out
+and will have axis inversion relative to display coordinates
+if the proejction defines it.
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="getPrjY"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>getPrjY</b>()
+					
+					</div>
+					<div class="description">
+						Get projected y-coordinate of the given viewport coordinates.
+Note that these coordinates will have resolution divided out
+and will have axis inversion relative to display coordinates
+if the proejction defines it.
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="getZoom"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>getZoom</b>()
+					
+					</div>
+					<div class="description">
+						
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="prjToDspX"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>prjToDspX</b>()
+					
+					</div>
+					<div class="description">
+						
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="prjToDspY"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>prjToDspY</b>()
+					
+					</div>
+					<div class="description">
+						
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="setDspXY"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>setDspXY</b>()
+					
+					</div>
+					<div class="description">
+						
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="setGlbXY"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>setGlbXY</b>()
+					
+					</div>
+					<div class="description">
+						
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="setPrjXY"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>setPrjXY</b>()
+					
+					</div>
+					<div class="description">
+						
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="setRes"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>setRes</b>()
+					
+					</div>
+					<div class="description">
+						
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="setZoom"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>setZoom</b>()
+					
+					</div>
+					<div class="description">
+						
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+						
+						
+
+					
+				
+			
+			
+<!-- ============================== event details ========================= -->		
+			
+			
+			<hr />
+		</div>
+
+		
+<!-- ============================== footer ================================= -->
+		<div class="fineprint" style="clear:both">
+			
+			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Mon Jul 11 2011 16:05:48 GMT-0700 (PDT)
+		</div>
+	</body>
+</html>

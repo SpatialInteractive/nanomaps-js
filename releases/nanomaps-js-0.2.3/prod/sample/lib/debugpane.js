@@ -1,0 +1,1 @@
+(function(){var a;function b(d){var c=$("#debugpane");if(!c.get(0)){c=$(document.createElement("div"));c.get(0).id="debugpane";c.appendTo(document.body)}else{c.append("<br>")}c.append(d);if(a){clearTimeout(a)}a=setTimeout(function(){a=null;c.remove()},5000);c.click(function(){c.remove()})}window.showDebugMessage=b;console.log=b})();

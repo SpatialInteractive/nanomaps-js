@@ -1,0 +1,221 @@
+<html><head><meta http-equiv="content-type" content="text/html; charset=UTF-8"> <style>
+	.KEYW {color: #933;}
+	.COMM {color: #bbb; font-style: italic;}
+	.NUMB {color: #393;}
+	.STRN {color: #393;}
+	.REGX {color: #339;}
+	.line {border-right: 1px dotted #666; color: #666; font-style: normal;}
+	</style></head><body><pre><span class='line'>  1</span> <span class="COMM">/**
+<span class='line'>  2</span>  * nanomaps.geometry.js
+<span class='line'>  3</span>  * Geometry primitives
+<span class='line'>  4</span>  */</span><span class="WHIT">
+<span class='line'>  5</span> 
+<span class='line'>  6</span> </span><span class="COMM">// Helpers to get x/y alias names</span><span class="WHIT">
+<span class='line'>  7</span> </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">X_NAMES</span><span class="PUNC">=</span><span class="PUNC">[</span><span class="STRN">'x'</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">'lng'</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">'longitude'</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">'lon'</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>  8</span> </span><span class="WHIT">	</span><span class="NAME">Y_NAMES</span><span class="PUNC">=</span><span class="PUNC">[</span><span class="STRN">'y'</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">'lat'</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">'latitude'</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>  9</span> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="NAME">firstNumeric</span><span class="PUNC">(</span><span class="NAME">object</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">props</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 10</span> </span><span class="WHIT">	</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">,</span><span class="NAME">v</span><span class="PUNC">,</span><span class="NAME">t</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 11</span> </span><span class="WHIT">	</span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">i</span><span class="PUNC">=</span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">&lt;</span><span class="NAME">props.length</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">++</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 12</span> </span><span class="WHIT">		</span><span class="NAME">v</span><span class="PUNC">=</span><span class="NAME">object</span><span class="PUNC">[</span><span class="NAME">props</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 13</span> </span><span class="WHIT">		</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">v</span><span class="PUNC">!==</span><span class="NAME">undefined</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="NAME">v</span><span class="PUNC">!==</span><span class="KEYW">null</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 14</span> </span><span class="WHIT">			</span><span class="NAME">t</span><span class="PUNC">=</span><span class="KEYW">typeof</span><span class="WHIT"> </span><span class="NAME">v</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 15</span> </span><span class="WHIT">			</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">t</span><span class="PUNC">===</span><span class="STRN">'number'</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">v</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 16</span> </span><span class="WHIT">			</span><span class="KEYW">else</span><span class="WHIT"> </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">t</span><span class="PUNC">===</span><span class="STRN">'function'</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">Number</span><span class="PUNC">(</span><span class="NAME">v.call</span><span class="PUNC">(</span><span class="NAME">object</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 17</span> </span><span class="WHIT">		</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 18</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 19</span> </span><span class="WHIT">	</span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">NaN</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 20</span> </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 21</span> </span><span class="WHIT">	
+<span class='line'> 22</span> </span><span class="COMM">/**
+<span class='line'> 23</span>  * Abstracts out a single point in a global coordinate system.
+<span class='line'> 24</span>  * This may be neurotic, but my brain is wired to think of (latitude,longitude)
+<span class='line'> 25</span>  * and when its in that mode, I can't get it in my head that x=longitude and
+<span class='line'> 26</span>  * y=latitude (in fact, just after writing this sentence I had to read it 3 times
+<span class='line'> 27</span>  * because that didn't quite look right).  
+<span class='line'> 28</span>  * As a further neurosis, I spent my productive map-engaged years abbreviating them (lat,lng).
+<span class='line'> 29</span>  * &lt;p>
+<span class='line'> 30</span>  * So the presence of this class is a tip of the hat to the fact that no one
+<span class='line'> 31</span>  * can cure the brain and quirky habits are better indulged in old age than
+<span class='line'> 32</span>  * challenged.  Everyone else can just go on using (x,y) and remembering
+<span class='line'> 33</span>  * the difference.  I name things explicitly here so as not to get confused.  Surely
+<span class='line'> 34</span>  * a lifetime of abuse is worth a few bytes in a library.
+<span class='line'> 35</span>  * &lt;p>
+<span class='line'> 36</span>  * The entire rest of the library deals in (x,y).  I've tried to keep any concept
+<span class='line'> 37</span>  * of latitude and longitude here in the form of helper methods.  The "public" api
+<span class='line'> 38</span>  * should pass around instances of this class.  The bits under the covers, though
+<span class='line'> 39</span>  * will often just passes x's and y's nakedly (ie. see MapState).
+<span class='line'> 40</span>  * &lt;p>
+<span class='line'> 41</span>  * This class is also structured to allow some future refactoring to support double
+<span class='line'> 42</span>  * or integral E6 coordinates.  This could save some space with lots instances (maybe,
+<span class='line'> 43</span>  * depending on alignment) but my intuition tells me it is probably not a speed savings
+<span class='line'> 44</span>  * since we've got to go back to double anyway for projection math.  In my experience
+<span class='line'> 45</span>  * this is usually a premature optimization, but I leave the option open by way of a subclass.
+<span class='line'> 46</span>  * &lt;p>
+<span class='line'> 47</span>  * Ok, that's enough of a treatise on a simple Coordinate class.
+<span class='line'> 48</span>  *
+<span class='line'> 49</span>  * @constructor
+<span class='line'> 50</span>  * @name nanomaps.Coordinate
+<span class='line'> 51</span>  * @param x horizontal coordinate
+<span class='line'> 52</span>  * @param y vertical coordinate
+<span class='line'> 53</span>  * @author stella
+<span class='line'> 54</span>  */</span><span class="WHIT">
+<span class='line'> 55</span> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="NAME">Coordinate</span><span class="PUNC">(</span><span class="NAME">x</span><span class="PUNC">,</span><span class="NAME">y</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 56</span> </span><span class="WHIT">	</span><span class="NAME">this._x</span><span class="PUNC">=</span><span class="NAME">Number</span><span class="PUNC">(</span><span class="NAME">x</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 57</span> </span><span class="WHIT">	</span><span class="NAME">this._y</span><span class="PUNC">=</span><span class="NAME">Number</span><span class="PUNC">(</span><span class="NAME">y</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 58</span> </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 59</span> </span><span class="COMM">/**
+<span class='line'> 60</span>  * Static function for returning a coordinate given
+<span class='line'> 61</span>  * latitude,longitude.  This is here just to make sure
+<span class='line'> 62</span>  * I get it right instead of relying on my memory that
+<span class='line'> 63</span>  * lat=y and lng=x.
+<span class='line'> 64</span>  * @public
+<span class='line'> 65</span>  * @name latLng
+<span class='line'> 66</span>  * @methodOf nanomaps.Coordinate
+<span class='line'> 67</span>  * @param lat {Number}
+<span class='line'> 68</span>  * @param lng {Number}
+<span class='line'> 69</span>  * @return {Coordinate}
+<span class='line'> 70</span>  */</span><span class="WHIT">
+<span class='line'> 71</span> </span><span class="NAME">Coordinate.latLng</span><span class="PUNC">=</span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">lat</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">lng</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 72</span> </span><span class="WHIT">	</span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">Coordinate</span><span class="PUNC">(</span><span class="NAME">lng</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">lat</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 73</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 74</span> 
+<span class='line'> 75</span> </span><span class="COMM">/**
+<span class='line'> 76</span>  * Factory method for constructing a coordinate from (x,y)
+<span class='line'> 77</span>  * @public
+<span class='line'> 78</span>  * @name xy
+<span class='line'> 79</span>  * @methodOf nanomaps.Coordinate
+<span class='line'> 80</span>  * @param x {Number}
+<span class='line'> 81</span>  * @param y {Number}
+<span class='line'> 82</span>  * @return {Coordinate}
+<span class='line'> 83</span>  */</span><span class="WHIT">
+<span class='line'> 84</span> </span><span class="NAME">Coordinate.xy</span><span class="PUNC">=</span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">x</span><span class="PUNC">,</span><span class="NAME">y</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 85</span> </span><span class="WHIT">	</span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">Coordinate</span><span class="PUNC">(</span><span class="NAME">x</span><span class="PUNC">,</span><span class="NAME">y</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 86</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 87</span> 
+<span class='line'> 88</span> </span><span class="COMM">/**
+<span class='line'> 89</span>  * Generic conversion function to produce a Coordinate
+<span class='line'> 90</span>  * from a variety of objects.  If object is a Coordinate,
+<span class='line'> 91</span>  * then object is returned as-is.  Otherwise, the x-coordinate
+<span class='line'> 92</span>  * is determined by the first existent property:
+<span class='line'> 93</span>  * &lt;ol>
+<span class='line'> 94</span>  * &lt;li>x
+<span class='line'> 95</span>  * &lt;li>lng
+<span class='line'> 96</span>  * &lt;li>longitude
+<span class='line'> 97</span>  * &lt;li>lon
+<span class='line'> 98</span>  * &lt;/ol>
+<span class='line'> 99</span>  * The y coordinate is the first property:
+<span class='line'>100</span>  * &lt;ol>
+<span class='line'>101</span>  * &lt;li>y
+<span class='line'>102</span>  * &lt;li>lat
+<span class='line'>103</span>  * &lt;li>latitude
+<span class='line'>104</span>  * &lt;/ol>
+<span class='line'>105</span>  * 
+<span class='line'>106</span>  * Alternatively, if object is an array, then it is
+<span class='line'>107</span>  * taken to be [x, y]
+<span class='line'>108</span>  * @public
+<span class='line'>109</span>  * @name from
+<span class='line'>110</span>  * @methodOf nanomaps.Coordinate
+<span class='line'>111</span>  * @param object {Object}
+<span class='line'>112</span>  * @return {Coordinate}
+<span class='line'>113</span>  */</span><span class="WHIT">
+<span class='line'>114</span> </span><span class="NAME">Coordinate.from</span><span class="PUNC">=</span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">object</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>115</span> </span><span class="WHIT">	</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">object</span><span class="WHIT"> </span><span class="KEYW">instanceof</span><span class="WHIT"> </span><span class="NAME">Coordinate</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>116</span> </span><span class="WHIT">		</span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">object</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>117</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>118</span> </span><span class="WHIT">	</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">object</span><span class="WHIT"> </span><span class="KEYW">instanceof</span><span class="WHIT"> </span><span class="NAME">Array</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>119</span> </span><span class="WHIT">		</span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">Coordinate</span><span class="PUNC">(</span><span class="NAME">object</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">object</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>120</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>121</span> </span><span class="WHIT">	</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">x</span><span class="PUNC">=</span><span class="NAME">firstNumeric</span><span class="PUNC">(</span><span class="NAME">object</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">X_NAMES</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>122</span> </span><span class="WHIT">		</span><span class="NAME">y</span><span class="PUNC">=</span><span class="NAME">firstNumeric</span><span class="PUNC">(</span><span class="NAME">object</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">Y_NAMES</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>123</span> </span><span class="WHIT">	</span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">Coordinate</span><span class="PUNC">(</span><span class="NAME">x</span><span class="PUNC">,</span><span class="NAME">y</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>124</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>125</span> 
+<span class='line'>126</span> </span><span class="NAME">Coordinate.prototype</span><span class="PUNC">=</span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>127</span> </span><span class="WHIT">	</span><span class="COMM">/**
+<span class='line'>128</span> 	 * @public
+<span class='line'>129</span> 	 * @memberOf nanomaps.Coordinate.prototype
+<span class='line'>130</span> 	 */</span><span class="WHIT">
+<span class='line'>131</span> </span><span class="WHIT">	</span><span class="NAME">x</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>132</span> </span><span class="WHIT">		</span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this._x</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>133</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>134</span> </span><span class="WHIT">	</span><span class="COMM">/**
+<span class='line'>135</span> 	 * @public
+<span class='line'>136</span> 	 * @memberOf nanomaps.Coordinate.prototype
+<span class='line'>137</span> 	 */</span><span class="WHIT">
+<span class='line'>138</span> </span><span class="WHIT">	</span><span class="NAME">y</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>139</span> </span><span class="WHIT">		</span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this._y</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>140</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>141</span> </span><span class="WHIT">	</span><span class="COMM">/**
+<span class='line'>142</span> 	 * @public
+<span class='line'>143</span> 	 * @memberOf nanomaps.Coordinate.prototype
+<span class='line'>144</span> 	 */</span><span class="WHIT">
+<span class='line'>145</span> </span><span class="WHIT">	</span><span class="NAME">lat</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>146</span> </span><span class="WHIT">		</span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this._y</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>147</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>148</span> </span><span class="WHIT">	</span><span class="COMM">/**
+<span class='line'>149</span> 	 * @public
+<span class='line'>150</span> 	 * @memberOf nanomaps.Coordinate.prototype
+<span class='line'>151</span> 	 */</span><span class="WHIT">
+<span class='line'>152</span> </span><span class="WHIT">	</span><span class="NAME">lng</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>153</span> </span><span class="WHIT">		</span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this._x</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>154</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>155</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>156</span> </span><span class="NAME">exports.Coordinate</span><span class="PUNC">=</span><span class="NAME">Coordinate</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>157</span> 
+<span class='line'>158</span> </span><span class="COMM">/**
+<span class='line'>159</span>  * Simple bounds class with members:
+<span class='line'>160</span>  * &lt;ul>
+<span class='line'>161</span>  * &lt;li>minx
+<span class='line'>162</span>  * &lt;li>miny
+<span class='line'>163</span>  * &lt;li>maxx
+<span class='line'>164</span>  * &lt;li>maxy
+<span class='line'>165</span>  * &lt;/ul>
+<span class='line'>166</span>  
+<span class='line'>167</span>  * @constructor
+<span class='line'>168</span>  * @name nanomaps.Bounds
+<span class='line'>169</span>  * @param minx {number}
+<span class='line'>170</span>  * @param miny {number}
+<span class='line'>171</span>  * @param maxx {number}
+<span class='line'>172</span>  * @param maxy {number}
+<span class='line'>173</span>  */</span><span class="WHIT">
+<span class='line'>174</span> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="NAME">Bounds</span><span class="PUNC">(</span><span class="NAME">minx</span><span class="PUNC">,</span><span class="NAME">miny</span><span class="PUNC">,</span><span class="NAME">maxx</span><span class="PUNC">,</span><span class="NAME">maxy</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>175</span> </span><span class="WHIT">	</span><span class="COMM">/**
+<span class='line'>176</span> 	 * @public
+<span class='line'>177</span> 	 * @memberOf nanomaps.Bounds.prototype
+<span class='line'>178</span> 	 */</span><span class="WHIT">
+<span class='line'>179</span> </span><span class="WHIT">	</span><span class="NAME">this.minx</span><span class="PUNC">=</span><span class="NAME">minx</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>180</span> </span><span class="WHIT">	</span><span class="COMM">/**
+<span class='line'>181</span> 	 * @public
+<span class='line'>182</span> 	 * @memberOf nanomaps.Bounds.prototype
+<span class='line'>183</span> 	 */</span><span class="WHIT">
+<span class='line'>184</span> </span><span class="WHIT">	</span><span class="NAME">this.miny</span><span class="PUNC">=</span><span class="NAME">miny</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>185</span> </span><span class="WHIT">	</span><span class="COMM">/**
+<span class='line'>186</span> 	 * @public
+<span class='line'>187</span> 	 * @memberOf nanomaps.Bounds.prototype
+<span class='line'>188</span> 	 */</span><span class="WHIT">
+<span class='line'>189</span> </span><span class="WHIT">	</span><span class="NAME">this.maxx</span><span class="PUNC">=</span><span class="NAME">maxx</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>190</span> </span><span class="WHIT">	</span><span class="COMM">/**
+<span class='line'>191</span> 	 * @public
+<span class='line'>192</span> 	 * @memberOf nanomaps.Bounds.prototype
+<span class='line'>193</span> 	 */</span><span class="WHIT">
+<span class='line'>194</span> </span><span class="WHIT">	</span><span class="NAME">this.maxy</span><span class="PUNC">=</span><span class="NAME">maxy</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>195</span> </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>196</span> 
+<span class='line'>197</span> </span><span class="COMM">/**
+<span class='line'>198</span>  * Convert tile x,y,level coordinates to a Microsoft
+<span class='line'>199</span>  * quad-key
+<span class='line'>200</span>  */</span><span class="WHIT">
+<span class='line'>201</span> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="NAME">tileXYToQuadkey</span><span class="PUNC">(</span><span class="NAME">tileX</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">tileY</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">level</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>202</span> </span><span class="WHIT">	</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">mask</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">value</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">ret</span><span class="PUNC">=</span><span class="STRN">''</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>203</span> </span><span class="WHIT">	</span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">i</span><span class="PUNC">=</span><span class="NAME">level</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">></span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">--</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>204</span> </span><span class="WHIT">		</span><span class="NAME">value</span><span class="PUNC">=</span><span class="NUMB">48</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>205</span> </span><span class="WHIT">		</span><span class="NAME">mask</span><span class="PUNC">=</span><span class="NUMB">1</span><span class="PUNC">&lt;&lt;</span><span class="PUNC">(</span><span class="NAME">i</span><span class="PUNC">-</span><span class="NUMB">1</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>206</span> </span><span class="WHIT">		</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">(</span><span class="NAME">tileX</span><span class="PUNC">&</span><span class="NAME">mask</span><span class="PUNC">)</span><span class="PUNC">!==</span><span class="NUMB">0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="NAME">value</span><span class="PUNC">++</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>207</span> </span><span class="WHIT">		</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">(</span><span class="NAME">tileY</span><span class="PUNC">&</span><span class="NAME">mask</span><span class="PUNC">)</span><span class="PUNC">!==</span><span class="NUMB">0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="NAME">value</span><span class="PUNC">+</span><span class="PUNC">=</span><span class="NUMB">2</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>208</span> </span><span class="WHIT">		</span><span class="NAME">ret</span><span class="PUNC">+</span><span class="PUNC">=</span><span class="NAME">String.fromCharCode</span><span class="PUNC">(</span><span class="NAME">value</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>209</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>210</span> </span><span class="WHIT">	</span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">ret</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>211</span> </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>212</span> 
+<span class='line'>213</span> 
+<span class='line'>214</span> </span></pre></body></html>
