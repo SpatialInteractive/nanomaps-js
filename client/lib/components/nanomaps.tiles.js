@@ -23,6 +23,8 @@
  * @param {TileSelector} [options.selector] describes the source and geometry of the
  * tiles
  * @param {integer} [options.buffer=64] The number of pixels to actively buffer on
+ * @param {Number} [options.pixelRatio=1.0] The ratio of tilepixel / csspixel
+ * @param {Number} [options.autoPixelRatio=false] If no pixelRatio is given consult the browser to determine native ratio
  * all sides of the map
  */
 function TileLayer(options) {
@@ -37,6 +39,29 @@ function TileLayer(options) {
 	var sel=peer.sel=new CartesianTileSelector(options);
 	
 	/**
+	 * Ratio of tilePixel / cssPixel.  This will be 1.0 on most displays.
+	 * On high density displays, setting this to 2.0 may result in better
+	 * visual clarity.
+	 * @name pixelRatio
+	 * @public
+	 * @memberOf nanomaps.TileLayer#
+	 */
+	var explicitPixelRatio=Number(options.pixelRatio);
+	if (!explicitPixelRatio && options.autoPixelRatio) {
+		explicitPixelRatio=window.devicePixelRatio;
+	}
+	
+	/**
+	 * Ratio of tilePixel / cssPixel.  This will be 1.0 on most displays.
+	 * On high density displays, setting this to 2.0 may result in better
+	 * visual clarity.
+	 * @name pixelRatio
+	 * @public
+	 * @memberOf nanomaps.TileLayer#
+	 */
+	sel.pixelRatio=peer.pixelRatio=this.pixelRatio=explicitPixelRatio||1.0;
+	
+	/**
 	 * The element that is the root of the TileLayer
 	 * @name element
 	 * @public
@@ -46,6 +71,9 @@ function TileLayer(options) {
 	element.style.position='absolute';
 	element.style.left='0px';
 	element.style.top='0px';
+	if (explicitPixelRatio) {
+		element.style.zoom=(1/explicitPixelRatio);
+	}
 	element.mapeer=peer;
 	element.setAttribute('tilesrc', sel.toString());	// For DOM debugging
 }
@@ -116,8 +144,9 @@ TileLayerPeer.prototype={
 	loadPendingTiles: function(mapState) {
 		var transitionTileSet=this.transition,
 			currentTileSet=this.current,
-			right=mapState.w-1,
-			bottom=mapState.h-1,
+			pixelRatio=this.pixelRatio,
+			right=pixelRatio * (mapState.w-1),
+			bottom=pixelRatio * (mapState.h-1),
 			updatedKeys,
 			i,
 			key,
@@ -129,7 +158,7 @@ TileLayerPeer.prototype={
 		transitionTileSet.clear();
 		// Select tiles that intersect our display area
 		updatedKeys=this.sel.select(mapState.prj,
-			mapState.res,
+			mapState.res / pixelRatio,
 			mapState.getPrjX(0,0),
 			mapState.getPrjY(0,0),
 			mapState.getPrjX(right,bottom),
@@ -145,12 +174,12 @@ TileLayerPeer.prototype={
 				tile=new Tile(this.sel, key);
 				transitionTileSet.add(tile);
 				newTiles.push(tile);
-				setTileBounds(mapState, tile);
+				setTileBounds(mapState, tile, pixelRatio);
 			}
 		}
 		
 		// Sort and load
-		sortTiles(newTiles, mapState.w/2, mapState.h/2);
+		sortTiles(newTiles, pixelRatio*mapState.w/2, pixelRatio*mapState.h/2);
 		for (i=0; i<newTiles.length; i++) {
 			tile=newTiles[i];
 			// Load the tiles but don't generate previews because
@@ -172,8 +201,9 @@ TileLayerPeer.prototype={
 			oldTileSet=this.old,
 			mapState=map.mapState,
 			lockedState=this.lockedState,
-			right=mapState.w-1,
-			bottom=mapState.h-1,
+			pixelRatio=this.pixelRatio,
+			right=pixelRatio*(mapState.w-1),
+			bottom=pixelRatio*(mapState.h-1),
 			updatedKeys,
 			i,
 			key,
@@ -200,7 +230,7 @@ TileLayerPeer.prototype={
 		
 		// Select tiles that intersect our display area
 		updatedKeys=this.sel.select(mapState.prj,
-			mapState.res,
+			mapState.res / pixelRatio,
 			mapState.getPrjX(0,0),
 			mapState.getPrjY(0,0),
 			mapState.getPrjX(right,bottom),
@@ -225,7 +255,7 @@ TileLayerPeer.prototype={
 			}
 			tile.mark=true;
 			
-			setTileBounds(mapState, tile);
+			setTileBounds(mapState, tile, pixelRatio);
 
 			// After a transition we may be dealing with a child that
 			// was loaded without ever being attached.  Fix that now.
@@ -242,7 +272,7 @@ TileLayerPeer.prototype={
 		// previews
 		if (newTiles.length>0) {
 			currentTileSet.sweep(oldTileSet, function(tile) {
-				setTileBounds(mapState, tile);
+				setTileBounds(mapState, tile, pixelRatio);
 			});
 		}
 		
@@ -251,7 +281,7 @@ TileLayerPeer.prototype={
 		// them by proximity to the center but don't have the display information until
 		// after we've iterated over all of them.  Think of this as the "initialize new
 		// tiles" loop
-		sortTiles(newTiles, mapState.w/2, mapState.h/2);
+		sortTiles(newTiles, pixelRatio * mapState.w/2, pixelRatio * mapState.h/2);
 		for (i=0; i<newTiles.length; i++) {
 			tile=newTiles[i];
 			
@@ -296,12 +326,12 @@ function sortTiles(tilesAry, x, y) {
  * @param mapState
  * @param tile
  */
-function setTileBounds(mapState, tile) {
+function setTileBounds(mapState, tile, pixelRatio) {
 	var size=tile.sel.tileSize,
 		tileKey=tile.tileKey,
-		scaledSize=Math.ceil(size * tileKey.res / mapState.res),
-		left=Math.floor(mapState.prjToDspX(tileKey.scaledX * tileKey.res) - mapState.x),
-		top=Math.floor(mapState.prjToDspY(tileKey.scaledY * tileKey.res) - mapState.y);
+		scaledSize=pixelRatio * Math.ceil(size * tileKey.res / mapState.res),
+		left=pixelRatio * Math.floor(mapState.prjToDspX(tileKey.scaledX * tileKey.res) - mapState.x),
+		top=pixelRatio * Math.floor(mapState.prjToDspY(tileKey.scaledY * tileKey.res) - mapState.y);
 		
 	tile.setBounds(left, top, scaledSize, scaledSize);
 }
@@ -421,13 +451,16 @@ CartesianTileSelector.prototype={
 	 * @param {TileKey} TileKey returned from select
 	 */
 	resolveSrc: function(tileKey) {
-		return this.srcSpec.replace(/\$\{([A-Za-z]+)(\:([^\}]*))?\}/g, function(s, name, ignore, args) {
+		var self=this;
+		return self.srcSpec.replace(/\$\{([A-Za-z]+)(\:([^\}]*))?\}/g, function(s, name, ignore, args) {
 			if (name==='quadkey') {
 				return tileXYToQuadkey(tileKey.tileX, tileKey.tileY, tileKey.level);
 			} else if (name==='modulo') {
 				// get the args and modulo it by the tileDesc.tileX
 				args=args.split(/\,/);
 				return args[tileKey.tileX%args.length];
+			} else if (name==='pixelRatio') {
+				return self.pixelRatio || 1.0;
 			} else {
 				return tileKey[name];
 			}

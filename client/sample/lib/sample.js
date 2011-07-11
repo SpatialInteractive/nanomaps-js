@@ -23,7 +23,9 @@ var map,
 
 var TILE_LAYERS={
 	street: new nanomaps.TileLayer({
-			tileSrc: "http://otile${modulo:1,2,3}.mqcdn.com/tiles/1.0.0/osm/${level}/${tileX}/${tileY}.png"
+			//tileSrc: "http://otile${modulo:1,2,3}.mqcdn.com/tiles/1.0.0/osm/${level}/${tileX}/${tileY}.png",
+			tileSrc: "http://192.168.0.102:7666/map/mqstreet/${level}/${tileX}/${tileY}?pixelRatio=${pixelRatio}",
+			autoPixelRatio: true
 		}),
 	sat: new nanomaps.TileLayer({
 			tileSrc: "http://oatile${modulo:1,2,3}.mqcdn.com/naip/${level}/${tileX}/${tileY}.jpg"
@@ -50,12 +52,10 @@ function initialize() {
 	var mapElt=$('#map').get(0);
 	
 	// Detect hi resolution display and bias zoom levels
-	var pixelRatio=window.devicePixelRatio||1,
-		zoomBias=0.0;
-	if (pixelRatio>1.5) zoomBias=-0.50;
+	var pixelRatio=window.devicePixelRatio||1;
 	
 	map=new nanomaps.MapSurface(mapElt, {
-		zoomBias: zoomBias
+		//zoomBias: zoomBias
 	});
 	map.on('motion.longtap', function(motionEvent) {
 		var latLng=map.getLocation(motionEvent.x, motionEvent.y);
