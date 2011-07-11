@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script src="../releases/nanomaps-js-dev/prod/nanomaps.bundle.all.js"></script>
+</head>
+<body>
+	<style>
+	#map {
+		width: 640px;
+		height: 480px;
+	}
+	</style>
+	
+	<div id="map">
+	</div>
+	
+	<div>
+		&copy;<a href="http://www.openstreetmap.org/">OpenStreetMap</a> and contributors,
+		<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>
+	</div>
+	
+	<script>
+		var map=new nanomaps.MapSurface(document.getElementById('map'));
+		map.setLocation({ lat: 47.604317, lng: -122.329773 });
+		map.setZoom(13);
+
+		var tileLayer=new nanomaps.TileLayer({
+			tileSrc: 'http://otile${modulo:1,2,3}.mqcdn.com/tiles/1.0.0/osm/${level}/${tileX}/${tileY}.png'
+		});
+		map.attach(tileLayer);
+	</script>
+</body>
+</html>
+
