@@ -56,7 +56,8 @@ if [ -d $pages/releases/$build_name ]; then
 	rm -Rf $pages/releases/$build_name
 fi
 cp -a $build $pages/releases
-cp build/$build_name.tar.gz $pages/releases
+mkdir -p $pages/releases/archives
+cp build/$build_name.tar.gz $pages/releases/archives
 
 echo "Copied release to pages"
 
